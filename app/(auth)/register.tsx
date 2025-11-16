@@ -1,5 +1,4 @@
 
-import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,162 +10,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { colors, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-
-export default function RegisterScreen() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    identification: '',
-    address: '',
-    password: '',
-    confirmPassword: '',
-    referralCode: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
-  const router = useRouter();
-
-  const handleRegister = async () => {
-    if (!formData.name || !formData.email || !formData.identification || 
-        !formData.address || !formData.password) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register({
-        name: formData.name,
-        email: formData.email,
-        identification: formData.identification,
-        address: formData.address,
-        referredBy: formData.referralCode || undefined,
-      }, formData.password);
-      
-      router.replace('/(auth)/verify-email');
-    } catch (error) {
-      Alert.alert('Error', 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="person.badge.plus.fill" 
-            android_material_icon_name="person_add" 
-            size={60} 
-            color={colors.primary} 
-          />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join MXI Pre-Sale</Text>
-        </View>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.name}
-            onChangeText={(text) => setFormData({ ...formData, name: text })}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.email}
-            onChangeText={(text) => setFormData({ ...formData, email: text })}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Identification Number *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.identification}
-            onChangeText={(text) => setFormData({ ...formData, identification: text })}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Residential Address *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.address}
-            onChangeText={(text) => setFormData({ ...formData, address: text })}
-            multiline
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.password}
-            onChangeText={(text) => setFormData({ ...formData, password: text })}
-            secureTextEntry
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password *"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.confirmPassword}
-            onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-            secureTextEntry
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Referral Code (Optional)"
-            placeholderTextColor={colors.textSecondary}
-            value={formData.referralCode}
-            onChangeText={(text) => setFormData({ ...formData, referralCode: text })}
-            autoCapitalize="characters"
-          />
-
-          <TouchableOpacity 
-            style={[buttonStyles.primary, styles.button]} 
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.card} />
-            ) : (
-              <Text style={buttonStyles.text}>Register</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.linkButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.linkText}>
-              Already have an account? <Text style={styles.linkTextBold}>Login</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+import { useRouter } from 'expo-router';
+import { colors, buttonStyles } from '@/styles/commonStyles';
+import React, { useState } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -176,50 +24,246 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
+    paddingTop: 40,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
-    marginTop: 20,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: colors.text,
-    marginTop: 16,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
-    marginTop: 8,
+    textAlign: 'center',
   },
   form: {
-    width: '100%',
+    gap: 16,
+  },
+  inputContainer: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   input: {
     backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 14,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     color: colors.text,
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  button: {
+  registerButton: {
+    ...buttonStyles.primary,
     marginTop: 8,
   },
-  linkButton: {
-    marginTop: 16,
-    alignItems: 'center',
-    marginBottom: 40,
+  registerButtonText: {
+    ...buttonStyles.primaryText,
   },
-  linkText: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 8,
+  },
+  footerText: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  linkTextBold: {
+  linkText: {
+    fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
   },
 });
+
+export default function RegisterScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [identification, setIdentification] = useState('');
+  const [address, setAddress] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const router = useRouter();
+
+  const handleRegister = async () => {
+    if (!email || !password || !name || !identification || !address) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(
+        {
+          email,
+          name,
+          identification,
+          address,
+        },
+        password,
+        referralCode || undefined
+      );
+      
+      // User will be redirected after email verification
+      router.replace('/login');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      Alert.alert('Registration Failed', error.message || 'Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <IconSymbol 
+            ios_icon_name="person.badge.plus.fill" 
+            android_material_icon_name="person_add" 
+            size={56} 
+            color={colors.primary} 
+          />
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join the MXI pre-sale</Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Full Name *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="John Doe"
+              placeholderTextColor={colors.textSecondary}
+              value={name}
+              onChangeText={setName}
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="your@email.com"
+              placeholderTextColor={colors.textSecondary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Identification *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="ID Number"
+              placeholderTextColor={colors.textSecondary}
+              value={identification}
+              onChangeText={setIdentification}
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Address *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Your address"
+              placeholderTextColor={colors.textSecondary}
+              value={address}
+              onChangeText={setAddress}
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="At least 6 characters"
+              placeholderTextColor={colors.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Confirm Password *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Re-enter password"
+              placeholderTextColor={colors.textSecondary}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Referral Code (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter referral code"
+              placeholderTextColor={colors.textSecondary}
+              value={referralCode}
+              onChangeText={setReferralCode}
+              autoCapitalize="characters"
+              editable={!loading}
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.registerButton} 
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.registerButtonText}>Create Account</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/login')}>
+            <Text style={styles.linkText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

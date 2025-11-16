@@ -1,5 +1,4 @@
 
-import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,116 +10,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-
-export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter();
-
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await login(email, password);
-      router.replace('/(tabs)/(home)/');
-    } catch (error) {
-      Alert.alert('Error', 'Invalid credentials');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="bitcoinsign.circle.fill" 
-            android_material_icon_name="currency_bitcoin" 
-            size={80} 
-            color={colors.primary} 
-          />
-          <Text style={styles.title}>MXI Pre-Sale</Text>
-          <Text style={styles.subtitle}>Welcome Back</Text>
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <IconSymbol 
-              ios_icon_name="envelope.fill" 
-              android_material_icon_name="email" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <IconSymbol 
-              ios_icon_name="lock.fill" 
-              android_material_icon_name="lock" 
-              size={20} 
-              color={colors.textSecondary} 
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-
-          <TouchableOpacity 
-            style={[buttonStyles.primary, styles.button]} 
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.card} />
-            ) : (
-              <Text style={buttonStyles.text}>Login</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.linkButton}
-            onPress={() => router.push('/(auth)/register')}
-          >
-            <Text style={styles.linkText}>
-              Don&apos;t have an account? <Text style={styles.linkTextBold}>Register</Text>
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.demoInfo}>
-            <Text style={styles.demoText}>Demo Credentials:</Text>
-            <Text style={styles.demoText}>User: any email / any password</Text>
-            <Text style={styles.demoText}>Admin: admin@mxi.com / admin123</Text>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+import { useRouter } from 'expo-router';
+import { colors, buttonStyles } from '@/styles/commonStyles';
+import React, { useState } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -138,61 +32,149 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: colors.text,
-    marginTop: 16,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: colors.textSecondary,
-    marginTop: 8,
   },
   form: {
-    width: '100%',
+    gap: 16,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    marginBottom: 16,
+    gap: 8,
   },
-  input: {
-    flex: 1,
-    padding: 14,
-    fontSize: 16,
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.text,
   },
-  button: {
+  input: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  loginButton: {
+    ...buttonStyles.primary,
     marginTop: 8,
   },
-  linkButton: {
-    marginTop: 16,
-    alignItems: 'center',
+  loginButtonText: {
+    ...buttonStyles.primaryText,
   },
-  linkText: {
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 8,
+  },
+  footerText: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  linkTextBold: {
+  linkText: {
+    fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
   },
-  demoInfo: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: colors.card,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  demoText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
 });
+
+export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await login(email, password);
+      // Navigation will be handled by auth state change
+    } catch (error: any) {
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <IconSymbol 
+            ios_icon_name="lock.shield.fill" 
+            android_material_icon_name="security" 
+            size={64} 
+            color={colors.primary} 
+          />
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to your MXI account</Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="your@email.com"
+              placeholderTextColor={colors.textSecondary}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor={colors.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              editable={!loading}
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Sign In</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/register')}>
+            <Text style={styles.linkText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
