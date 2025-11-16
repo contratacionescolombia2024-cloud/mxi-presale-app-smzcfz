@@ -1,15 +1,51 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { colors } from '@/styles/commonStyles';
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+});
 
 export default function TabLayout() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
 
+  useEffect(() => {
+    console.log('📱 Tab Layout - Auth State:', {
+      isAuthenticated,
+      isAdmin,
+      isLoading,
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+    });
+  }, [isAuthenticated, isAdmin, isLoading, user]);
+
+  // Show loading indicator while checking auth
+  if (isLoading) {
+    console.log('⏳ Tab Layout - Still loading auth state...');
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log('🚫 Tab Layout - Not authenticated, redirecting to login');
     return <Redirect href="/(auth)/login" />;
   }
+
+  console.log('✅ Tab Layout - User is authenticated, showing tabs');
 
   const tabs: TabBarItem[] = [
     {

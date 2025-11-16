@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -114,6 +114,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  successBox: {
+    backgroundColor: '#D1FAE5',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  successText: {
+    color: '#065F46',
+    fontSize: 14,
+    lineHeight: 20,
+  },
 });
 
 export default function LoginScreen() {
@@ -121,8 +134,18 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showResendButton, setShowResendButton] = useState(false);
-  const { login, resendVerificationEmail } = useAuth();
+  const [loginSuccess, setLoginSuccess] = useState(false);
+  const { login, resendVerificationEmail, isAuthenticated } = useAuth();
   const router = useRouter();
+
+  // Navigate to home when authenticated
+  useEffect(() => {
+    console.log('🔍 Login screen - isAuthenticated:', isAuthenticated);
+    if (isAuthenticated) {
+      console.log('✅ User is authenticated, navigating to home...');
+      router.replace('/(tabs)/(home)/');
+    }
+  }, [isAuthenticated]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -132,12 +155,24 @@ export default function LoginScreen() {
 
     setLoading(true);
     setShowResendButton(false);
+    setLoginSuccess(false);
     
     try {
+      console.log('🔐 Attempting login...');
       await login(email, password);
-      // Navigation will happen automatically via auth state change
+      console.log('✅ Login function completed');
+      setLoginSuccess(true);
+      
+      // Show success message
+      Alert.alert(
+        'Login Successful',
+        'Welcome back! Redirecting to home...',
+        [{ text: 'OK' }]
+      );
+      
+      // Navigation will happen automatically via useEffect when isAuthenticated changes
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ Login error in component:', error);
       
       if (error.message === 'EMAIL_NOT_CONFIRMED') {
         setShowResendButton(true);
@@ -147,7 +182,10 @@ export default function LoginScreen() {
           [{ text: 'OK' }]
         );
       } else {
-        Alert.alert('Login Failed', error.message || 'Failed to log in. Please try again.');
+        Alert.alert(
+          'Login Failed', 
+          error.message || 'Failed to log in. Please check your credentials and try again.'
+        );
       }
     } finally {
       setLoading(false);
@@ -164,7 +202,7 @@ export default function LoginScreen() {
     try {
       await resendVerificationEmail(email);
     } catch (error: any) {
-      console.error('Resend verification error:', error);
+      console.error('❌ Resend verification error:', error);
       Alert.alert('Error', error.message || 'Failed to resend verification email');
     } finally {
       setLoading(false);
@@ -187,6 +225,14 @@ export default function LoginScreen() {
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your MXI account</Text>
         </View>
+
+        {loginSuccess && (
+          <View style={styles.successBox}>
+            <Text style={styles.successText}>
+              ✅ Login successful! Redirecting to home screen...
+            </Text>
+          </View>
+        )}
 
         {showResendButton && (
           <View style={styles.warningBox}>
@@ -254,14 +300,14 @@ export default function LoginScreen() {
         <View style={styles.footer}>
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.linkText}>Register</Text>
             </TouchableOpacity>
           </View>
           
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>First time admin?</Text>
-            <TouchableOpacity onPress={() => router.push('/admin-setup')}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/admin-setup')}>
               <Text style={styles.linkText}>Setup Admin</Text>
             </TouchableOpacity>
           </View>

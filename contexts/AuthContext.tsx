@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user profile from database
   const loadUserProfile = async (userId: string, email: string) => {
     try {
-      console.log('Loading user profile for:', userId, email);
+      console.log('🔍 Loading user profile for:', userId, email);
       
       const { data: profile, error } = await supabase
         .from('users_profiles')
@@ -36,11 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Error loading profile:', error);
+        console.error('❌ Error loading profile:', error);
         
         // If profile doesn't exist, try to create a basic one
         if (error.code === 'PGRST116') {
-          console.log('Profile not found for user:', userId, '- attempting to create one');
+          console.log('⚠️ Profile not found for user:', userId, '- attempting to create one');
           
           // Generate a unique referral code
           const referralCode = 'REF' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .single();
 
           if (createError) {
-            console.error('Failed to create profile:', createError);
+            console.error('❌ Failed to create profile:', createError);
             Alert.alert(
               'Profile Missing',
               'Your user profile is missing and could not be created automatically. Please contact support.',
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return null;
           }
 
-          console.log('Profile created successfully:', newProfile);
+          console.log('✅ Profile created successfully:', newProfile);
           
           // Show alert to user to complete their profile
           Alert.alert(
@@ -95,12 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             referredBy: newProfile.referred_by || undefined,
           };
 
+          console.log('✅ User data set:', userData.id, userData.email);
           setUser(userData);
           
           // Check if admin
-          if (email === 'admin@mxi.com' || email === 'inversionesingo@gmail.com') {
-            setIsAdmin(true);
-          }
+          const adminEmails = ['admin@mxi.com', 'inversionesingo@gmail.com', 'contratacionescolombia2024@gmail.com'];
+          const isAdminUser = adminEmails.includes(email.toLowerCase());
+          console.log('🔐 Is admin?', isAdminUser, 'for email:', email);
+          setIsAdmin(isAdminUser);
           
           return userData;
         }
@@ -108,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (profile) {
+        console.log('✅ Profile found:', profile.id, profile.name);
         const { data: authUser } = await supabase.auth.getUser();
         
         const userData: User = {
@@ -124,41 +127,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           referredBy: profile.referred_by || undefined,
         };
 
+        console.log('✅ User data set:', userData.id, userData.email);
         setUser(userData);
         
         // Check if admin
-        if (email === 'admin@mxi.com' || email === 'inversionesingo@gmail.com') {
-          setIsAdmin(true);
-        }
+        const adminEmails = ['admin@mxi.com', 'inversionesingo@gmail.com', 'contratacionescolombia2024@gmail.com'];
+        const isAdminUser = adminEmails.includes(email.toLowerCase());
+        console.log('🔐 Is admin?', isAdminUser, 'for email:', email);
+        setIsAdmin(isAdminUser);
         
         return userData;
       }
     } catch (error) {
-      console.error('Error in loadUserProfile:', error);
+      console.error('❌ Error in loadUserProfile:', error);
     }
     return null;
   };
 
   // Initialize auth state
   useEffect(() => {
-    console.log('Initializing auth state');
+    console.log('🚀 Initializing auth state');
     
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session?.user?.id);
+      console.log('📋 Initial session:', session?.user?.id, session?.user?.email);
       if (session?.user) {
-        loadUserProfile(session.user.id, session.user.email || '');
+        loadUserProfile(session.user.id, session.user.email || '').then(() => {
+          console.log('✅ Initial profile loaded');
+          setIsLoading(false);
+        });
+      } else {
+        console.log('ℹ️ No initial session');
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      console.log('🔄 Auth state changed:', event, session?.user?.id, session?.user?.email);
       
       if (session?.user) {
+        console.log('👤 User logged in, loading profile...');
         await loadUserProfile(session.user.id, session.user.email || '');
+        console.log('✅ Profile loaded after auth change');
       } else {
+        console.log('👋 User logged out');
         setUser(null);
         setIsAdmin(false);
       }
@@ -166,13 +179,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      console.log('🧹 Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('Login attempt:', email);
+      console.log('🔐 Login attempt for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -180,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error.message);
         
         // Provide more specific error messages
         if (error.message.includes('Invalid login credentials')) {
@@ -193,21 +207,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        const profile = await loadUserProfile(data.user.id, data.user.email || '');
+        console.log('✅ Login successful for user:', data.user.id, data.user.email);
+        console.log('⏳ Waiting for profile to load...');
         
-        // Profile will be created automatically if it doesn't exist
-        // So we don't need to sign out the user anymore
-        console.log('Login successful, profile loaded:', profile?.id);
+        // Wait a bit for the auth state change to trigger
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        console.log('✅ Login complete');
       }
     } catch (error: any) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error.message);
       throw error;
     }
   };
 
   const register = async (userData: Partial<User>, password: string, referralCode?: string) => {
     try {
-      console.log('Register attempt:', userData.email);
+      console.log('📝 Register attempt:', userData.email);
       
       // Validate referral code if provided
       let referredBy: string | null = null;
@@ -239,12 +255,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
         throw new Error(error.message);
       }
 
       if (data.user) {
-        console.log('User created in auth, creating profile...');
+        console.log('✅ User created in auth, creating profile...');
         
         // Generate a unique referral code
         const referralCode = 'REF' + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -262,14 +278,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
 
         if (profileError) {
-          console.error('Profile creation error:', profileError);
+          console.error('❌ Profile creation error:', profileError);
           
           // If profile creation fails, we should delete the auth user
           // But we can't do that from the client, so just show an error
           throw new Error('Failed to create user profile. Please contact support with error code: PROFILE_CREATE_FAILED');
         }
 
-        console.log('Profile created successfully');
+        console.log('✅ Profile created successfully');
 
         // Show email verification alert
         Alert.alert(
@@ -279,23 +295,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
     } catch (error: any) {
-      console.error('Registration failed:', error);
+      console.error('❌ Registration failed:', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      console.log('Logging out');
+      console.log('👋 Logging out');
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
         throw error;
       }
       setUser(null);
       setIsAdmin(false);
+      console.log('✅ Logout successful');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('❌ Logout failed:', error);
       throw error;
     }
   };
@@ -304,7 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!user) return;
       
-      console.log('Updating user:', userData);
+      console.log('📝 Updating user:', userData);
       
       const { error } = await supabase
         .from('users_profiles')
@@ -318,21 +335,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Update error:', error);
+        console.error('❌ Update error:', error);
         throw error;
       }
 
+      console.log('✅ User updated successfully');
       // Reload profile
       await loadUserProfile(user.id, user.email);
     } catch (error) {
-      console.error('Update failed:', error);
+      console.error('❌ Update failed:', error);
       throw error;
     }
   };
 
   const resendVerificationEmail = async (email: string) => {
     try {
-      console.log('Resending verification email to:', email);
+      console.log('📧 Resending verification email to:', email);
       
       const { error } = await supabase.auth.resend({
         type: 'signup',
@@ -343,33 +361,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        console.error('Resend verification error:', error);
+        console.error('❌ Resend verification error:', error);
         throw new Error(error.message);
       }
 
+      console.log('✅ Verification email sent');
       Alert.alert(
         'Verification Email Sent',
         'Please check your email inbox (and spam folder) for the verification link.',
         [{ text: 'OK' }]
       );
     } catch (error: any) {
-      console.error('Resend verification failed:', error);
+      console.error('❌ Resend verification failed:', error);
       throw error;
     }
   };
 
+  const value = {
+    user, 
+    isAuthenticated: !!user, 
+    isAdmin, 
+    isLoading,
+    login, 
+    register, 
+    logout, 
+    updateUser,
+    resendVerificationEmail
+  };
+
+  console.log('🔍 Auth Context State:', {
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.email,
+    isAuthenticated: !!user,
+    isAdmin,
+    isLoading
+  });
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated: !!user, 
-      isAdmin, 
-      isLoading,
-      login, 
-      register, 
-      logout, 
-      updateUser,
-      resendVerificationEmail
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
