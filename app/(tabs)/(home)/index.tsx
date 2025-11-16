@@ -273,7 +273,7 @@ export default function HomeScreen() {
           >
             <IconSymbol 
               ios_icon_name="person.2.fill" 
-              android_material_icon_name="group" 
+              android_material_icon_name="people" 
               size={32} 
               color={colors.primary} 
             />

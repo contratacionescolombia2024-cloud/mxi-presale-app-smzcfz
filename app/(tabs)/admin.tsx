@@ -85,7 +85,7 @@ export default function AdminScreen() {
               <View style={[commonStyles.card, styles.metricCard]}>
                 <IconSymbol 
                   ios_icon_name="person.3.fill" 
-                  android_material_icon_name="group" 
+                  android_material_icon_name="people" 
                   size={32} 
                   color={colors.primary} 
                 />

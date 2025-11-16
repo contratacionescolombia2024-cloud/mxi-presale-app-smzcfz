@@ -74,7 +74,7 @@ export default function ReferralsScreen() {
         <View style={styles.header}>
           <IconSymbol 
             ios_icon_name="person.2.fill" 
-            android_material_icon_name="group" 
+            android_material_icon_name="people" 
             size={60} 
             color={colors.accent} 
           />
