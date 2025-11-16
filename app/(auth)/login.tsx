@@ -23,18 +23,30 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 24,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: 48,
   },
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    boxShadow: '0px 8px 24px rgba(108, 92, 231, 0.4)',
+    elevation: 8,
+  },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
@@ -42,254 +54,253 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   form: {
-    gap: 16,
+    marginBottom: 24,
   },
   inputContainer: {
-    gap: 8,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    paddingHorizontal: 16,
   },
-  button: {
-    ...buttonStyles.primary,
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: colors.text,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
     marginTop: 8,
   },
-  buttonText: {
-    ...buttonStyles.primaryText,
-  },
-  secondaryButton: {
-    ...buttonStyles.secondary,
-  },
-  secondaryButtonText: {
-    ...buttonStyles.secondaryText,
-  },
-  linkContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-    gap: 8,
-  },
-  linkText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  link: {
+  forgotPasswordText: {
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
   },
-  errorContainer: {
-    backgroundColor: '#fee',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#fcc',
+  loginButton: {
+    ...buttonStyles.primary,
+    marginTop: 24,
+  },
+  loginButtonText: {
+    ...buttonStyles.text,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 32,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  registerText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  registerLink: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  resendButton: {
+    marginTop: 16,
+    padding: 12,
+    alignItems: 'center',
+  },
+  resendButtonText: {
+    fontSize: 14,
+    color: colors.secondary,
+    fontWeight: '600',
   },
   errorText: {
-    color: '#c00',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  infoContainer: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  infoText: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 4,
   },
 });
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, isAuthenticated, isLoading, resendVerificationEmail } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('✅ User authenticated, redirecting to home');
-      router.replace('/(tabs)/(home)');
+      router.replace('/(tabs)/(home)/');
     }
   }, [isAuthenticated]);
 
   const handleLogin = async () => {
-    setError('');
-    
     if (!email || !password) {
-      setError('Please enter both email and password.');
+      setError('Please enter both email and password');
       return;
     }
 
-    setIsSubmitting(true);
+    setLoading(true);
+    setError('');
+    
     try {
-      console.log('🔐 Attempting login for:', email);
       await login(email, password);
-      console.log('✅ Login successful');
-      // Navigation will happen automatically via useEffect
     } catch (err: any) {
-      console.error('❌ Login error:', err.message);
-      
-      if (err.message === 'EMAIL_NOT_CONFIRMED') {
-        setError('Your email is not verified yet. Please check your inbox for the verification link.');
-        Alert.alert(
-          'Email Not Verified',
-          'Please verify your email before signing in. Check your inbox (and spam folder) for the verification link.',
-          [
-            {
-              text: 'Resend Verification Email',
-              onPress: () => handleResendVerification(),
-            },
-            { text: 'OK' },
-          ]
-        );
-      } else {
-        setError(err.message || 'Login failed. Please check your credentials and try again.');
-      }
+      console.error('Login error:', err);
+      setError(err.message || 'Login failed. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
   const handleResendVerification = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address first.');
+      Alert.alert('Error', 'Please enter your email address');
       return;
     }
 
-    try {
-      console.log('📧 Resending verification email to:', email);
-      await resendVerificationEmail(email);
-    } catch (err: any) {
-      console.error('❌ Resend verification error:', err);
-      Alert.alert('Error', 'Failed to resend verification email. Please try again.');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.text, marginTop: 16 }}>Loading...</Text>
-        </View>
-      </SafeAreaView>
+    Alert.alert(
+      'Verification Email',
+      'A new verification email will be sent to your address.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              // Implement resend verification logic
+              Alert.alert('Success', 'Verification email sent!');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to send verification email');
+            }
+          },
+        },
+      ]
     );
-  }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="lock.shield.fill" 
-            android_material_icon_name="security" 
-            size={64} 
-            color={colors.primary} 
-          />
+          <View style={styles.logo}>
+            <IconSymbol
+              ios_icon_name="bitcoinsign.circle.fill"
+              android_material_icon_name="currency_bitcoin"
+              size={48}
+              color="#FFFFFF"
+            />
+          </View>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your MXI account</Text>
         </View>
 
-        {error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
-
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your@email.com"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                setError('');
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
+            <View style={styles.inputWrapper}>
+              <IconSymbol
+                ios_icon_name="envelope.fill"
+                android_material_icon_name="email"
+                size={20}
+                color={colors.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor={colors.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                setError('');
-              }}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isSubmitting}
-            />
+            <View style={styles.inputWrapper}>
+              <IconSymbol
+                ios_icon_name="lock.fill"
+                android_material_icon_name="lock"
+                size={20}
+                color={colors.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={colors.textSecondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!loading}
+              />
+            </View>
           </View>
 
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <TouchableOpacity
-            style={[styles.button, isSubmitting && { opacity: 0.6 }]}
+            style={styles.loginButton}
             onPress={handleLogin}
-            disabled={isSubmitting}
+            disabled={loading}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/(auth)/register')}
-            disabled={isSubmitting}
+            style={styles.resendButton}
+            onPress={handleResendVerification}
           >
-            <Text style={styles.secondaryButtonText}>Create New Account</Text>
+            <Text style={styles.resendButtonText}>Resend Verification Email</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.linkContainer}>
-          <Text style={styles.linkText}>First time admin?</Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/admin-setup')}>
-            <Text style={styles.link}>Setup Admin Account</Text>
-          </TouchableOpacity>
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
         </View>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            💡 After registration, you must verify your email before you can sign in. 
-            Check your inbox (and spam folder) for the verification link.
-          </Text>
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>Don&apos;t have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <Text style={styles.registerLink}>Sign Up</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>

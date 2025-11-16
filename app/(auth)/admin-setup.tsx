@@ -1,4 +1,5 @@
 
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
-import React, { useState } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
@@ -23,89 +23,94 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
+    padding: 24,
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    boxShadow: '0px 8px 24px rgba(255, 118, 117, 0.4)',
+    elevation: 8,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  warning: {
+  warningCard: {
     backgroundColor: colors.card,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 32,
     borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
+    borderLeftColor: colors.warning,
   },
   warningText: {
     fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  infoBox: {
-    backgroundColor: '#DBEAFE',
-    borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 24,
-  },
-  infoText: {
-    color: '#1E40AF',
-    fontSize: 14,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   form: {
-    gap: 16,
+    marginBottom: 24,
   },
   inputContainer: {
-    gap: 8,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
+    paddingHorizontal: 16,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: colors.text,
   },
   createButton: {
     ...buttonStyles.primary,
-    marginTop: 8,
+    marginTop: 24,
+    backgroundColor: colors.error,
   },
   createButtonText: {
-    ...buttonStyles.primaryText,
+    ...buttonStyles.text,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  backButton: {
+    marginTop: 16,
+    padding: 12,
     alignItems: 'center',
-    marginTop: 24,
-    gap: 8,
   },
-  footerText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  linkText: {
+  backButtonText: {
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
@@ -113,7 +118,7 @@ const styles = StyleSheet.create({
 });
 
 export default function AdminSetupScreen() {
-  const [email, setEmail] = useState('admin@mxi.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -137,63 +142,47 @@ export default function AdminSetupScreen() {
 
     setLoading(true);
     try {
-      console.log('Creating admin user:', email);
-
-      // Sign up the admin user
-      const { data, error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: 'https://natively.dev/email-confirmed',
           data: {
-            name: 'Administrator',
-            identification: 'ADMIN',
-            address: 'N/A',
-          }
-        }
+            is_admin: true,
+          },
+        },
       });
 
-      if (error) {
-        console.error('Admin creation error:', error);
-        throw new Error(error.message);
-      }
+      if (authError) throw authError;
 
-      if (data.user) {
-        console.log('Admin user created in auth, creating profile...');
-
-        // Create admin profile
+      if (authData.user) {
         const { error: profileError } = await supabase
           .from('users_profiles')
           .insert({
-            id: data.user.id,
+            id: authData.user.id,
+            email: email,
             name: 'Administrator',
             identification: 'ADMIN',
-            address: 'N/A',
-            referral_code: 'ADMIN' + Math.random().toString(36).substring(2, 6).toUpperCase(),
-            referred_by: null,
+            address: 'Admin Address',
+            is_admin: true,
+            email_verified: false,
+            kyc_status: 'approved',
+            referral_code: `ADMIN${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
           });
 
         if (profileError) {
-          console.error('Admin profile creation error:', profileError);
-          throw new Error('Failed to create admin profile: ' + profileError.message);
+          console.error('Profile creation error:', profileError);
         }
 
-        console.log('Admin profile created successfully');
-
         Alert.alert(
-          'Admin Account Created! ✅',
-          `The admin account has been created successfully.\n\n📧 IMPORTANT: You must verify your email before logging in!\n\n1. Check your email inbox (${email})\n2. Look for the verification email from Supabase\n3. Click the verification link in the email\n4. After verification, return here and log in\n\nNote: Check your spam folder if you don't see the email.`,
-          [
-            {
-              text: 'Go to Login',
-              onPress: () => router.replace('/login'),
-            },
-          ]
+          'Success',
+          'Admin account created! Please check your email to verify your account.',
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
         );
       }
     } catch (error: any) {
-      console.error('Admin creation failed:', error);
-      Alert.alert('Creation Failed', error.message || 'Failed to create admin account');
+      console.error('Admin creation error:', error);
+      Alert.alert('Error', error.message || 'Failed to create admin account');
     } finally {
       setLoading(false);
     }
@@ -201,91 +190,111 @@ export default function AdminSetupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <IconSymbol 
-            ios_icon_name="shield.fill" 
-            android_material_icon_name="admin_panel_settings" 
-            size={64} 
-            color={colors.primary} 
-          />
+          <View style={styles.logo}>
+            <IconSymbol
+              ios_icon_name="shield.lefthalf.filled"
+              android_material_icon_name="admin_panel_settings"
+              size={48}
+              color="#FFFFFF"
+            />
+          </View>
           <Text style={styles.title}>Admin Setup</Text>
-          <Text style={styles.subtitle}>Create the administrator account</Text>
+          <Text style={styles.subtitle}>Create administrator account</Text>
         </View>
 
-        <View style={styles.warning}>
+        <View style={styles.warningCard}>
           <Text style={styles.warningText}>
-            ⚠️ This screen is for initial setup only. After creating the admin account, this screen should be removed or protected.
-          </Text>
-        </View>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
-            ℹ️ After creating the admin account, you MUST verify the email address before you can log in. Check your inbox for the verification email.
+            ⚠️ This will create an administrator account with full access to all system features. Only proceed if you are authorized to create admin accounts.
           </Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Admin Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="admin@mxi.com"
-              placeholderTextColor={colors.textSecondary}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              editable={!loading}
-            />
+            <View style={styles.inputWrapper}>
+              <IconSymbol
+                ios_icon_name="envelope.fill"
+                android_material_icon_name="email"
+                size={20}
+                color={colors.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="admin@example.com"
+                placeholderTextColor={colors.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter password (min 6 characters)"
-              placeholderTextColor={colors.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!loading}
-            />
+            <View style={styles.inputWrapper}>
+              <IconSymbol
+                ios_icon_name="lock.fill"
+                android_material_icon_name="lock"
+                size={20}
+                color={colors.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Create a strong password"
+                placeholderTextColor={colors.textSecondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                editable={!loading}
+              />
+            </View>
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
-              placeholderTextColor={colors.textSecondary}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              editable={!loading}
-            />
+            <View style={styles.inputWrapper}>
+              <IconSymbol
+                ios_icon_name="lock.fill"
+                android_material_icon_name="lock"
+                size={20}
+                color={colors.textSecondary}
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm your password"
+                placeholderTextColor={colors.textSecondary}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                editable={!loading}
+              />
+            </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.createButton} 
+          <TouchableOpacity
+            style={styles.createButton}
             onPress={handleCreateAdmin}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.createButtonText}>Create Admin Account</Text>
             )}
           </TouchableOpacity>
-        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text style={styles.linkText}>Sign In</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Back to Login</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
