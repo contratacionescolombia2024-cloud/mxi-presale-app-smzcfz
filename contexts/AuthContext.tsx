@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('❌ Error loading profile:', error);
+        console.error('❌ Error loading profile:', error.message, error.code);
         
         // If profile doesn't exist, try to create a basic one
         if (error.code === 'PGRST116') {
@@ -62,8 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (createError) {
             console.error('❌ Failed to create profile:', createError);
             Alert.alert(
-              'Profile Missing',
-              'Your user profile is missing and could not be created automatically. Please contact support.',
+              'Profile Error',
+              'Your user profile could not be created. Please contact support.',
               [{ text: 'OK' }]
             );
             return null;
@@ -187,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       console.log('🔐 Login attempt for:', email);
+      setIsLoading(true);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -218,12 +219,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('❌ Login failed:', error.message);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const register = async (userData: Partial<User>, password: string, referralCode?: string) => {
     try {
       console.log('📝 Register attempt:', userData.email);
+      setIsLoading(true);
       
       // Validate referral code if provided
       let referredBy: string | null = null;
@@ -263,7 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ User created in auth, creating profile...');
         
         // Generate a unique referral code
-        const referralCode = 'REF' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        const newReferralCode = 'REF' + Math.random().toString(36).substring(2, 10).toUpperCase();
         
         // Create user profile
         const { error: profileError } = await supabase
@@ -273,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: userData.name!,
             identification: userData.identification!,
             address: userData.address!,
-            referral_code: referralCode,
+            referral_code: newReferralCode,
             referred_by: referredBy,
           });
 
@@ -297,12 +301,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error('❌ Registration failed:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
     try {
       console.log('👋 Logging out');
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('❌ Logout error:', error);
@@ -314,6 +321,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Logout failed:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -322,6 +331,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!user) return;
       
       console.log('📝 Updating user:', userData);
+      setIsLoading(true);
       
       const { error } = await supabase
         .from('users_profiles')
@@ -345,6 +355,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Update failed:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 

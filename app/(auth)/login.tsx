@@ -1,4 +1,5 @@
 
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,7 +15,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
-import React, { useState, useEffect } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -23,12 +23,12 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
     justifyContent: 'center',
+    padding: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 48,
   },
   title: {
     fontSize: 32,
@@ -61,69 +61,58 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  loginButton: {
+  button: {
     ...buttonStyles.primary,
     marginTop: 8,
   },
-  loginButtonText: {
+  buttonText: {
     ...buttonStyles.primaryText,
   },
-  resendButton: {
-    backgroundColor: '#3B82F6',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
+  secondaryButton: {
+    ...buttonStyles.secondary,
   },
-  resendButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  secondaryButtonText: {
+    ...buttonStyles.secondaryText,
   },
-  footer: {
-    flexDirection: 'column',
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
-    gap: 12,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
-  footerText: {
+  linkText: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  linkText: {
+  link: {
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
   },
-  warningBox: {
-    backgroundColor: '#FEF3C7',
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
+  errorContainer: {
+    backgroundColor: '#fee',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#fcc',
   },
-  warningText: {
-    color: '#92400E',
+  errorText: {
+    color: '#c00',
     fontSize: 14,
     lineHeight: 20,
   },
-  successBox: {
-    backgroundColor: '#D1FAE5',
-    borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
+  infoContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  successText: {
-    color: '#065F46',
+  infoText: {
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -132,82 +121,81 @@ const styles = StyleSheet.create({
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showResendButton, setShowResendButton] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
-  const { login, resendVerificationEmail, isAuthenticated } = useAuth();
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, isAuthenticated, isLoading, resendVerificationEmail } = useAuth();
   const router = useRouter();
 
-  // Navigate to home when authenticated
   useEffect(() => {
-    console.log('🔍 Login screen - isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
-      console.log('✅ User is authenticated, navigating to home...');
-      router.replace('/(tabs)/(home)/');
+      console.log('✅ User authenticated, redirecting to home');
+      router.replace('/(tabs)/(home)');
     }
   }, [isAuthenticated]);
 
   const handleLogin = async () => {
+    setError('');
+    
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      setError('Please enter both email and password.');
       return;
     }
 
-    setLoading(true);
-    setShowResendButton(false);
-    setLoginSuccess(false);
-    
+    setIsSubmitting(true);
     try {
-      console.log('🔐 Attempting login...');
+      console.log('🔐 Attempting login for:', email);
       await login(email, password);
-      console.log('✅ Login function completed');
-      setLoginSuccess(true);
+      console.log('✅ Login successful');
+      // Navigation will happen automatically via useEffect
+    } catch (err: any) {
+      console.error('❌ Login error:', err.message);
       
-      // Show success message
-      Alert.alert(
-        'Login Successful',
-        'Welcome back! Redirecting to home...',
-        [{ text: 'OK' }]
-      );
-      
-      // Navigation will happen automatically via useEffect when isAuthenticated changes
-    } catch (error: any) {
-      console.error('❌ Login error in component:', error);
-      
-      if (error.message === 'EMAIL_NOT_CONFIRMED') {
-        setShowResendButton(true);
+      if (err.message === 'EMAIL_NOT_CONFIRMED') {
+        setError('Your email is not verified yet. Please check your inbox for the verification link.');
         Alert.alert(
           'Email Not Verified',
-          'Your email address has not been verified yet. Please check your inbox for the verification email, or click the button below to resend it.',
-          [{ text: 'OK' }]
+          'Please verify your email before signing in. Check your inbox (and spam folder) for the verification link.',
+          [
+            {
+              text: 'Resend Verification Email',
+              onPress: () => handleResendVerification(),
+            },
+            { text: 'OK' },
+          ]
         );
       } else {
-        Alert.alert(
-          'Login Failed', 
-          error.message || 'Failed to log in. Please check your credentials and try again.'
-        );
+        setError(err.message || 'Login failed. Please check your credentials and try again.');
       }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleResendVerification = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+      Alert.alert('Error', 'Please enter your email address first.');
       return;
     }
 
-    setLoading(true);
     try {
+      console.log('📧 Resending verification email to:', email);
       await resendVerificationEmail(email);
-    } catch (error: any) {
-      console.error('❌ Resend verification error:', error);
-      Alert.alert('Error', error.message || 'Failed to resend verification email');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      console.error('❌ Resend verification error:', err);
+      Alert.alert('Error', 'Failed to resend verification email. Please try again.');
     }
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ color: colors.text, marginTop: 16 }}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -218,7 +206,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <IconSymbol 
             ios_icon_name="lock.shield.fill" 
-            android_material_icon_name="lock" 
+            android_material_icon_name="security" 
             size={64} 
             color={colors.primary} 
           />
@@ -226,21 +214,11 @@ export default function LoginScreen() {
           <Text style={styles.subtitle}>Sign in to your MXI account</Text>
         </View>
 
-        {loginSuccess && (
-          <View style={styles.successBox}>
-            <Text style={styles.successText}>
-              ✅ Login successful! Redirecting to home screen...
-            </Text>
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
-        )}
-
-        {showResendButton && (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningText}>
-              ⚠️ Your email is not verified. Please check your inbox or click the button below to resend the verification email.
-            </Text>
-          </View>
-        )}
+        ) : null}
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
@@ -250,10 +228,14 @@ export default function LoginScreen() {
               placeholder="your@email.com"
               placeholderTextColor={colors.textSecondary}
               value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
+              onChangeText={(text) => {
+                setEmail(text);
+                setError('');
+              }}
               keyboardType="email-address"
-              editable={!loading}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
             />
           </View>
 
@@ -264,53 +246,50 @@ export default function LoginScreen() {
               placeholder="Enter your password"
               placeholderTextColor={colors.textSecondary}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                setError('');
+              }}
               secureTextEntry
-              editable={!loading}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!isSubmitting}
             />
           </View>
 
-          <TouchableOpacity 
-            style={styles.loginButton} 
+          <TouchableOpacity
+            style={[styles.button, isSubmitting && { opacity: 0.6 }]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isSubmitting}
           >
-            {loading ? (
+            {isSubmitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
+              <Text style={styles.buttonText}>Sign In</Text>
             )}
           </TouchableOpacity>
 
-          {showResendButton && (
-            <TouchableOpacity 
-              style={styles.resendButton} 
-              onPress={handleResendVerification}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.resendButtonText}>Resend Verification Email</Text>
-              )}
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push('/(auth)/register')}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.secondaryButtonText}>Create New Account</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.footer}>
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.linkText}>Register</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.footerRow}>
-            <Text style={styles.footerText}>First time admin?</Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/admin-setup')}>
-              <Text style={styles.linkText}>Setup Admin</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.linkContainer}>
+          <Text style={styles.linkText}>First time admin?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/admin-setup')}>
+            <Text style={styles.link}>Setup Admin Account</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>
+            💡 After registration, you must verify your email before you can sign in. 
+            Check your inbox (and spam folder) for the verification link.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
