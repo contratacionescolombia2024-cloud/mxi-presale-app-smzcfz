@@ -1,28 +1,36 @@
 
 export const colors = {
-  // Dark theme colors
-  background: '#0A0E27',
-  card: '#1A1F3A',
-  border: '#2A2F4A',
+  // Dark theme colors - Premium palette
+  background: '#0B0D1E',
+  card: '#151829',
+  border: '#252840',
   
   // Text colors
   text: '#FFFFFF',
-  textSecondary: '#A0A0B8',
+  textSecondary: '#9CA3AF',
   
-  // Brand colors
-  primary: '#6C5CE7',
-  secondary: '#00B894',
-  accent: '#FDCB6E',
-  highlight: '#FD79A8',
+  // Brand colors - Premium gradient tones
+  primary: '#8B5CF6',
+  secondary: '#10B981',
+  accent: '#F59E0B',
+  highlight: '#EC4899',
   
   // Status colors
-  success: '#4CAF50',
-  warning: '#FF9800',
-  error: '#F44336',
-  info: '#2196F3',
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+  
+  // Section background colors - Subtle differentiation
+  sectionPurple: 'rgba(139, 92, 246, 0.08)',
+  sectionGreen: 'rgba(16, 185, 129, 0.08)',
+  sectionBlue: 'rgba(59, 130, 246, 0.08)',
+  sectionOrange: 'rgba(245, 158, 11, 0.08)',
+  sectionPink: 'rgba(236, 72, 153, 0.08)',
+  sectionTeal: 'rgba(20, 184, 166, 0.08)',
   
   // Additional colors
-  dark: '#0A0E27',
+  dark: '#0B0D1E',
   light: '#FFFFFF',
 };
 

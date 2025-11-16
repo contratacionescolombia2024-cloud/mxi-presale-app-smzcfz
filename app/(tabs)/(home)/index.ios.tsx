@@ -96,20 +96,97 @@ const styles = StyleSheet.create({
     color: colors.accent,
     textAlign: 'center',
   },
-  balanceCard: {
-    ...commonStyles.card,
-    marginBottom: 24,
+  salesStatusCard: {
+    backgroundColor: colors.sectionPurple,
+    borderRadius: 20,
     padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+  },
+  salesStatusHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  salesStatusTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  phaseBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  phaseBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  salesMetrics: {
+    gap: 16,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  metricLabel: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  progressBarContainer: {
+    marginTop: 8,
+  },
+  progressBar: {
+    height: 10,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 5,
+  },
+  progressText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: '600',
+    marginTop: 6,
+    textAlign: 'right',
+  },
+  balanceCard: {
+    backgroundColor: colors.sectionGreen,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
   },
   balanceLabel: {
     fontSize: 14,
     color: colors.textSecondary,
     marginBottom: 8,
+    fontWeight: '500',
   },
   balanceAmount: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: colors.secondary,
     marginBottom: 16,
   },
   balanceBreakdown: {
@@ -123,6 +200,7 @@ const styles = StyleSheet.create({
   balanceRowLabel: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   balanceRowValue: {
     fontSize: 16,
@@ -130,9 +208,12 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   stageCard: {
-    ...commonStyles.card,
+    backgroundColor: colors.sectionBlue,
+    borderRadius: 20,
+    padding: 24,
     marginBottom: 24,
-    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.2)',
   },
   stageHeader: {
     flexDirection: 'row',
@@ -146,7 +227,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   stageBadge: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.info,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -167,23 +248,12 @@ const styles = StyleSheet.create({
   stageLabel: {
     fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   stageValue: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: colors.border,
-    borderRadius: 4,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -192,12 +262,29 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   actionCard: {
-    ...commonStyles.card,
     flex: 1,
     minWidth: '47%',
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     gap: 12,
+    borderWidth: 1,
+  },
+  actionCardPurchase: {
+    backgroundColor: colors.sectionOrange,
+    borderColor: 'rgba(245, 158, 11, 0.2)',
+  },
+  actionCardVesting: {
+    backgroundColor: colors.sectionGreen,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  actionCardReferrals: {
+    backgroundColor: colors.sectionPink,
+    borderColor: 'rgba(236, 72, 153, 0.2)',
+  },
+  actionCardKYC: {
+    backgroundColor: colors.sectionTeal,
+    borderColor: 'rgba(20, 184, 166, 0.2)',
   },
   actionLabel: {
     fontSize: 14,
@@ -269,6 +356,9 @@ export default function HomeScreen() {
 
   const totalMXI = (vestingData?.totalMXI || 0) + (referralStats?.totalMXIEarned || 0);
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
+  const totalAvailableMXI = 25000000;
+  const totalSoldMXI = currentStage?.soldMXI || 0;
+  const overallProgress = (totalSoldMXI / totalAvailableMXI) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -317,8 +407,50 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
+        {/* Sales Status Counter */}
+        <View style={styles.salesStatusCard}>
+          <View style={styles.salesStatusHeader}>
+            <Text style={styles.salesStatusTitle}>📊 Sales Status</Text>
+            <View style={styles.phaseBadge}>
+              <Text style={styles.phaseBadgeText}>Phase {currentStage?.stage || 1}</Text>
+            </View>
+          </View>
+          
+          <View style={styles.salesMetrics}>
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Current Phase Price</Text>
+              <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
+            </View>
+            
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Phase Progress</Text>
+              <Text style={styles.metricValue}>
+                {currentStage?.soldMXI.toLocaleString() || '0'} / {currentStage?.totalMXI.toLocaleString() || '0'} MXI
+              </Text>
+            </View>
+            
+            <View style={styles.progressBarContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${progress}%` }]} />
+              </View>
+              <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
+            </View>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Total Available</Text>
+              <Text style={styles.metricValue}>{totalAvailableMXI.toLocaleString()} MXI</Text>
+            </View>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Overall Progress</Text>
+              <Text style={styles.metricValue}>{overallProgress.toFixed(2)}%</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Balance Card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Total MXI Balance</Text>
+          <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
@@ -337,10 +469,11 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Current Stage Info */}
         {currentStage && (
           <View style={styles.stageCard}>
             <View style={styles.stageHeader}>
-              <Text style={styles.stageTitle}>Current Pre-Sale Stage</Text>
+              <Text style={styles.stageTitle}>⏱️ Current Pre-Sale Stage</Text>
               <View style={styles.stageBadge}>
                 <Text style={styles.stageBadgeText}>Stage {currentStage.stage}</Text>
               </View>
@@ -348,25 +481,29 @@ export default function HomeScreen() {
             
             <View style={styles.stageInfo}>
               <View style={styles.stageRow}>
-                <Text style={styles.stageLabel}>Price per MXI</Text>
-                <Text style={styles.stageValue}>${currentStage.price.toFixed(2)} USDT</Text>
-              </View>
-              <View style={styles.stageRow}>
-                <Text style={styles.stageLabel}>Sold</Text>
+                <Text style={styles.stageLabel}>Start Date</Text>
                 <Text style={styles.stageValue}>
-                  {currentStage.soldMXI.toLocaleString()} / {currentStage.totalMXI.toLocaleString()}
+                  {new Date(currentStage.startDate).toLocaleDateString()}
                 </Text>
               </View>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progress}%` }]} />
+              <View style={styles.stageRow}>
+                <Text style={styles.stageLabel}>End Date</Text>
+                <Text style={styles.stageValue}>
+                  {new Date(currentStage.endDate).toLocaleDateString()}
+                </Text>
+              </View>
+              <View style={styles.stageRow}>
+                <Text style={styles.stageLabel}>Duration</Text>
+                <Text style={styles.stageValue}>30 Days</Text>
               </View>
             </View>
           </View>
         )}
 
+        {/* Action Cards */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, styles.actionCardPurchase]}
             onPress={() => router.push('/purchase')}
           >
             <IconSymbol 
@@ -380,7 +517,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, styles.actionCardVesting]}
             onPress={() => router.push('/vesting')}
           >
             <IconSymbol 
@@ -394,28 +531,28 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, styles.actionCardReferrals]}
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
               ios_icon_name="person.2.fill" 
               android_material_icon_name="people" 
               size={40} 
-              color={colors.secondary}
+              color={colors.highlight}
               type="hierarchical"
             />
             <Text style={styles.actionLabel}>Referrals</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionCard}
+            style={[styles.actionCard, styles.actionCardKYC]}
             onPress={() => router.push('/kyc')}
           >
             <IconSymbol 
               ios_icon_name="checkmark.shield.fill" 
               android_material_icon_name="verified_user" 
               size={40} 
-              color={colors.info}
+              color="#14B8A6"
               type="hierarchical"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>
