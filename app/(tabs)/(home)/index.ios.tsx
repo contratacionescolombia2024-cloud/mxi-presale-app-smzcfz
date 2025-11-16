@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: colors.primary,
+    shadowColor: '#FB923C',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.5,
     shadowRadius: 16,
   },
   countdownGradient: {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   countdownTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   },
   countdownItem: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     padding: 12,
     minWidth: 70,
@@ -93,14 +93,55 @@ const styles = StyleSheet.create({
   launchDate: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.accent,
+    color: '#FB923C',
     textAlign: 'center',
+  },
+  balanceCard: {
+    backgroundColor: colors.sectionGreen,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: colors.secondary,
+    marginBottom: 16,
+  },
+  balanceBreakdown: {
+    gap: 12,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  balanceRowLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  balanceRowValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  phaseCountersContainer: {
+    marginBottom: 24,
+    gap: 16,
   },
   salesStatusCard: {
     backgroundColor: colors.sectionPurple,
     borderRadius: 20,
     padding: 24,
-    marginBottom: 24,
     borderWidth: 1,
     borderColor: 'rgba(139, 92, 246, 0.2)',
   },
@@ -169,51 +210,52 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'right',
   },
-  balanceCard: {
-    backgroundColor: colors.sectionGreen,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
-  },
-  balanceLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  balanceAmount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: colors.secondary,
-    marginBottom: 16,
-  },
-  balanceBreakdown: {
-    gap: 12,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  balanceRowLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  balanceRowValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  stageCard: {
+  overallProgressCard: {
     backgroundColor: colors.sectionBlue,
     borderRadius: 20,
     padding: 24,
-    marginBottom: 24,
     borderWidth: 1,
     borderColor: 'rgba(59, 130, 246, 0.2)',
+  },
+  overallProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  overallProgressTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  overallProgressMetrics: {
+    gap: 16,
+  },
+  overallProgressBar: {
+    height: 10,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  overallProgressFill: {
+    height: '100%',
+    backgroundColor: colors.info,
+    borderRadius: 5,
+  },
+  overallProgressText: {
+    fontSize: 13,
+    color: colors.info,
+    fontWeight: '600',
+    marginTop: 6,
+    textAlign: 'right',
+  },
+  stageCard: {
+    backgroundColor: colors.sectionTeal,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.2)',
   },
   stageHeader: {
     flexDirection: 'row',
@@ -227,7 +269,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   stageBadge: {
-    backgroundColor: colors.info,
+    backgroundColor: '#14B8A6',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -373,10 +415,10 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer */}
+        {/* Countdown Timer - Stronger Orange */}
         <View style={styles.countdownCard}>
           <LinearGradient
-            colors={[colors.primary, colors.secondary]}
+            colors={['#FB923C', '#F97316']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.countdownGradient}
@@ -407,48 +449,7 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
-        {/* Sales Status Counter */}
-        <View style={styles.salesStatusCard}>
-          <View style={styles.salesStatusHeader}>
-            <Text style={styles.salesStatusTitle}>📊 Sales Status</Text>
-            <View style={styles.phaseBadge}>
-              <Text style={styles.phaseBadgeText}>Phase {currentStage?.stage || 1}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.salesMetrics}>
-            <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Current Phase Price</Text>
-              <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
-            </View>
-            
-            <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Phase Progress</Text>
-              <Text style={styles.metricValue}>
-                {currentStage?.soldMXI.toLocaleString() || '0'} / {currentStage?.totalMXI.toLocaleString() || '0'} MXI
-              </Text>
-            </View>
-            
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progress}%` }]} />
-              </View>
-              <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
-            </View>
-
-            <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Total Available</Text>
-              <Text style={styles.metricValue}>{totalAvailableMXI.toLocaleString()} MXI</Text>
-            </View>
-
-            <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Overall Progress</Text>
-              <Text style={styles.metricValue}>{overallProgress.toFixed(2)}%</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Balance Card */}
+        {/* Balance Card - Moved directly below countdown */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -465,6 +466,71 @@ export default function HomeScreen() {
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
               <Text style={styles.balanceRowValue}>{(vestingData?.currentRewards || 0).toFixed(4)}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Phase Counters - Two counters interconnected */}
+        <View style={styles.phaseCountersContainer}>
+          {/* Current Phase Sales Status Counter */}
+          <View style={styles.salesStatusCard}>
+            <View style={styles.salesStatusHeader}>
+              <Text style={styles.salesStatusTitle}>📊 Current Phase Status</Text>
+              <View style={styles.phaseBadge}>
+                <Text style={styles.phaseBadgeText}>Phase {currentStage?.stage || 1}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.salesMetrics}>
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Current Phase Price</Text>
+                <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
+              </View>
+              
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Phase Progress</Text>
+                <Text style={styles.metricValue}>
+                  {currentStage?.soldMXI.toLocaleString() || '0'} / {currentStage?.totalMXI.toLocaleString() || '0'} MXI
+                </Text>
+              </View>
+              
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, { width: `${progress}%` }]} />
+                </View>
+                <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Overall Pre-Sale Progress Counter */}
+          <View style={styles.overallProgressCard}>
+            <View style={styles.overallProgressHeader}>
+              <Text style={styles.overallProgressTitle}>🎯 Overall Pre-Sale Progress</Text>
+            </View>
+            
+            <View style={styles.overallProgressMetrics}>
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Total Available</Text>
+                <Text style={styles.metricValue}>{totalAvailableMXI.toLocaleString()} MXI</Text>
+              </View>
+
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Total Sold</Text>
+                <Text style={styles.metricValue}>{totalSoldMXI.toLocaleString()} MXI</Text>
+              </View>
+
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Remaining</Text>
+                <Text style={styles.metricValue}>{(totalAvailableMXI - totalSoldMXI).toLocaleString()} MXI</Text>
+              </View>
+
+              <View style={styles.progressBarContainer}>
+                <View style={styles.overallProgressBar}>
+                  <View style={[styles.overallProgressFill, { width: `${overallProgress}%` }]} />
+                </View>
+                <Text style={styles.overallProgressText}>{overallProgress.toFixed(2)}% Complete</Text>
+              </View>
             </View>
           </View>
         </View>

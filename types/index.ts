@@ -14,12 +14,14 @@ export interface User {
 }
 
 export interface PreSaleStage {
+  id?: string;
   stage: number;
   price: number;
   startDate: string;
   endDate: string;
   totalMXI: number;
   soldMXI: number;
+  isActive?: boolean;
 }
 
 export interface Purchase {
@@ -34,6 +36,7 @@ export interface Purchase {
 }
 
 export interface VestingData {
+  id?: string;
   userId: string;
   totalMXI: number;
   currentRewards: number;
@@ -56,13 +59,12 @@ export interface Referral {
 }
 
 export interface ReferralStats {
+  totalReferrals: number;
   level1Count: number;
   level2Count: number;
   level3Count: number;
   totalMXIEarned: number;
-  level1MXI: number;
-  level2MXI: number;
-  level3MXI: number;
+  referrals: any[];
 }
 
 export interface Message {
