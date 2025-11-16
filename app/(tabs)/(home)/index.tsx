@@ -46,10 +46,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#FB923C',
+    shadowColor: '#D97706',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   countdownGradient: {
     padding: 24,
@@ -96,7 +98,7 @@ const styles = StyleSheet.create({
   launchDate: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FB923C',
+    color: '#D97706',
     textAlign: 'center',
   },
   balanceCard: {
@@ -104,8 +106,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
   },
   balanceLabel: {
     fontSize: 14,
@@ -137,29 +139,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  phaseCountersContainer: {
-    marginBottom: 24,
-    gap: 16,
-  },
-  salesStatusCard: {
+  vestingCard: {
     backgroundColor: colors.sectionPurple,
     borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.2)',
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.4)',
   },
-  salesStatusHeader: {
+  vestingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  salesStatusTitle: {
+  vestingTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
-  phaseBadge: {
+  vestingBadge: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -169,13 +168,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  phaseBadgeText: {
-    fontSize: 14,
+  vestingBadgeText: {
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#fff',
   },
-  salesMetrics: {
+  vestingMetrics: {
     gap: 16,
+  },
+  vestingRewardsContainer: {
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  vestingRewardsLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  vestingRewardsAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  vestingRewardsUpdate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   metricRow: {
     flexDirection: 'row',
@@ -192,113 +216,89 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  progressBarContainer: {
+  projectionsContainer: {
     marginTop: 8,
+    gap: 8,
   },
-  progressBar: {
-    height: 10,
-    backgroundColor: 'rgba(139, 92, 246, 0.2)',
-    borderRadius: 5,
-    overflow: 'hidden',
+  projectionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderRadius: 8,
   },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 5,
-  },
-  progressText: {
+  projectionLabel: {
     fontSize: 13,
-    color: colors.primary,
-    fontWeight: '600',
-    marginTop: 6,
-    textAlign: 'right',
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
-  overallProgressCard: {
+  projectionValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  phaseCountersContainer: {
+    marginBottom: 24,
+    gap: 16,
+  },
+  salesStatusCard: {
     backgroundColor: colors.sectionBlue,
     borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
   },
-  overallProgressHeader: {
+  salesStatusHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
-  overallProgressTitle: {
+  salesStatusTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
-  overallProgressMetrics: {
+  phaseBadge: {
+    backgroundColor: colors.info,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: colors.info,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  phaseBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  salesMetrics: {
     gap: 16,
   },
-  overallProgressBar: {
+  progressBarContainer: {
+    marginTop: 8,
+  },
+  progressBar: {
     height: 10,
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
     borderRadius: 5,
     overflow: 'hidden',
   },
-  overallProgressFill: {
+  progressFill: {
     height: '100%',
     backgroundColor: colors.info,
     borderRadius: 5,
   },
-  overallProgressText: {
+  progressText: {
     fontSize: 13,
     color: colors.info,
     fontWeight: '600',
     marginTop: 6,
     textAlign: 'right',
-  },
-  stageCard: {
-    backgroundColor: colors.sectionTeal,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(20, 184, 166, 0.2)',
-  },
-  stageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  stageTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  stageBadge: {
-    backgroundColor: '#14B8A6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  stageBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  stageInfo: {
-    gap: 12,
-  },
-  stageRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  stageLabel: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  stageValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -313,23 +313,23 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     gap: 12,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   actionCardPurchase: {
     backgroundColor: colors.sectionOrange,
-    borderColor: 'rgba(245, 158, 11, 0.2)',
+    borderColor: 'rgba(245, 158, 11, 0.4)',
   },
   actionCardVesting: {
     backgroundColor: colors.sectionGreen,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
   },
   actionCardReferrals: {
     backgroundColor: colors.sectionPink,
-    borderColor: 'rgba(236, 72, 153, 0.2)',
+    borderColor: 'rgba(236, 72, 153, 0.4)',
   },
   actionCardKYC: {
     backgroundColor: colors.sectionTeal,
-    borderColor: 'rgba(20, 184, 166, 0.2)',
+    borderColor: 'rgba(20, 184, 166, 0.4)',
   },
   actionLabel: {
     fontSize: 14,
@@ -401,9 +401,6 @@ export default function HomeScreen() {
 
   const totalMXI = (vestingData?.totalMXI || 0) + (referralStats?.totalMXIEarned || 0);
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
-  const totalAvailableMXI = 25000000;
-  const totalSoldMXI = currentStage?.soldMXI || 0;
-  const overallProgress = (totalSoldMXI / totalAvailableMXI) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -418,10 +415,10 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Stronger Orange */}
+        {/* Countdown Timer - Attenuated Orange */}
         <View style={styles.countdownCard}>
           <LinearGradient
-            colors={['#FB923C', '#F97316']}
+            colors={['#D97706', '#EA580C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.countdownGradient}
@@ -473,9 +470,67 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Phase Counters - Two counters interconnected */}
+        {/* Vesting Display with Real-Time Updates */}
+        <View style={styles.vestingCard}>
+          <View style={styles.vestingHeader}>
+            <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
+            <View style={styles.vestingBadge}>
+              <Text style={styles.vestingBadgeText}>Live</Text>
+            </View>
+          </View>
+          
+          <View style={styles.vestingMetrics}>
+            {/* Real-time rewards display */}
+            <View style={styles.vestingRewardsContainer}>
+              <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
+              <Text style={styles.vestingRewardsAmount}>
+                {(vestingData?.currentRewards || 0).toFixed(6)} MXI
+              </Text>
+              <Text style={styles.vestingRewardsUpdate}>
+                ⚡ Updating every second
+              </Text>
+            </View>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Total Vesting MXI</Text>
+              <Text style={styles.metricValue}>{(vestingData?.totalMXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.metricRow}>
+              <Text style={styles.metricLabel}>Monthly Rate</Text>
+              <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
+            </View>
+
+            {/* Projections */}
+            <View style={styles.projectionsContainer}>
+              <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings</Text>
+              
+              <View style={styles.projectionRow}>
+                <Text style={styles.projectionLabel}>7 Days</Text>
+                <Text style={styles.projectionValue}>
+                  +{(vestingData?.projections?.days7 || 0).toFixed(4)} MXI
+                </Text>
+              </View>
+
+              <View style={styles.projectionRow}>
+                <Text style={styles.projectionLabel}>15 Days</Text>
+                <Text style={styles.projectionValue}>
+                  +{(vestingData?.projections?.days15 || 0).toFixed(4)} MXI
+                </Text>
+              </View>
+
+              <View style={styles.projectionRow}>
+                <Text style={styles.projectionLabel}>30 Days</Text>
+                <Text style={styles.projectionValue}>
+                  +{(vestingData?.projections?.days30 || 0).toFixed(4)} MXI
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Phase Counter - Single counter for current phase */}
         <View style={styles.phaseCountersContainer}>
-          {/* Current Phase Sales Status Counter */}
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
               <Text style={styles.salesStatusTitle}>📊 Current Phase Status</Text>
@@ -503,71 +558,23 @@ export default function HomeScreen() {
                 </View>
                 <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
               </View>
-            </View>
-          </View>
 
-          {/* Overall Pre-Sale Progress Counter */}
-          <View style={styles.overallProgressCard}>
-            <View style={styles.overallProgressHeader}>
-              <Text style={styles.overallProgressTitle}>🎯 Overall Pre-Sale Progress</Text>
-            </View>
-            
-            <View style={styles.overallProgressMetrics}>
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Total Available</Text>
-                <Text style={styles.metricValue}>{totalAvailableMXI.toLocaleString()} MXI</Text>
+                <Text style={styles.metricLabel}>Start Date</Text>
+                <Text style={styles.metricValue}>
+                  {currentStage ? new Date(currentStage.startDate).toLocaleDateString() : 'N/A'}
+                </Text>
               </View>
 
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Total Sold</Text>
-                <Text style={styles.metricValue}>{totalSoldMXI.toLocaleString()} MXI</Text>
-              </View>
-
-              <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Remaining</Text>
-                <Text style={styles.metricValue}>{(totalAvailableMXI - totalSoldMXI).toLocaleString()} MXI</Text>
-              </View>
-
-              <View style={styles.progressBarContainer}>
-                <View style={styles.overallProgressBar}>
-                  <View style={[styles.overallProgressFill, { width: `${overallProgress}%` }]} />
-                </View>
-                <Text style={styles.overallProgressText}>{overallProgress.toFixed(2)}% Complete</Text>
+                <Text style={styles.metricLabel}>End Date</Text>
+                <Text style={styles.metricValue}>
+                  {currentStage ? new Date(currentStage.endDate).toLocaleDateString() : 'N/A'}
+                </Text>
               </View>
             </View>
           </View>
         </View>
-
-        {/* Current Stage Info */}
-        {currentStage && (
-          <View style={styles.stageCard}>
-            <View style={styles.stageHeader}>
-              <Text style={styles.stageTitle}>⏱️ Current Pre-Sale Stage</Text>
-              <View style={styles.stageBadge}>
-                <Text style={styles.stageBadgeText}>Stage {currentStage.stage}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.stageInfo}>
-              <View style={styles.stageRow}>
-                <Text style={styles.stageLabel}>Start Date</Text>
-                <Text style={styles.stageValue}>
-                  {new Date(currentStage.startDate).toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={styles.stageRow}>
-                <Text style={styles.stageLabel}>End Date</Text>
-                <Text style={styles.stageValue}>
-                  {new Date(currentStage.endDate).toLocaleDateString()}
-                </Text>
-              </View>
-              <View style={styles.stageRow}>
-                <Text style={styles.stageLabel}>Duration</Text>
-                <Text style={styles.stageValue}>30 Days</Text>
-              </View>
-            </View>
-          </View>
-        )}
 
         {/* Action Cards */}
         <View style={styles.actionsGrid}>
