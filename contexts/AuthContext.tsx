@@ -14,6 +14,7 @@ interface AuthContextType {
   register: (userData: Partial<User>, password: string, referralCode?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
         
         // Check if admin
-        if (email === 'admin@mxi.com') {
+        if (email === 'admin@mxi.com' || email === 'inversionesingo@gmail.com') {
           setIsAdmin(true);
         }
         
@@ -128,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Invalid email or password. Please check your credentials and try again.');
         } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Please verify your email address before logging in. Check your inbox for the verification link.');
+          throw new Error('EMAIL_NOT_CONFIRMED');
         } else {
           throw new Error(error.message);
         }
@@ -274,6 +275,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resendVerificationEmail = async (email: string) => {
+    try {
+      console.log('Resending verification email to:', email);
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+        options: {
+          emailRedirectTo: 'https://natively.dev/email-confirmed'
+        }
+      });
+
+      if (error) {
+        console.error('Resend verification error:', error);
+        throw new Error(error.message);
+      }
+
+      Alert.alert(
+        'Verification Email Sent',
+        'Please check your email inbox (and spam folder) for the verification link.',
+        [{ text: 'OK' }]
+      );
+    } catch (error: any) {
+      console.error('Resend verification failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -283,7 +312,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login, 
       register, 
       logout, 
-      updateUser 
+      updateUser,
+      resendVerificationEmail
     }}>
       {children}
     </AuthContext.Provider>

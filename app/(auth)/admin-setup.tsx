@@ -54,6 +54,19 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 20,
   },
+  infoBox: {
+    backgroundColor: '#DBEAFE',
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  infoText: {
+    color: '#1E40AF',
+    fontSize: 14,
+    lineHeight: 20,
+  },
   form: {
     gap: 16,
   },
@@ -168,8 +181,8 @@ export default function AdminSetupScreen() {
         console.log('Admin profile created successfully');
 
         Alert.alert(
-          'Admin Created Successfully',
-          'The admin account has been created. Please check your email to verify the account, then you can log in.',
+          'Admin Account Created! ✅',
+          `The admin account has been created successfully.\n\n📧 IMPORTANT: You must verify your email before logging in!\n\n1. Check your email inbox (${email})\n2. Look for the verification email from Supabase\n3. Click the verification link in the email\n4. After verification, return here and log in\n\nNote: Check your spam folder if you don't see the email.`,
           [
             {
               text: 'Go to Login',
@@ -206,6 +219,12 @@ export default function AdminSetupScreen() {
         <View style={styles.warning}>
           <Text style={styles.warningText}>
             ⚠️ This screen is for initial setup only. After creating the admin account, this screen should be removed or protected.
+          </Text>
+        </View>
+
+        <View style={styles.infoBox}>
+          <Text style={styles.infoText}>
+            ℹ️ After creating the admin account, you MUST verify the email address before you can log in. Check your inbox for the verification email.
           </Text>
         </View>
 

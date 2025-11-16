@@ -67,6 +67,19 @@ const styles = StyleSheet.create({
   loginButtonText: {
     ...buttonStyles.primaryText,
   },
+  resendButton: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  resendButtonText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -92,13 +105,27 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textDecorationLine: 'underline',
   },
+  warningBox: {
+    backgroundColor: '#FEF3C7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  warningText: {
+    color: '#92400E',
+    fontSize: 14,
+    lineHeight: 20,
+  },
 });
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const [showResendButton, setShowResendButton] = useState(false);
+  const { login, resendVerificationEmail } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -108,12 +135,40 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+    setShowResendButton(false);
+    
     try {
       await login(email, password);
       // Navigation will be handled by auth state change
     } catch (error: any) {
       console.error('Login error:', error);
-      Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
+      
+      if (error.message === 'EMAIL_NOT_CONFIRMED') {
+        setShowResendButton(true);
+        Alert.alert(
+          'Email Not Verified',
+          'Your email address has not been verified yet. Please check your inbox for the verification email and click the link to verify your account.\n\nIf you didn\'t receive the email, you can request a new one using the button below.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await resendVerificationEmail(email);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to resend verification email');
     } finally {
       setLoading(false);
     }
@@ -135,6 +190,14 @@ export default function LoginScreen() {
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your MXI account</Text>
         </View>
+
+        {showResendButton && (
+          <View style={styles.warningBox}>
+            <Text style={styles.warningText}>
+              ⚠️ Your email is not verified. Please check your inbox or click the button below to resend the verification email.
+            </Text>
+          </View>
+        )}
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
@@ -169,12 +232,26 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
           >
-            {loading ? (
+            {loading && !showResendButton ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.loginButtonText}>Sign In</Text>
             )}
           </TouchableOpacity>
+
+          {showResendButton && (
+            <TouchableOpacity 
+              style={styles.resendButton} 
+              onPress={handleResendVerification}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.resendButtonText}>Resend Verification Email</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.footer}>
