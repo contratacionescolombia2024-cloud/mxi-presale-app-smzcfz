@@ -1,62 +1,72 @@
 
 import React from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { StyleProp, ViewStyle, View, Text, Platform } from "react-native";
+import { StyleProp, ViewStyle, View, Text } from "react-native";
 
-// Type for valid Material Icons - using only verified icons
+/**
+ * RADICAL ICON SOLUTION
+ * 
+ * This is a simplified, bulletproof icon system that GUARANTEES rendering.
+ * - Uses only verified Material Icons
+ * - Simple name mapping
+ * - Always renders something (never blank)
+ * - Clear error messages
+ */
+
+// Type for valid Material Icons
 type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
-// VERIFIED Material Icons - These are guaranteed to exist
-const VERIFIED_MATERIAL_ICONS: Record<string, MaterialIconName> = {
-  // Home & Navigation
+// CORE ICON MAP - Only icons we absolutely need and know exist
+const ICON_MAP: Record<string, MaterialIconName> = {
+  // Navigation
   'home': 'home',
   'menu': 'menu',
-  'arrow_forward': 'arrow_forward',
-  'arrow_back': 'arrow_back',
-  'chevron_right': 'chevron_right',
-  'chevron_left': 'chevron_left',
+  'arrow-back': 'arrow-back',
+  'arrow-forward': 'arrow-forward',
+  'chevron-left': 'chevron-left',
+  'chevron-right': 'chevron-right',
   
-  // Shopping & Purchase
-  'shopping_cart': 'shopping_cart',
-  'credit_card': 'credit_card',
+  // Shopping & Money
+  'shopping-cart': 'shopping-cart',
+  'credit-card': 'credit-card',
   'payment': 'payment',
-  'currency_bitcoin': 'currency_bitcoin',
+  'attach-money': 'attach-money',
   
   // Charts & Analytics
-  'trending_up': 'trending_up',
-  'bar_chart': 'bar_chart',
-  'show_chart': 'show_chart',
+  'trending-up': 'trending-up',
+  'bar-chart': 'bar-chart',
+  'show-chart': 'show-chart',
   'analytics': 'analytics',
   
-  // People & Social
+  // People
   'person': 'person',
   'people': 'people',
   'group': 'group',
   
   // Verification & Security
-  'verified_user': 'verified_user',
+  'verified-user': 'verified-user',
   'security': 'security',
   'verified': 'verified',
-  'check_circle': 'check_circle',
+  'check-circle': 'check-circle',
   'check': 'check',
   'lock': 'lock',
   'shield': 'shield',
   
-  // Documents & Files
+  // Documents
   'description': 'description',
-  'insert_drive_file': 'insert_drive_file',
-  'content_copy': 'content_copy',
+  'insert-drive-file': 'insert-drive-file',
+  'content-copy': 'content-copy',
   'folder': 'folder',
   
   // Communication
   'message': 'message',
   'email': 'email',
-  'mail_outline': 'mail_outline',
+  'mail-outline': 'mail-outline',
   'chat': 'chat',
   'phone': 'phone',
   
   // Actions
-  'add_circle': 'add_circle',
+  'add-circle': 'add-circle',
   'add': 'add',
   'delete': 'delete',
   'edit': 'edit',
@@ -71,16 +81,17 @@ const VERIFIED_MATERIAL_ICONS: Record<string, MaterialIconName> = {
   'warning': 'warning',
   'error': 'error',
   
-  // Calendar & Time
+  // Time
   'event': 'event',
   'schedule': 'schedule',
   'timer': 'timer',
+  'access-time': 'access-time',
   
   // Media
   'photo': 'photo',
-  'camera_alt': 'camera_alt',
+  'camera-alt': 'camera-alt',
   'videocam': 'videocam',
-  'play_arrow': 'play_arrow',
+  'play-arrow': 'play-arrow',
   'pause': 'pause',
   
   // Misc
@@ -94,64 +105,72 @@ const VERIFIED_MATERIAL_ICONS: Record<string, MaterialIconName> = {
 };
 
 /**
- * Resolves an icon name to a valid Material Icon
- * Uses only verified icons to prevent rendering issues
+ * Resolve icon name to a valid Material Icon
+ * This function ALWAYS returns a valid icon name
  */
-function resolveIconName(
-  androidIconName?: string | MaterialIconName
-): MaterialIconName {
-  // If no icon provided, use default
-  if (!androidIconName) {
-    console.log('[IconSymbol] No icon name provided, using default "help"');
+function resolveIcon(name?: string): MaterialIconName {
+  if (!name) {
+    console.warn('[IconSymbol] No icon name provided, using "help"');
     return 'help';
   }
 
-  // Convert to lowercase for case-insensitive matching
-  const iconKey = androidIconName.toLowerCase().trim();
+  // Normalize the name (lowercase, replace underscores with hyphens)
+  const normalized = name.toLowerCase().replace(/_/g, '-').trim();
   
-  // Check if it's in our verified list
-  if (iconKey in VERIFIED_MATERIAL_ICONS) {
-    const resolvedIcon = VERIFIED_MATERIAL_ICONS[iconKey];
-    console.log(`[IconSymbol] ✓ Resolved "${androidIconName}" -> "${resolvedIcon}"`);
-    return resolvedIcon;
+  // Check our map first
+  if (normalized in ICON_MAP) {
+    return ICON_MAP[normalized];
   }
 
-  // Check if it's already a valid Material Icon
-  if (androidIconName in MaterialIcons.glyphMap) {
-    console.log(`[IconSymbol] ✓ Direct match "${androidIconName}"`);
-    return androidIconName as MaterialIconName;
+  // Check if it's directly in Material Icons
+  if (name in MaterialIcons.glyphMap) {
+    return name as MaterialIconName;
+  }
+
+  // Try normalized version
+  if (normalized in MaterialIcons.glyphMap) {
+    return normalized as MaterialIconName;
   }
 
   // Fallback
-  console.warn(
-    `[IconSymbol] ✗ Icon not found: "${androidIconName}". Using "help" as fallback.`,
-    `\nAvailable icons: ${Object.keys(VERIFIED_MATERIAL_ICONS).join(', ')}`
-  );
+  console.warn(`[IconSymbol] Icon "${name}" not found. Using "help" as fallback.`);
   return 'help';
 }
 
 /**
- * IconSymbol component for Android/Web
- * Uses Material Icons with comprehensive error handling
+ * IconSymbol Component - Android/Web Version
+ * 
+ * Props:
+ * - name: Simple icon name (e.g., "home", "shopping-cart")
+ * - size: Icon size in pixels (default: 24)
+ * - color: Icon color (default: "#FFFFFF")
+ * - style: Additional styles
+ * 
+ * Legacy props (for backwards compatibility):
+ * - ios_icon_name: Ignored on Android
+ * - android_material_icon_name: Used as primary name
  */
 export function IconSymbol({
+  name,
   ios_icon_name,
   android_material_icon_name,
   size = 24,
   color = '#FFFFFF',
   style,
 }: {
+  name?: string;
   ios_icon_name?: string;
-  android_material_icon_name?: MaterialIconName | string;
+  android_material_icon_name?: string;
   size?: number;
   color?: string;
   style?: StyleProp<ViewStyle>;
+  // Ignore these props on Android
   weight?: any;
   type?: any;
   colors?: any;
 }) {
-  // Resolve the icon name
-  const iconName = resolveIconName(android_material_icon_name);
+  // Priority: name > android_material_icon_name > ios_icon_name
+  const iconName = resolveIcon(name || android_material_icon_name || ios_icon_name);
 
   try {
     return (
@@ -163,16 +182,9 @@ export function IconSymbol({
       />
     );
   } catch (error) {
-    console.error(
-      '[IconSymbol] Error rendering Material Icon:',
-      error,
-      '\nIcon:',
-      iconName,
-      '\nOriginal:',
-      android_material_icon_name
-    );
+    console.error('[IconSymbol] Render error:', error);
     
-    // Render a fallback
+    // Emergency fallback - render a visible placeholder
     return (
       <View
         style={[
@@ -181,13 +193,15 @@ export function IconSymbol({
             height: size,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            backgroundColor: 'rgba(255, 0, 0, 0.3)',
             borderRadius: size / 2,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 0, 0, 0.5)',
           },
           style,
         ]}
       >
-        <Text style={{ fontSize: size * 0.5, color, fontWeight: 'bold' }}>
+        <Text style={{ fontSize: size * 0.6, color, fontWeight: 'bold' }}>
           ?
         </Text>
       </View>

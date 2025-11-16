@@ -2,6 +2,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
+import { ICONS } from '@/constants/AppIcons';
 import { useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import {
@@ -583,11 +584,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/purchase')}
           >
             <IconSymbol 
-              ios_icon_name="cart.fill" 
-              android_material_icon_name="shopping_cart" 
+              name={ICONS.SHOPPING_CART}
               size={40} 
               color={colors.accent}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Purchase MXI</Text>
           </TouchableOpacity>
@@ -597,11 +596,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/vesting')}
           >
             <IconSymbol 
-              ios_icon_name="chart.line.uptrend.xyaxis" 
-              android_material_icon_name="trending_up" 
+              name={ICONS.TRENDING_UP}
               size={40} 
               color={colors.success}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Vesting</Text>
           </TouchableOpacity>
@@ -611,11 +608,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
-              ios_icon_name="person.2.fill" 
-              android_material_icon_name="people" 
+              name={ICONS.PEOPLE}
               size={40} 
               color={colors.highlight}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Referrals</Text>
           </TouchableOpacity>
@@ -625,11 +620,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/kyc')}
           >
             <IconSymbol 
-              ios_icon_name="checkmark.shield.fill" 
-              android_material_icon_name="verified_user" 
+              name={ICONS.VERIFIED_USER}
               size={40} 
               color="#14B8A6"
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>
           </TouchableOpacity>
