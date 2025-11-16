@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import React, { useEffect, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -40,19 +39,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   countdownCard: {
+    backgroundColor: colors.sectionOrangeStrong,
     marginBottom: 24,
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(217, 119, 6, 0.3)',
-  },
-  countdownGradient: {
     padding: 24,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(217, 119, 6, 0.4)',
   },
   countdownTitle: {
     fontSize: 20,
@@ -75,10 +68,12 @@ const styles = StyleSheet.create({
   },
   countdownItem: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
     borderRadius: 12,
     padding: 12,
     minWidth: 70,
+    borderWidth: 1,
+    borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   countdownNumber: {
     fontSize: 32,
@@ -412,38 +407,31 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Attenuated Orange */}
+        {/* Countdown Timer - Translucent Orange */}
         <View style={styles.countdownCard}>
-          <LinearGradient
-            colors={['#D97706', '#EA580C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.countdownGradient}
-          >
-            <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
-            <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
-            
-            <View style={styles.countdownContainer}>
-              <View style={styles.countdownItem}>
-                <Text style={styles.countdownNumber}>{countdown.days}</Text>
-                <Text style={styles.countdownLabel}>Days</Text>
-              </View>
-              <View style={styles.countdownItem}>
-                <Text style={styles.countdownNumber}>{countdown.hours}</Text>
-                <Text style={styles.countdownLabel}>Hours</Text>
-              </View>
-              <View style={styles.countdownItem}>
-                <Text style={styles.countdownNumber}>{countdown.minutes}</Text>
-                <Text style={styles.countdownLabel}>Min</Text>
-              </View>
-              <View style={styles.countdownItem}>
-                <Text style={styles.countdownNumber}>{countdown.seconds}</Text>
-                <Text style={styles.countdownLabel}>Sec</Text>
-              </View>
+          <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
+          <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
+          
+          <View style={styles.countdownContainer}>
+            <View style={styles.countdownItem}>
+              <Text style={styles.countdownNumber}>{countdown.days}</Text>
+              <Text style={styles.countdownLabel}>Days</Text>
             </View>
+            <View style={styles.countdownItem}>
+              <Text style={styles.countdownNumber}>{countdown.hours}</Text>
+              <Text style={styles.countdownLabel}>Hours</Text>
+            </View>
+            <View style={styles.countdownItem}>
+              <Text style={styles.countdownNumber}>{countdown.minutes}</Text>
+              <Text style={styles.countdownLabel}>Min</Text>
+            </View>
+            <View style={styles.countdownItem}>
+              <Text style={styles.countdownNumber}>{countdown.seconds}</Text>
+              <Text style={styles.countdownLabel}>Sec</Text>
+            </View>
+          </View>
 
-            <Text style={styles.launchDate}>February 20, 2026</Text>
-          </LinearGradient>
+          <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
         {/* Balance Card - Moved directly below countdown */}
@@ -580,11 +568,10 @@ export default function HomeScreen() {
             onPress={() => router.push('/purchase')}
           >
             <IconSymbol 
-              ios_icon_name="cart.fill" 
-              android_material_icon_name="shopping_cart" 
+              ios_icon_name="cart.fill"
+              android_material_icon_name="shopping_cart"
               size={40} 
               color={colors.accent}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Purchase MXI</Text>
           </TouchableOpacity>
@@ -594,11 +581,10 @@ export default function HomeScreen() {
             onPress={() => router.push('/vesting')}
           >
             <IconSymbol 
-              ios_icon_name="chart.line.uptrend.xyaxis" 
-              android_material_icon_name="trending_up" 
+              ios_icon_name="chart.line.uptrend.xyaxis"
+              android_material_icon_name="trending_up"
               size={40} 
               color={colors.success}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Vesting</Text>
           </TouchableOpacity>
@@ -608,11 +594,10 @@ export default function HomeScreen() {
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
-              ios_icon_name="person.2.fill" 
-              android_material_icon_name="people" 
+              ios_icon_name="person.3.fill"
+              android_material_icon_name="people"
               size={40} 
               color={colors.highlight}
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Referrals</Text>
           </TouchableOpacity>
@@ -622,11 +607,10 @@ export default function HomeScreen() {
             onPress={() => router.push('/kyc')}
           >
             <IconSymbol 
-              ios_icon_name="checkmark.shield.fill" 
-              android_material_icon_name="verified_user" 
+              ios_icon_name="checkmark.shield.fill"
+              android_material_icon_name="verified_user"
               size={40} 
               color="#14B8A6"
-              type="hierarchical"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>
           </TouchableOpacity>

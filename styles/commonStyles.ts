@@ -26,7 +26,7 @@ export const colors = {
   sectionGreen: 'rgba(16, 185, 129, 0.08)',
   sectionBlue: 'rgba(59, 130, 246, 0.08)',
   sectionOrange: 'rgba(245, 158, 11, 0.08)',
-  sectionOrangeStrong: 'rgba(251, 146, 60, 0.12)',
+  sectionOrangeStrong: 'rgba(217, 119, 6, 0.08)',
   sectionPink: 'rgba(236, 72, 153, 0.08)',
   sectionTeal: 'rgba(20, 184, 166, 0.08)',
   
