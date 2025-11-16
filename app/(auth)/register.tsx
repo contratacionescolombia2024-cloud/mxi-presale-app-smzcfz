@@ -242,7 +242,7 @@ export default function RegisterScreen() {
             <View style={styles.inputWrapper}>
               <IconSymbol
                 ios_icon_name="creditcard.fill"
-                android_material_icon_name="badge"
+                android_material_icon_name="credit_card"
                 size={20}
                 color={colors.textSecondary}
                 style={styles.inputIcon}

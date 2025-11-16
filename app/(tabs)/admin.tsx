@@ -41,7 +41,7 @@ export default function AdminScreen() {
 
   const tabs = [
     { id: 'metrics', label: 'Metrics', iosIcon: 'chart.bar.fill', androidIcon: 'bar_chart' },
-    { id: 'users', label: 'Users', iosIcon: 'person.3.fill', androidIcon: 'people' },
+    { id: 'users', label: 'Users', iosIcon: 'person.3.fill', androidIcon: 'group' },
     { id: 'kyc', label: 'KYC', iosIcon: 'checkmark.shield.fill', androidIcon: 'verified_user' },
     { id: 'messages', label: 'Messages', iosIcon: 'message.fill', androidIcon: 'message' },
     { id: 'settings', label: 'Settings', iosIcon: 'gearshape.fill', androidIcon: 'settings' },
@@ -51,7 +51,7 @@ export default function AdminScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <IconSymbol 
-          ios_icon_name="shield.lefthalf.filled" 
+          ios_icon_name="shield.fill" 
           android_material_icon_name="security" 
           size={40} 
           color={colors.error} 
@@ -86,7 +86,7 @@ export default function AdminScreen() {
               <View style={[commonStyles.card, styles.metricCard]}>
                 <IconSymbol 
                   ios_icon_name="person.3.fill" 
-                  android_material_icon_name="people" 
+                  android_material_icon_name="group" 
                   size={32} 
                   color={colors.primary} 
                 />
@@ -118,7 +118,7 @@ export default function AdminScreen() {
 
               <View style={[commonStyles.card, styles.metricCard]}>
                 <IconSymbol 
-                  ios_icon_name="clock.badge.checkmark.fill" 
+                  ios_icon_name="clock.fill" 
                   android_material_icon_name="schedule" 
                   size={32} 
                   color={colors.warning} 
@@ -204,7 +204,7 @@ export default function AdminScreen() {
             </View>
             <TouchableOpacity style={styles.actionButton}>
               <IconSymbol 
-                ios_icon_name="doc.text.magnifyingglass" 
+                ios_icon_name="magnifyingglass" 
                 android_material_icon_name="search" 
                 size={20} 
                 color={colors.primary} 
@@ -220,7 +220,7 @@ export default function AdminScreen() {
             <View style={styles.messageStats}>
               <View style={styles.messageStat}>
                 <IconSymbol 
-                  ios_icon_name="envelope.badge.fill" 
+                  ios_icon_name="envelope.fill" 
                   android_material_icon_name="email" 
                   size={32} 
                   color={colors.warning} 
