@@ -1,91 +1,271 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/IconSymbol";
-import { GlassView } from "expo-glass-effect";
-import { useTheme } from "@react-navigation/native";
+
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
 
 export default function ProfileScreen() {
-  const theme = useTheme();
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive',
+          onPress: () => {
+            logout();
+            router.replace('/(auth)/login');
+          }
+        },
+      ]
+    );
+  };
+
+  const getKYCStatusColor = () => {
+    switch (user?.kycStatus) {
+      case 'approved': return colors.success;
+      case 'rejected': return colors.error;
+      default: return colors.warning;
+    }
+  };
+
+  const getKYCStatusText = () => {
+    switch (user?.kycStatus) {
+      case 'approved': return 'Verified';
+      case 'rejected': return 'Rejected';
+      default: return 'Pending';
+    }
+  };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.contentContainer,
-          Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-        ]}
-      >
-        <GlassView style={[
-          styles.profileHeader,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <IconSymbol ios_icon_name="person.circle.fill" android_material_icon_name="person" size={80} color={theme.colors.primary} />
-          <Text style={[styles.name, { color: theme.colors.text }]}>John Doe</Text>
-          <Text style={[styles.email, { color: theme.dark ? '#98989D' : '#666' }]}>john.doe@example.com</Text>
-        </GlassView>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <IconSymbol 
+              ios_icon_name="person.fill" 
+              android_material_icon_name="person" 
+              size={50} 
+              color={colors.card} 
+            />
+          </View>
+          <Text style={styles.name}>{user?.name}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
+          
+          <View style={[styles.kycBadge, { backgroundColor: getKYCStatusColor() }]}>
+            <IconSymbol 
+              ios_icon_name={user?.kycStatus === 'approved' ? 'checkmark.shield.fill' : 'shield.fill'} 
+              android_material_icon_name={user?.kycStatus === 'approved' ? 'verified_user' : 'shield'} 
+              size={16} 
+              color={colors.card} 
+            />
+            <Text style={styles.kycBadgeText}>KYC: {getKYCStatusText()}</Text>
+          </View>
+        </View>
 
-        <GlassView style={[
-          styles.section,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
+        <View style={commonStyles.card}>
+          <Text style={styles.cardTitle}>Account Information</Text>
+          
           <View style={styles.infoRow}>
-            <IconSymbol ios_icon_name="phone.fill" android_material_icon_name="phone" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>+1 (555) 123-4567</Text>
+            <Text style={styles.infoLabel}>Referral Code</Text>
+            <Text style={styles.infoValue}>{user?.referralCode}</Text>
           </View>
+          
           <View style={styles.infoRow}>
-            <IconSymbol ios_icon_name="location.fill" android_material_icon_name="location-on" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>San Francisco, CA</Text>
+            <Text style={styles.infoLabel}>Identification</Text>
+            <Text style={styles.infoValue}>{user?.identification}</Text>
           </View>
-        </GlassView>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Address</Text>
+            <Text style={styles.infoValue}>{user?.address}</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Member Since</Text>
+            <Text style={styles.infoValue}>
+              {new Date(user?.createdAt || '').toLocaleDateString()}
+            </Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Email Verified</Text>
+            <View style={styles.verifiedBadge}>
+              <IconSymbol 
+                ios_icon_name={user?.emailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'} 
+                android_material_icon_name={user?.emailVerified ? 'check_circle' : 'cancel'} 
+                size={16} 
+                color={user?.emailVerified ? colors.success : colors.error} 
+              />
+              <Text style={[styles.verifiedText, { color: user?.emailVerified ? colors.success : colors.error }]}>
+                {user?.emailVerified ? 'Verified' : 'Not Verified'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/kyc')}
+        >
+          <IconSymbol 
+            ios_icon_name="checkmark.shield.fill" 
+            android_material_icon_name="verified_user" 
+            size={24} 
+            color={colors.primary} 
+          />
+          <Text style={styles.menuItemText}>KYC Verification</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.textSecondary} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/messages')}
+        >
+          <IconSymbol 
+            ios_icon_name="message.fill" 
+            android_material_icon_name="message" 
+            size={24} 
+            color={colors.secondary} 
+          />
+          <Text style={styles.menuItemText}>Messages</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.textSecondary} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[buttonStyles.outline, styles.logoutButton]}
+          onPress={handleLogout}
+        >
+          <Text style={buttonStyles.textOutline}>Logout</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    // backgroundColor handled dynamically
-  },
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
-  contentContainer: {
+  scrollContent: {
     padding: 20,
+    paddingBottom: 100,
   },
-  contentContainerWithTabBar: {
-    paddingBottom: 100, // Extra padding for floating tab bar
-  },
-  profileHeader: {
+  header: {
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 32,
+    marginBottom: 24,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
-    gap: 12,
   },
   name: {
     fontSize: 24,
-    fontWeight: 'bold',
-    // color handled dynamically
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
   },
   email: {
-    fontSize: 16,
-    // color handled dynamically
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
   },
-  section: {
+  kycBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
-    padding: 20,
-    gap: 12,
+  },
+  kycBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.card,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  infoText: {
+  infoLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    maxWidth: '60%',
+    textAlign: 'right',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    gap: 12,
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
+    elevation: 2,
+  },
+  menuItemText: {
+    flex: 1,
     fontSize: 16,
-    // color handled dynamically
+    fontWeight: '600',
+    color: colors.text,
+  },
+  logoutButton: {
+    marginTop: 20,
   },
 });

@@ -1,15 +1,40 @@
+
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
 
 export default function TabLayout() {
-  // Define the tabs configuration
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   const tabs: TabBarItem[] = [
     {
       name: '(home)',
       route: '/(tabs)/(home)/',
       icon: 'home',
       label: 'Home',
+    },
+    {
+      name: 'purchase',
+      route: '/(tabs)/purchase',
+      icon: 'shopping_cart',
+      label: 'Buy MXI',
+    },
+    {
+      name: 'vesting',
+      route: '/(tabs)/vesting',
+      icon: 'trending_up',
+      label: 'Vesting',
+    },
+    {
+      name: 'referrals',
+      route: '/(tabs)/referrals',
+      icon: 'people',
+      label: 'Referrals',
     },
     {
       name: 'profile',
@@ -19,17 +44,22 @@ export default function TabLayout() {
     },
   ];
 
-  // For Android and Web, use Stack navigation with custom floating tab bar
   return (
     <>
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: 'none', // Remove fade animation to prevent black screen flash
+          animation: 'none',
         }}
       >
-        <Stack.Screen key="home" name="(home)" />
-        <Stack.Screen key="profile" name="profile" />
+        <Stack.Screen name="(home)" />
+        <Stack.Screen name="purchase" />
+        <Stack.Screen name="vesting" />
+        <Stack.Screen name="referrals" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="kyc" />
+        <Stack.Screen name="messages" />
+        <Stack.Screen name="admin" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>
