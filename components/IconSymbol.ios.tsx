@@ -1,5 +1,7 @@
+
 import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
-import { StyleProp, ViewStyle } from "react-native";
+import { StyleProp, ViewStyle, Text } from "react-native";
+import React from "react";
 
 export function IconSymbol({
   ios_icon_name,
@@ -16,6 +18,15 @@ export function IconSymbol({
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
 }) {
+  // Fallback if icon name is invalid
+  if (!ios_icon_name) {
+    return (
+      <Text style={[{ fontSize: size, color }, style]}>
+        ?
+      </Text>
+    );
+  }
+
   return (
     <SymbolView
       weight={weight}

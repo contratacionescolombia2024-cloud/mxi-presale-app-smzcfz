@@ -60,7 +60,7 @@ export default function TabLayout() {
       route: '/(tabs)/purchase',
       iosIcon: 'cart.fill',
       androidIcon: 'shopping_cart',
-      label: 'Buy MXI',
+      label: 'Buy',
     },
     {
       name: 'vesting',

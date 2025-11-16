@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,7 +52,7 @@ export default function AdminScreen() {
       <View style={styles.header}>
         <IconSymbol 
           ios_icon_name="shield.lefthalf.filled" 
-          android_material_icon_name="admin_panel_settings" 
+          android_material_icon_name="security" 
           size={40} 
           color={colors.error} 
         />
@@ -67,7 +68,7 @@ export default function AdminScreen() {
           >
             <IconSymbol 
               ios_icon_name={tab.iosIcon as any} 
-              android_material_icon_name={tab.androidIcon} 
+              android_material_icon_name={tab.androidIcon as any} 
               size={20} 
               color={activeTab === tab.id ? colors.card : colors.text} 
             />
@@ -118,7 +119,7 @@ export default function AdminScreen() {
               <View style={[commonStyles.card, styles.metricCard]}>
                 <IconSymbol 
                   ios_icon_name="clock.badge.checkmark.fill" 
-                  android_material_icon_name="pending_actions" 
+                  android_material_icon_name="schedule" 
                   size={32} 
                   color={colors.warning} 
                 />
@@ -204,7 +205,7 @@ export default function AdminScreen() {
             <TouchableOpacity style={styles.actionButton}>
               <IconSymbol 
                 ios_icon_name="doc.text.magnifyingglass" 
-                android_material_icon_name="find_in_page" 
+                android_material_icon_name="search" 
                 size={20} 
                 color={colors.primary} 
               />
@@ -220,7 +221,7 @@ export default function AdminScreen() {
               <View style={styles.messageStat}>
                 <IconSymbol 
                   ios_icon_name="envelope.badge.fill" 
-                  android_material_icon_name="mark_email_unread" 
+                  android_material_icon_name="email" 
                   size={32} 
                   color={colors.warning} 
                 />
@@ -313,6 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 12,
   },
   title: {

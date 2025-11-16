@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Share,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,22 +49,22 @@ export default function ReferralsScreen() {
     { 
       level: 1, 
       commission: '5%', 
-      count: referralStats.level1Count, 
-      earned: referralStats.level1MXI,
+      count: referralStats?.level1Count || 0, 
+      earned: referralStats?.level1MXI || 0,
       color: colors.primary,
     },
     { 
       level: 2, 
       commission: '2%', 
-      count: referralStats.level2Count, 
-      earned: referralStats.level2MXI,
+      count: referralStats?.level2Count || 0, 
+      earned: referralStats?.level2MXI || 0,
       color: colors.secondary,
     },
     { 
       level: 3, 
       commission: '1%', 
-      count: referralStats.level3Count, 
-      earned: referralStats.level3MXI,
+      count: referralStats?.level3Count || 0, 
+      earned: referralStats?.level3MXI || 0,
       color: colors.accent,
     },
   ];
@@ -84,9 +85,9 @@ export default function ReferralsScreen() {
 
         <View style={[commonStyles.card, styles.totalCard]}>
           <Text style={styles.totalLabel}>Total Referral Earnings</Text>
-          <Text style={styles.totalAmount}>{referralStats.totalMXIEarned.toFixed(2)} MXI</Text>
+          <Text style={styles.totalAmount}>{(referralStats?.totalMXIEarned || 0).toFixed(2)} MXI</Text>
           <Text style={styles.totalSubtext}>
-            From {referralStats.level1Count + referralStats.level2Count + referralStats.level3Count} referrals
+            From {(referralStats?.level1Count || 0) + (referralStats?.level2Count || 0) + (referralStats?.level3Count || 0)} referrals
           </Text>
         </View>
 
@@ -164,11 +165,11 @@ export default function ReferralsScreen() {
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How It Works</Text>
             <Text style={styles.infoText}>
-              - Level 1: 5% commission on direct referrals{'\n'}
-              - Level 2: 2% commission on their referrals{'\n'}
-              - Level 3: 1% commission on third level{'\n'}
-              - Commissions paid in MXI instantly{'\n'}
-              - No limit on referrals
+              {'\u2022'} Level 1: 5% commission on direct referrals{'\n'}
+              {'\u2022'} Level 2: 2% commission on their referrals{'\n'}
+              {'\u2022'} Level 3: 1% commission on third level{'\n'}
+              {'\u2022'} Commissions paid in MXI instantly{'\n'}
+              {'\u2022'} No limit on referrals
             </Text>
           </View>
         </View>
@@ -184,6 +185,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 100,
   },
   header: {

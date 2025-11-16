@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import React, { useEffect, useState } from 'react';
@@ -23,6 +24,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 100,
   },
   header: {
