@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { PreSaleStage, Purchase, VestingData, ReferralStats } from '@/types';
 import { supabase } from '@/app/integrations/supabase/client';
-import { useAuth } from './AuthContext';
 
 interface PreSaleContextType {
   currentStage: PreSaleStage | null;
@@ -16,6 +16,14 @@ interface PreSaleContextType {
 
 const PreSaleContext = createContext<PreSaleContextType | undefined>(undefined);
 
+export function usePreSale() {
+  const context = useContext(PreSaleContext);
+  if (!context) {
+    throw new Error('usePreSale must be used within a PreSaleProvider');
+  }
+  return context;
+}
+
 export function PreSaleProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [currentStage, setCurrentStage] = useState<PreSaleStage | null>(null);
@@ -24,76 +32,102 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load current presale stage (public data, no auth required)
+  useEffect(() => {
+    console.log('🔄 PreSaleContext - Loading data, auth state:', { isAuthenticated, userId: user?.id });
+    loadCurrentStage();
+    if (isAuthenticated && user) {
+      loadUserPurchases();
+      loadVestingData();
+      loadReferralStats();
+    } else {
+      setUserPurchases([]);
+      setVestingData(null);
+      setReferralStats(null);
+      setIsLoading(false);
+    }
+  }, [user, isAuthenticated]);
+
+  // Real-time vesting updates
+  useEffect(() => {
+    if (!isAuthenticated || !user || !vestingData?.totalMXI) {
+      return;
+    }
+
+    console.log('⏱️ Starting real-time vesting updates for user:', user.id);
+
+    const interval = setInterval(() => {
+      setVestingData((prev) => {
+        if (!prev) return null;
+
+        const monthlyRate = prev.monthlyRate || 0.03;
+        const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
+        const increment = prev.totalMXI * secondlyRate;
+
+        const newRewards = (prev.currentRewards || 0) + increment;
+
+        return {
+          ...prev,
+          currentRewards: newRewards,
+          lastUpdate: new Date().toISOString(),
+          projections: {
+            days7: prev.totalMXI * monthlyRate * (7 / 30),
+            days15: prev.totalMXI * monthlyRate * (15 / 30),
+            days30: prev.totalMXI * monthlyRate,
+          },
+        };
+      });
+    }, 1000);
+
+    return () => {
+      console.log('🛑 Stopping real-time vesting updates');
+      clearInterval(interval);
+    };
+  }, [user, isAuthenticated, vestingData?.totalMXI]);
+
   const loadCurrentStage = async () => {
     try {
       console.log('📊 Loading current presale stage...');
-      const now = new Date().toISOString();
-      
       const { data, error } = await supabase
         .from('presale_stages')
         .select('*')
-        .lte('start_date', now)
-        .gte('end_date', now)
+        .eq('is_active', true)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error loading active stage:', error);
+      if (error) {
+        console.error('❌ Error loading current stage:', error);
+        throw error;
       }
 
       if (data) {
-        console.log('✅ Loaded active stage:', data.stage);
+        console.log('✅ Current stage loaded:', data);
         setCurrentStage({
+          id: data.id,
           stage: data.stage,
-          price: Number(data.price),
+          price: data.price,
+          totalMXI: data.total_mxi,
+          soldMXI: data.sold_mxi,
           startDate: data.start_date,
           endDate: data.end_date,
-          totalMXI: Number(data.total_mxi),
-          soldMXI: Number(data.sold_mxi || 0),
+          isActive: data.is_active,
         });
-        return;
-      }
-
-      // If no active stage, get the first stage
-      console.log('⚠️ No active stage found, loading first stage...');
-      const { data: firstStage, error: firstStageError } = await supabase
-        .from('presale_stages')
-        .select('*')
-        .order('stage', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      
-      if (firstStageError && firstStageError.code !== 'PGRST116') {
-        console.error('❌ Error loading first stage:', firstStageError);
-        return;
-      }
-
-      if (firstStage) {
-        console.log('✅ Loaded first stage:', firstStage.stage);
-        setCurrentStage({
-          stage: firstStage.stage,
-          price: Number(firstStage.price),
-          startDate: firstStage.start_date,
-          endDate: firstStage.end_date,
-          totalMXI: Number(firstStage.total_mxi),
-          soldMXI: Number(firstStage.sold_mxi || 0),
-        });
+      } else {
+        console.log('⚠️ No active presale stage found');
+        setCurrentStage(null);
       }
     } catch (error) {
-      console.error('❌ Error in loadCurrentStage:', error);
+      console.error('❌ Failed to load current stage:', error);
+      setCurrentStage(null);
     }
   };
 
-  // Load user purchases (requires authentication)
   const loadUserPurchases = async () => {
-    if (!user || !isAuthenticated) {
-      console.log('ℹ️ Skipping purchases load - user not authenticated');
-      setUserPurchases([]);
+    if (!user?.id) {
+      console.log('⚠️ No user ID, skipping purchases load');
       return;
     }
 
     try {
-      console.log('📦 Loading user purchases...');
+      console.log('💰 Loading user purchases for:', user.id);
       const { data, error } = await supabase
         .from('purchases')
         .select('*')
@@ -102,102 +136,56 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('❌ Error loading purchases:', error);
-        setUserPurchases([]);
-        return;
+        throw error;
       }
 
-      if (data) {
-        console.log('✅ Loaded', data.length, 'purchases');
-        setUserPurchases(data.map(p => ({
-          id: p.id,
-          userId: p.user_id,
-          amount: Number(p.amount),
-          mxiAmount: Number(p.mxi_amount),
-          paymentMethod: p.payment_method as 'paypal' | 'binance',
-          status: p.status as 'pending' | 'completed' | 'failed',
-          createdAt: p.created_at || '',
-          stage: p.stage,
-        })));
-      }
+      console.log('✅ Purchases loaded:', data?.length || 0);
+      setUserPurchases(data || []);
     } catch (error) {
-      console.error('❌ Error in loadUserPurchases:', error);
+      console.error('❌ Failed to load purchases:', error);
       setUserPurchases([]);
     }
   };
 
-  // Load vesting data (requires authentication)
   const loadVestingData = async () => {
-    if (!user || !isAuthenticated) {
-      console.log('ℹ️ Skipping vesting load - user not authenticated');
-      setVestingData(null);
+    if (!user?.id) {
+      console.log('⚠️ No user ID, skipping vesting data load');
       return;
     }
 
     try {
-      console.log('💰 Loading vesting data...');
-      
-      // Get current vesting data - use single() with error handling
+      console.log('📈 Loading vesting data for:', user.id);
       const { data, error } = await supabase
         .from('vesting')
         .select('*')
         .eq('user_id', user.id)
-        .limit(1);
+        .maybeSingle();
 
-      // Handle errors gracefully
       if (error) {
-        console.log('⚠️ Vesting query error (this is OK if user has no vesting yet):', error.message);
-        // Set default vesting data
-        setVestingData({
-          userId: user.id,
-          totalMXI: 0,
-          currentRewards: 0,
-          monthlyRate: 0.03,
-          lastUpdate: new Date().toISOString(),
-          projections: {
-            days7: 0,
-            days15: 0,
-            days30: 0,
-          },
-        });
-        return;
+        console.error('❌ Error loading vesting data:', error);
+        throw error;
       }
 
-      // Check if we got data
-      if (data && data.length > 0) {
-        const vestingRecord = data[0];
-        console.log('✅ Loaded vesting data');
-        const totalMXI = Number(vestingRecord.total_mxi || 0);
-        const monthlyRate = Number(vestingRecord.monthly_rate || 0.03);
-        
-        // Calculate current rewards using the database function
-        let rewards = Number(vestingRecord.current_rewards || 0);
-        try {
-          const { data: currentRewards, error: rewardsError } = await supabase
-            .rpc('calculate_vesting_rewards', { p_user_id: user.id });
-
-          if (!rewardsError && currentRewards !== null) {
-            rewards = Number(currentRewards);
-          }
-        } catch (rewardsError) {
-          console.log('⚠️ Could not calculate rewards, using stored value');
-        }
-
+      if (data) {
+        console.log('✅ Vesting data loaded:', data);
+        const monthlyRate = data.monthly_rate || 0.03;
         setVestingData({
-          userId: user.id,
-          totalMXI,
-          currentRewards: rewards,
-          monthlyRate,
-          lastUpdate: vestingRecord.last_update || new Date().toISOString(),
+          id: data.id,
+          userId: data.user_id,
+          totalMXI: data.total_mxi || 0,
+          currentRewards: data.current_rewards || 0,
+          monthlyRate: monthlyRate,
+          lastUpdate: data.last_update || new Date().toISOString(),
           projections: {
-            days7: (totalMXI * monthlyRate * 7) / 30,
-            days15: (totalMXI * monthlyRate * 15) / 30,
-            days30: totalMXI * monthlyRate,
+            days7: (data.total_mxi || 0) * monthlyRate * (7 / 30),
+            days15: (data.total_mxi || 0) * monthlyRate * (15 / 30),
+            days30: (data.total_mxi || 0) * monthlyRate,
           },
         });
       } else {
-        console.log('ℹ️ No vesting data yet, creating default');
-        // No vesting data yet
+        console.log('⚠️ No vesting data found, initializing with zeros');
         setVestingData({
+          id: '',
           userId: user.id,
           totalMXI: 0,
           currentRewards: 0,
@@ -211,245 +199,186 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (error) {
-      console.error('❌ Error in loadVestingData:', error);
-      // Set default vesting data on error
-      setVestingData({
-        userId: user.id,
-        totalMXI: 0,
-        currentRewards: 0,
-        monthlyRate: 0.03,
-        lastUpdate: new Date().toISOString(),
-        projections: {
-          days7: 0,
-          days15: 0,
-          days30: 0,
-        },
-      });
+      console.error('❌ Failed to load vesting data:', error);
+      setVestingData(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Load referral stats (requires authentication)
   const loadReferralStats = async () => {
-    if (!user || !isAuthenticated) {
-      console.log('ℹ️ Skipping referrals load - user not authenticated');
-      setReferralStats(null);
+    if (!user?.id) {
+      console.log('⚠️ No user ID, skipping referral stats load');
       return;
     }
 
     try {
-      console.log('👥 Loading referral stats...');
+      console.log('👥 Loading referral stats for:', user.id);
       const { data, error } = await supabase
         .from('referrals')
         .select('*')
         .eq('referrer_id', user.id);
 
       if (error) {
-        console.error('❌ Error loading referrals:', error);
-        setReferralStats({
-          level1Count: 0,
-          level2Count: 0,
-          level3Count: 0,
-          totalMXIEarned: 0,
-          level1MXI: 0,
-          level2MXI: 0,
-          level3MXI: 0,
-        });
-        return;
+        console.error('❌ Error loading referral stats:', error);
+        throw error;
       }
 
-      if (data) {
-        console.log('✅ Loaded', data.length, 'referrals');
-        const level1 = data.filter(r => r.level === 1);
-        const level2 = data.filter(r => r.level === 2);
-        const level3 = data.filter(r => r.level === 3);
+      console.log('✅ Referral stats loaded:', data?.length || 0, 'referrals');
 
-        const level1MXI = level1.reduce((sum, r) => sum + Number(r.mxi_earned || 0), 0);
-        const level2MXI = level2.reduce((sum, r) => sum + Number(r.mxi_earned || 0), 0);
-        const level3MXI = level3.reduce((sum, r) => sum + Number(r.mxi_earned || 0), 0);
+      const level1 = data?.filter((r) => r.level === 1) || [];
+      const level2 = data?.filter((r) => r.level === 2) || [];
+      const level3 = data?.filter((r) => r.level === 3) || [];
 
-        setReferralStats({
-          level1Count: level1.length,
-          level2Count: level2.length,
-          level3Count: level3.length,
-          totalMXIEarned: level1MXI + level2MXI + level3MXI,
-          level1MXI,
-          level2MXI,
-          level3MXI,
-        });
-      } else {
-        console.log('ℹ️ No referrals yet, creating default');
-        setReferralStats({
-          level1Count: 0,
-          level2Count: 0,
-          level3Count: 0,
-          totalMXIEarned: 0,
-          level1MXI: 0,
-          level2MXI: 0,
-          level3MXI: 0,
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error in loadReferralStats:', error);
+      const totalEarned = data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+
       setReferralStats({
+        totalReferrals: data?.length || 0,
+        level1Count: level1.length,
+        level2Count: level2.length,
+        level3Count: level3.length,
+        totalMXIEarned: totalEarned,
+        referrals: data || [],
+      });
+    } catch (error) {
+      console.error('❌ Failed to load referral stats:', error);
+      setReferralStats({
+        totalReferrals: 0,
         level1Count: 0,
         level2Count: 0,
         level3Count: 0,
         totalMXIEarned: 0,
-        level1MXI: 0,
-        level2MXI: 0,
-        level3MXI: 0,
+        referrals: [],
       });
     }
   };
 
-  // Refresh all data
   const refreshData = async () => {
-    console.log('🔄 Refreshing all data...');
+    console.log('🔄 Refreshing all presale data...');
     setIsLoading(true);
-    
-    // Always load current stage (public data)
-    await loadCurrentStage();
-    
-    // Only load user-specific data if authenticated
-    if (isAuthenticated && user) {
-      await Promise.all([
-        loadUserPurchases(),
-        loadVestingData(),
-        loadReferralStats(),
-      ]);
-    } else {
-      console.log('ℹ️ User not authenticated, skipping user-specific data');
-      setUserPurchases([]);
-      setVestingData(null);
-      setReferralStats(null);
+    try {
+      await loadCurrentStage();
+      if (isAuthenticated && user) {
+        await Promise.all([
+          loadUserPurchases(),
+          loadVestingData(),
+          loadReferralStats(),
+        ]);
+      }
+      console.log('✅ Data refresh complete');
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    console.log('✅ Data refresh complete');
   };
 
-  // Initial load - always load stage, conditionally load user data
-  useEffect(() => {
-    console.log('🚀 PreSaleContext: Initial load, isAuthenticated:', isAuthenticated, 'user:', user?.id);
-    refreshData();
-  }, [user, isAuthenticated]);
-
-  // Real-time vesting updates (only when authenticated)
-  useEffect(() => {
-    if (!user || !isAuthenticated || !vestingData || vestingData.totalMXI === 0) {
-      console.log('ℹ️ Skipping vesting updates - not ready or no MXI');
-      return;
+  const purchaseMXI = async (amount: number, paymentMethod: 'paypal' | 'binance') => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
     }
 
-    console.log('⏱️ Starting real-time vesting updates');
-    const interval = setInterval(async () => {
-      // Update vesting rewards in real-time
-      try {
-        const { data: currentRewards, error } = await supabase
-          .rpc('calculate_vesting_rewards', { p_user_id: user.id });
-
-        if (error) {
-          console.error('❌ Error updating vesting rewards:', error);
-          return;
-        }
-
-        if (currentRewards !== null) {
-          setVestingData(prev => prev ? {
-            ...prev,
-            currentRewards: Number(currentRewards),
-            lastUpdate: new Date().toISOString(),
-          } : null);
-        }
-      } catch (error) {
-        console.error('❌ Error in vesting update interval:', error);
-      }
-    }, 1000); // Update every second
-
-    return () => {
-      console.log('🛑 Stopping real-time vesting updates');
-      clearInterval(interval);
-    };
-  }, [user, isAuthenticated, vestingData?.totalMXI]);
-
-  const purchaseMXI = async (amount: number, paymentMethod: 'paypal' | 'binance') => {
-    if (!user || !currentStage) {
-      throw new Error('User not authenticated or no active stage');
+    if (!currentStage) {
+      throw new Error('No active presale stage');
     }
 
     try {
-      console.log('💳 Purchase MXI:', amount, paymentMethod);
-      
-      if (amount < 10 || amount > 50000) {
-        throw new Error('Amount must be between 10 and 50000 USDT');
-      }
+      console.log('💳 Processing purchase:', { amount, paymentMethod, userId: user.id });
 
       const mxiAmount = amount / currentStage.price;
-      
+
       // Create purchase record
-      const { data, error } = await supabase
+      const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
           user_id: user.id,
-          amount,
+          stage_id: currentStage.id,
+          amount_usd: amount,
           mxi_amount: mxiAmount,
           payment_method: paymentMethod,
-          status: 'pending',
-          stage: currentStage.stage,
+          status: 'completed',
         })
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Purchase error:', error);
-        throw new Error('Failed to create purchase');
+      if (purchaseError) {
+        console.error('❌ Purchase error:', purchaseError);
+        throw purchaseError;
       }
 
-      console.log('✅ Purchase created:', data.id);
+      console.log('✅ Purchase created:', purchase);
 
-      // Refresh data after purchase
-      await refreshData();
+      // Update or create vesting record
+      const { data: existingVesting } = await supabase
+        .from('vesting')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      // Simulate payment processing (in production, integrate with PayPal/Binance)
-      setTimeout(async () => {
-        const { error: updateError } = await supabase
-          .from('purchases')
-          .update({ status: 'completed' })
-          .eq('id', data.id);
+      if (existingVesting) {
+        const { error: vestingError } = await supabase
+          .from('vesting')
+          .update({
+            total_mxi: existingVesting.total_mxi + mxiAmount,
+            last_update: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
 
-        if (updateError) {
-          console.error('❌ Purchase update error:', updateError);
-        } else {
-          console.log('✅ Purchase completed:', data.id);
-          // Refresh data again after completion
-          await refreshData();
+        if (vestingError) {
+          console.error('❌ Vesting update error:', vestingError);
+          throw vestingError;
         }
-      }, 2000);
+      } else {
+        const { error: vestingError } = await supabase
+          .from('vesting')
+          .insert({
+            user_id: user.id,
+            total_mxi: mxiAmount,
+            current_rewards: 0,
+            monthly_rate: 0.03,
+            last_update: new Date().toISOString(),
+          });
 
-    } catch (error: any) {
+        if (vestingError) {
+          console.error('❌ Vesting creation error:', vestingError);
+          throw vestingError;
+        }
+      }
+
+      // Update presale stage sold amount
+      const { error: stageError } = await supabase
+        .from('presale_stages')
+        .update({
+          sold_mxi: currentStage.soldMXI + mxiAmount,
+        })
+        .eq('id', currentStage.id);
+
+      if (stageError) {
+        console.error('❌ Stage update error:', stageError);
+        throw stageError;
+      }
+
+      console.log('✅ Purchase completed successfully');
+      await refreshData();
+    } catch (error) {
       console.error('❌ Purchase failed:', error);
       throw error;
     }
   };
 
   return (
-    <PreSaleContext.Provider value={{ 
-      currentStage, 
-      userPurchases, 
-      vestingData, 
-      referralStats,
-      isLoading,
-      purchaseMXI,
-      refreshData 
-    }}>
+    <PreSaleContext.Provider
+      value={{
+        currentStage,
+        userPurchases,
+        vestingData,
+        referralStats,
+        isLoading,
+        purchaseMXI,
+        refreshData,
+      }}
+    >
       {children}
     </PreSaleContext.Provider>
   );
-}
-
-export function usePreSale() {
-  const context = useContext(PreSaleContext);
-  if (context === undefined) {
-    throw new Error('usePreSale must be used within a PreSaleProvider');
-  }
-  return context;
 }
