@@ -16,7 +16,7 @@ import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -157,6 +157,27 @@ export default function ProfileScreen() {
             color={colors.textSecondary} 
           />
         </TouchableOpacity>
+
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/(tabs)/admin')}
+          >
+            <IconSymbol 
+              ios_icon_name="gearshape.fill" 
+              android_material_icon_name="settings" 
+              size={24} 
+              color={colors.accent} 
+            />
+            <Text style={styles.menuItemText}>Admin Panel</Text>
+            <IconSymbol 
+              ios_icon_name="chevron.right" 
+              android_material_icon_name="chevron_right" 
+              size={20} 
+              color={colors.textSecondary} 
+            />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity 
           style={[buttonStyles.outline, styles.logoutButton]}
