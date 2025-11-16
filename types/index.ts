@@ -3,14 +3,15 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  identification: string;
-  address: string;
-  createdAt: string;
-  emailVerified: boolean;
+  identification?: string;
+  address?: string;
+  createdAt?: string;
+  emailVerified?: boolean;
   kycStatus: 'pending' | 'approved' | 'rejected';
   kycDocuments?: string[];
-  referralCode: string;
+  referralCode?: string;
   referredBy?: string;
+  isAdmin?: boolean;
 }
 
 export interface PreSaleStage {

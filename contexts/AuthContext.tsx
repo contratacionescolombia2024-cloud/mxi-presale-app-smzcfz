@@ -101,22 +101,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             id: newProfile.id,
             email: newProfile.email,
             name: newProfile.name,
+            identification: newProfile.identification,
+            address: newProfile.address,
             kycStatus: newProfile.kyc_status,
-            isAdmin: newProfile.is_admin,
+            isAdmin: newProfile.is_admin || false,
             referralCode: newProfile.referral_code,
+            referredBy: newProfile.referred_by,
           });
         } else {
           throw error;
         }
       } else if (data) {
         console.log('✅ Profile loaded:', data);
+        console.log('🔑 Is Admin:', data.is_admin);
         setUser({
           id: data.id,
           email: data.email,
           name: data.name,
+          identification: data.identification,
+          address: data.address,
           kycStatus: data.kyc_status,
-          isAdmin: data.is_admin,
+          isAdmin: data.is_admin || false,
           referralCode: data.referral_code,
+          referredBy: data.referred_by,
         });
       } else {
         console.log('⚠️ No profile found, creating one...');
@@ -143,9 +150,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: newProfile.id,
           email: newProfile.email,
           name: newProfile.name,
+          identification: newProfile.identification,
+          address: newProfile.address,
           kycStatus: newProfile.kyc_status,
-          isAdmin: newProfile.is_admin,
+          isAdmin: newProfile.is_admin || false,
           referralCode: newProfile.referral_code,
+          referredBy: newProfile.referred_by,
         });
       }
     } catch (error) {
@@ -216,6 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: data.user.id,
           email: userData.email,
           name: userData.name || userData.email.split('@')[0],
+          identification: userData.identification,
+          address: userData.address,
           kyc_status: 'pending',
           is_admin: false,
         });
