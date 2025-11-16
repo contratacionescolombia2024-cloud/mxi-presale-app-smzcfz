@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   form: {
     gap: 16,
@@ -68,23 +69,27 @@ const styles = StyleSheet.create({
     ...buttonStyles.primaryText,
   },
   resendButton: {
-    backgroundColor: colors.card,
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 12,
-    padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.primary,
+    marginTop: 8,
   },
   resendButtonText: {
-    color: colors.primary,
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: 'column',
     alignItems: 'center',
     marginTop: 24,
+    gap: 12,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   footerText: {
@@ -95,15 +100,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
-  },
-  adminLink: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  adminLinkText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
   },
   warningBox: {
     backgroundColor: '#FEF3C7',
@@ -130,7 +126,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Error', 'Please enter both email and password');
       return;
     }
 
@@ -139,7 +135,7 @@ export default function LoginScreen() {
     
     try {
       await login(email, password);
-      // Navigation will be handled by auth state change
+      // Navigation will happen automatically via auth state change
     } catch (error: any) {
       console.error('Login error:', error);
       
@@ -147,11 +143,11 @@ export default function LoginScreen() {
         setShowResendButton(true);
         Alert.alert(
           'Email Not Verified',
-          'Your email address has not been verified yet. Please check your inbox for the verification email and click the link to verify your account.\n\nIf you didn\'t receive the email, you can request a new one using the button below.',
+          'Your email address has not been verified yet. Please check your inbox for the verification email, or click the button below to resend it.',
           [{ text: 'OK' }]
         );
       } else {
-        Alert.alert('Login Failed', error.message || 'Invalid credentials. Please try again.');
+        Alert.alert('Login Failed', error.message || 'Failed to log in. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -168,6 +164,7 @@ export default function LoginScreen() {
     try {
       await resendVerificationEmail(email);
     } catch (error: any) {
+      console.error('Resend verification error:', error);
       Alert.alert('Error', error.message || 'Failed to resend verification email');
     } finally {
       setLoading(false);
@@ -183,7 +180,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <IconSymbol 
             ios_icon_name="lock.shield.fill" 
-            android_material_icon_name="security" 
+            android_material_icon_name="lock" 
             size={64} 
             color={colors.primary} 
           />
@@ -232,7 +229,7 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
           >
-            {loading && !showResendButton ? (
+            {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.loginButtonText}>Sign In</Text>
@@ -246,7 +243,7 @@ export default function LoginScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={colors.primary} />
+                <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.resendButtonText}>Resend Verification Email</Text>
               )}
@@ -255,18 +252,20 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don&apos;t have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/register')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Don&apos;t have an account?</Text>
+            <TouchableOpacity onPress={() => router.push('/register')}>
+              <Text style={styles.linkText}>Register</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>First time admin?</Text>
+            <TouchableOpacity onPress={() => router.push('/admin-setup')}>
+              <Text style={styles.linkText}>Setup Admin</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <TouchableOpacity 
-          style={styles.adminLink}
-          onPress={() => router.push('/admin-setup')}
-        >
-          <Text style={styles.adminLinkText}>First time? Create admin account</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

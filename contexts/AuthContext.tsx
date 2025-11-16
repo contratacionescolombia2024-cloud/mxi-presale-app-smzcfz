@@ -38,14 +38,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Error loading profile:', error);
         
-        // If profile doesn't exist, show helpful error
+        // If profile doesn't exist, try to create a basic one
         if (error.code === 'PGRST116') {
-          console.log('Profile not found for user:', userId);
+          console.log('Profile not found for user:', userId, '- attempting to create one');
+          
+          // Generate a unique referral code
+          const referralCode = 'REF' + Math.random().toString(36).substring(2, 10).toUpperCase();
+          
+          // Create a basic profile
+          const { data: newProfile, error: createError } = await supabase
+            .from('users_profiles')
+            .insert({
+              id: userId,
+              name: email.split('@')[0], // Use email prefix as name
+              identification: 'PENDING',
+              address: 'PENDING',
+              referral_code: referralCode,
+              referred_by: null,
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Failed to create profile:', createError);
+            Alert.alert(
+              'Profile Missing',
+              'Your user profile is missing and could not be created automatically. Please contact support.',
+              [{ text: 'OK' }]
+            );
+            return null;
+          }
+
+          console.log('Profile created successfully:', newProfile);
+          
+          // Show alert to user to complete their profile
           Alert.alert(
-            'Profile Missing',
-            'Your user profile is missing. Please contact support or try registering again.',
+            'Complete Your Profile',
+            'Your profile was created with default values. Please update your information in the Profile section.',
             [{ text: 'OK' }]
           );
+
+          // Continue with the newly created profile
+          const { data: authUser } = await supabase.auth.getUser();
+          
+          const userData: User = {
+            id: newProfile.id,
+            email: email,
+            name: newProfile.name,
+            identification: newProfile.identification,
+            address: newProfile.address,
+            createdAt: newProfile.created_at || '',
+            emailVerified: authUser.user?.email_confirmed_at ? true : false,
+            kycStatus: (newProfile.kyc_status as 'pending' | 'approved' | 'rejected') || 'pending',
+            kycDocuments: newProfile.kyc_documents || [],
+            referralCode: newProfile.referral_code,
+            referredBy: newProfile.referred_by || undefined,
+          };
+
+          setUser(userData);
+          
+          // Check if admin
+          if (email === 'admin@mxi.com' || email === 'inversionesingo@gmail.com') {
+            setIsAdmin(true);
+          }
+          
+          return userData;
         }
         return null;
       }
@@ -138,11 +195,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         const profile = await loadUserProfile(data.user.id, data.user.email || '');
         
-        // If profile doesn't exist, sign out the user
-        if (!profile) {
-          await supabase.auth.signOut();
-          throw new Error('User profile not found. Please contact support.');
-        }
+        // Profile will be created automatically if it doesn't exist
+        // So we don't need to sign out the user anymore
+        console.log('Login successful, profile loaded:', profile?.id);
       }
     } catch (error: any) {
       console.error('Login failed:', error);
