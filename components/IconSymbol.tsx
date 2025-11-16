@@ -10,6 +10,7 @@ import {
   ViewStyle,
   View,
   Text,
+  ColorValue,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -243,7 +244,7 @@ function resolveIconName(
 }
 
 /**
- * An icon component that uses MaterialIcons on Android and web.
+ * An icon component that uses MaterialIcons on Android and web with support for colored icons.
  * Provides comprehensive fallback mechanism for icon resolution.
  */
 export function IconSymbol({
@@ -251,21 +252,31 @@ export function IconSymbol({
   android_material_icon_name,
   size = 24,
   color,
+  colors: colorArray,
   style,
+  type,
 }: {
   ios_icon_name?: string | undefined;
   android_material_icon_name?: MaterialIconName | string;
   size?: number;
-  color: string | OpaqueColorValue;
+  color?: string | OpaqueColorValue;
+  colors?: ColorValue[];
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
+  type?: "monochrome" | "hierarchical" | "palette" | "multicolor";
 }) {
   const iconName = resolveIconName(ios_icon_name, android_material_icon_name);
+
+  // For Android, we use the first color from the colors array if provided and type is palette
+  let finalColor = color;
+  if (type === "palette" && colorArray && colorArray.length > 0) {
+    finalColor = colorArray[0];
+  }
 
   try {
     return (
       <MaterialIcons
-        color={color}
+        color={finalColor as string}
         size={size}
         name={iconName}
         style={style as StyleProp<TextStyle>}
@@ -276,7 +287,7 @@ export function IconSymbol({
     // Render a fallback text icon
     return (
       <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-        <Text style={{ fontSize: size * 0.6, color: color as string, fontWeight: 'bold' }}>?</Text>
+        <Text style={{ fontSize: size * 0.6, color: finalColor as string || '#FFFFFF', fontWeight: 'bold' }}>?</Text>
       </View>
     );
   }

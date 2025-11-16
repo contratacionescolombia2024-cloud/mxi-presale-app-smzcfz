@@ -375,8 +375,9 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="cart.fill" 
               android_material_icon_name="shopping_cart" 
-              size={32} 
-              color={colors.primary} 
+              size={40} 
+              color={colors.accent}
+              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Purchase MXI</Text>
           </TouchableOpacity>
@@ -388,8 +389,9 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="chart.line.uptrend.xyaxis" 
               android_material_icon_name="trending_up" 
-              size={32} 
-              color={colors.primary} 
+              size={40} 
+              color={colors.success}
+              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Vesting</Text>
           </TouchableOpacity>
@@ -401,8 +403,9 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="person.2.fill" 
               android_material_icon_name="people" 
-              size={32} 
-              color={colors.primary} 
+              size={40} 
+              color={colors.secondary}
+              type="hierarchical"
             />
             <Text style={styles.actionLabel}>Referrals</Text>
           </TouchableOpacity>
@@ -414,8 +417,9 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="checkmark.shield.fill" 
               android_material_icon_name="verified_user" 
-              size={32} 
-              color={colors.primary} 
+              size={40} 
+              color={colors.info}
+              type="hierarchical"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>
           </TouchableOpacity>

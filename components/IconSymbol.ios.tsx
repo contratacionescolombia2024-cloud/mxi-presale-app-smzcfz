@@ -1,6 +1,6 @@
 
 import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
-import { StyleProp, ViewStyle, Text, View } from "react-native";
+import { StyleProp, ViewStyle, Text, View, ColorValue } from "react-native";
 import React from "react";
 
 // Comprehensive SF Symbol name validation and mapping
@@ -239,7 +239,7 @@ function resolveSymbolName(
 }
 
 /**
- * An icon component that uses native SF Symbols on iOS.
+ * An icon component that uses native SF Symbols on iOS with support for colored icons.
  * Provides comprehensive fallback mechanism for icon resolution.
  */
 export function IconSymbol({
@@ -247,15 +247,19 @@ export function IconSymbol({
   android_material_icon_name,
   size = 24,
   color,
+  colors: colorArray,
   style,
   weight = "regular",
+  type = "hierarchical",
 }: {
   ios_icon_name?: SymbolViewProps["name"] | string;
   android_material_icon_name?: any;
   size?: number;
-  color: string;
+  color?: string | ColorValue;
+  colors?: ColorValue[];
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
+  type?: "monochrome" | "hierarchical" | "palette" | "multicolor";
 }) {
   const symbolName = resolveSymbolName(ios_icon_name, android_material_icon_name);
 
@@ -264,6 +268,8 @@ export function IconSymbol({
       <SymbolView
         weight={weight}
         tintColor={color}
+        colors={colorArray}
+        type={type}
         resizeMode="scaleAspectFit"
         name={symbolName}
         style={[
@@ -275,7 +281,7 @@ export function IconSymbol({
         ]}
         fallback={
           <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-            <Text style={{ fontSize: size * 0.6, color, fontWeight: 'bold' }}>?</Text>
+            <Text style={{ fontSize: size * 0.6, color: color as string || '#FFFFFF', fontWeight: 'bold' }}>?</Text>
           </View>
         }
       />
@@ -284,7 +290,7 @@ export function IconSymbol({
     console.error('[IconSymbol iOS] Error rendering SF Symbol:', error, 'Symbol:', symbolName);
     return (
       <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-        <Text style={{ fontSize: size * 0.6, color, fontWeight: 'bold' }}>?</Text>
+        <Text style={{ fontSize: size * 0.6, color: color as string || '#FFFFFF', fontWeight: 'bold' }}>?</Text>
       </View>
     );
   }
