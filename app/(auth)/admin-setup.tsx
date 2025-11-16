@@ -10,11 +10,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import React, { useState } from 'react';
+import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
   container: {
@@ -24,11 +24,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    paddingTop: 40,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
@@ -40,6 +40,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  warning: {
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  },
+  warningText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
   },
   form: {
     gap: 16,
@@ -61,11 +74,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  registerButton: {
+  createButton: {
     ...buttonStyles.primary,
     marginTop: 8,
   },
-  registerButtonText: {
+  createButtonText: {
     ...buttonStyles.primaryText,
   },
   footer: {
@@ -86,21 +99,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function RegisterScreen() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [identification, setIdentification] = useState('');
-  const [address, setAddress] = useState('');
+export default function AdminSetupScreen() {
+  const [email, setEmail] = useState('admin@mxi.com');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
   const router = useRouter();
 
-  const handleRegister = async () => {
-    if (!name || !email || !identification || !address || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all required fields');
+  const handleCreateAdmin = async () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -116,22 +124,63 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      await register(
-        {
-          name,
-          email,
-          identification,
-          address,
-        },
+      console.log('Creating admin user:', email);
+
+      // Sign up the admin user
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
-        referralCode || undefined
-      );
-      
-      // After successful registration, go to login
-      router.replace('/login');
+        options: {
+          emailRedirectTo: 'https://natively.dev/email-confirmed',
+          data: {
+            name: 'Administrator',
+            identification: 'ADMIN',
+            address: 'N/A',
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Admin creation error:', error);
+        throw new Error(error.message);
+      }
+
+      if (data.user) {
+        console.log('Admin user created in auth, creating profile...');
+
+        // Create admin profile
+        const { error: profileError } = await supabase
+          .from('users_profiles')
+          .insert({
+            id: data.user.id,
+            name: 'Administrator',
+            identification: 'ADMIN',
+            address: 'N/A',
+            referral_code: 'ADMIN' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+            referred_by: null,
+          });
+
+        if (profileError) {
+          console.error('Admin profile creation error:', profileError);
+          throw new Error('Failed to create admin profile: ' + profileError.message);
+        }
+
+        console.log('Admin profile created successfully');
+
+        Alert.alert(
+          'Admin Created Successfully',
+          'The admin account has been created. Please check your email to verify the account, then you can log in.',
+          [
+            {
+              text: 'Go to Login',
+              onPress: () => router.replace('/login'),
+            },
+          ]
+        );
+      }
     } catch (error: any) {
-      console.error('Registration error:', error);
-      Alert.alert('Registration Failed', error.message || 'Failed to create account. Please try again.');
+      console.error('Admin creation failed:', error);
+      Alert.alert('Creation Failed', error.message || 'Failed to create admin account');
     } finally {
       setLoading(false);
     }
@@ -145,33 +194,27 @@ export default function RegisterScreen() {
       >
         <View style={styles.header}>
           <IconSymbol 
-            ios_icon_name="person.badge.plus.fill" 
-            android_material_icon_name="person_add" 
+            ios_icon_name="shield.fill" 
+            android_material_icon_name="admin_panel_settings" 
             size={64} 
             color={colors.primary} 
           />
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join the MXI presale platform</Text>
+          <Text style={styles.title}>Admin Setup</Text>
+          <Text style={styles.subtitle}>Create the administrator account</Text>
+        </View>
+
+        <View style={styles.warning}>
+          <Text style={styles.warningText}>
+            ⚠️ This screen is for initial setup only. After creating the admin account, this screen should be removed or protected.
+          </Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Full Name *</Text>
+            <Text style={styles.label}>Admin Email</Text>
             <TextInput
               style={styles.input}
-              placeholder="John Doe"
-              placeholderTextColor={colors.textSecondary}
-              value={name}
-              onChangeText={setName}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your@email.com"
+              placeholder="admin@mxi.com"
               placeholderTextColor={colors.textSecondary}
               value={email}
               onChangeText={setEmail}
@@ -182,31 +225,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Identification *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ID Number"
-              placeholderTextColor={colors.textSecondary}
-              value={identification}
-              onChangeText={setIdentification}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Address *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your address"
-              placeholderTextColor={colors.textSecondary}
-              value={address}
-              onChangeText={setAddress}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password *</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
               placeholder="Enter password (min 6 characters)"
@@ -219,7 +238,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm Password *</Text>
+            <Text style={styles.label}>Confirm Password</Text>
             <TextInput
               style={styles.input}
               placeholder="Confirm password"
@@ -231,28 +250,15 @@ export default function RegisterScreen() {
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Referral Code (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter referral code"
-              placeholderTextColor={colors.textSecondary}
-              value={referralCode}
-              onChangeText={setReferralCode}
-              autoCapitalize="characters"
-              editable={!loading}
-            />
-          </View>
-
           <TouchableOpacity 
-            style={styles.registerButton} 
-            onPress={handleRegister}
+            style={styles.createButton} 
+            onPress={handleCreateAdmin}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.registerButtonText}>Create Account</Text>
+              <Text style={styles.createButtonText}>Create Admin Account</Text>
             )}
           </TouchableOpacity>
         </View>

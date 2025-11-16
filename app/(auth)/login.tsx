@@ -83,6 +83,15 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
+  adminLink: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  adminLinkText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
+  },
 });
 
 export default function LoginScreen() {
@@ -174,6 +183,13 @@ export default function LoginScreen() {
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity 
+          style={styles.adminLink}
+          onPress={() => router.push('/admin-setup')}
+        >
+          <Text style={styles.adminLinkText}>First time? Create admin account</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
