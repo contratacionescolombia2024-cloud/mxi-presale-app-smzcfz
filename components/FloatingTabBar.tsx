@@ -17,7 +17,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  interpolate,
 } from 'react-native-reanimated';
 import React from 'react';
 
@@ -116,6 +115,7 @@ export default function FloatingTabBar({
   });
 
   const handleTabPress = (route: Href) => {
+    console.log('[FloatingTabBar] Tab pressed:', route);
     router.push(route);
   };
 
@@ -124,7 +124,14 @@ export default function FloatingTabBar({
       <Animated.View style={[styles.indicator, indicatorStyle]} />
       {tabs.map((tab, index) => {
         const isActive = index === activeIndex;
-        const iconColor = isActive ? colors.primary : colors.textSecondary;
+        const iconColor = isActive ? colors.primary : colors.text;
+
+        console.log(`[FloatingTabBar] Rendering tab "${tab.label}":`, {
+          ios: tab.iosIcon,
+          android: tab.androidIcon,
+          isActive,
+          color: iconColor,
+        });
 
         return (
           <TouchableOpacity

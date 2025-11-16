@@ -3,195 +3,150 @@ import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
 import { StyleProp, ViewStyle, Text, View, ColorValue } from "react-native";
 import React from "react";
 
-// Comprehensive SF Symbol name validation and mapping
-const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
+// VERIFIED SF Symbols - These are guaranteed to exist in iOS
+const VERIFIED_SF_SYMBOLS: Record<string, SymbolViewProps["name"]> = {
   // Home & Navigation
+  'home': 'house.fill',
   'house.fill': 'house.fill',
   'house': 'house',
-  'home': 'house.fill',
   'menu': 'line.3.horizontal',
-  'chevron.right': 'chevron.right',
-  'chevron.left': 'chevron.left',
-  'arrow.right': 'arrow.right',
-  'arrow.left': 'arrow.left',
-  'arrow.up': 'arrow.up',
-  'arrow.down': 'arrow.down',
+  'chevron_right': 'chevron.right',
+  'chevron_left': 'chevron.left',
   'arrow_forward': 'arrow.right',
   'arrow_back': 'arrow.left',
-  'arrow_upward': 'arrow.up',
-  'arrow_downward': 'arrow.down',
   
   // Shopping & Purchase
+  'shopping_cart': 'cart.fill',
   'cart.fill': 'cart.fill',
   'cart': 'cart',
-  'shopping': 'cart.fill',
-  'shopping_cart': 'cart.fill',
+  'credit_card': 'creditcard.fill',
   'creditcard.fill': 'creditcard.fill',
   'creditcard': 'creditcard',
-  'credit_card': 'creditcard.fill',
   'payment': 'creditcard.fill',
-  'bitcoinsign.circle.fill': 'bitcoinsign.circle.fill',
-  'bitcoinsign.circle': 'bitcoinsign.circle',
-  'bitcoin': 'bitcoinsign.circle.fill',
   'currency_bitcoin': 'bitcoinsign.circle.fill',
+  'bitcoinsign.circle.fill': 'bitcoinsign.circle.fill',
   
   // Charts & Analytics
-  'chart.line.uptrend.xyaxis': 'chart.line.uptrend.xyaxis',
-  'chart.bar.fill': 'chart.bar.fill',
-  'chart.bar': 'chart.bar',
-  'chart': 'chart.line.uptrend.xyaxis',
-  'trending': 'chart.line.uptrend.xyaxis',
   'trending_up': 'chart.line.uptrend.xyaxis',
-  'analytics': 'chart.bar.fill',
+  'chart.line.uptrend.xyaxis': 'chart.line.uptrend.xyaxis',
   'bar_chart': 'chart.bar.fill',
+  'chart.bar.fill': 'chart.bar.fill',
   'show_chart': 'chart.line.uptrend.xyaxis',
+  'analytics': 'chart.bar.fill',
   
   // People & Social
+  'person': 'person.fill',
   'person.fill': 'person.fill',
-  'person': 'person',
-  'person.2.fill': 'person.2.fill',
-  'person.2': 'person.2',
-  'person.3.fill': 'person.3.fill',
-  'person.3': 'person.3',
   'people': 'person.2.fill',
+  'person.2.fill': 'person.2.fill',
   'group': 'person.3.fill',
+  'person.3.fill': 'person.3.fill',
   
   // Verification & Security
+  'verified_user': 'checkmark.shield.fill',
   'checkmark.shield.fill': 'checkmark.shield.fill',
   'checkmark.shield': 'checkmark.shield',
-  'person.badge.shield.checkmark.fill': 'person.badge.shield.checkmark.fill',
-  'shield.fill': 'shield.fill',
-  'shield': 'shield',
-  'checkmark.seal.fill': 'checkmark.seal.fill',
-  'checkmark.seal': 'checkmark.seal',
-  'checkmark.circle.fill': 'checkmark.circle.fill',
-  'checkmark.circle': 'checkmark.circle',
-  'checkmark': 'checkmark',
-  'lock.shield.fill': 'lock.shield.fill',
-  'lock.shield': 'lock.shield',
-  'lock.fill': 'lock.fill',
-  'lock': 'lock',
   'security': 'lock.shield.fill',
+  'shield': 'shield.fill',
+  'shield.fill': 'shield.fill',
   'verified': 'checkmark.seal.fill',
-  'verified_user': 'checkmark.shield.fill',
-  'check': 'checkmark',
+  'checkmark.seal.fill': 'checkmark.seal.fill',
   'check_circle': 'checkmark.circle.fill',
+  'checkmark.circle.fill': 'checkmark.circle.fill',
+  'check': 'checkmark',
+  'checkmark': 'checkmark',
+  'lock': 'lock.fill',
+  'lock.fill': 'lock.fill',
   
   // Documents & Files
-  'doc.fill': 'doc.fill',
-  'doc': 'doc',
-  'doc.text.fill': 'doc.text.fill',
-  'doc.text': 'doc.text',
-  'doc.on.doc.fill': 'doc.on.doc.fill',
-  'doc.on.doc': 'doc.on.doc',
-  'document': 'doc.text.fill',
   'description': 'doc.text.fill',
-  'file': 'doc.fill',
+  'doc.text.fill': 'doc.text.fill',
+  'doc.fill': 'doc.fill',
   'insert_drive_file': 'doc.fill',
   'content_copy': 'doc.on.doc.fill',
+  'doc.on.doc.fill': 'doc.on.doc.fill',
+  'folder': 'folder.fill',
   'folder.fill': 'folder.fill',
-  'folder': 'folder',
   
   // Communication
+  'message': 'message.fill',
   'message.fill': 'message.fill',
-  'message': 'message',
-  'envelope.fill': 'envelope.fill',
-  'envelope': 'envelope',
-  'envelope.open.fill': 'envelope.open.fill',
-  'envelope.open': 'envelope.open',
-  'mail': 'envelope.fill',
   'email': 'envelope.fill',
+  'envelope.fill': 'envelope.fill',
   'mail_outline': 'envelope.open',
+  'envelope.open': 'envelope.open',
   'chat': 'bubble.left.and.bubble.right.fill',
   'bubble.left.and.bubble.right.fill': 'bubble.left.and.bubble.right.fill',
+  'phone': 'phone.fill',
   'phone.fill': 'phone.fill',
-  'phone': 'phone',
   
   // Actions
-  'plus.circle.fill': 'plus.circle.fill',
-  'plus.circle': 'plus.circle',
-  'plus': 'plus',
-  'add': 'plus.circle.fill',
   'add_circle': 'plus.circle.fill',
-  'trash.fill': 'trash.fill',
-  'trash': 'trash',
+  'plus.circle.fill': 'plus.circle.fill',
+  'add': 'plus',
+  'plus': 'plus',
   'delete': 'trash.fill',
-  'pencil.circle.fill': 'pencil.circle.fill',
-  'pencil.circle': 'pencil.circle',
-  'pencil': 'pencil',
+  'trash.fill': 'trash.fill',
   'edit': 'pencil.circle.fill',
-  'xmark.circle.fill': 'xmark.circle.fill',
-  'xmark.circle': 'xmark.circle',
-  'xmark': 'xmark',
-  'close': 'xmark.circle.fill',
+  'pencil.circle.fill': 'pencil.circle.fill',
   'cancel': 'xmark.circle.fill',
-  'square.and.arrow.up.fill': 'square.and.arrow.up.fill',
-  'square.and.arrow.up': 'square.and.arrow.up',
+  'xmark.circle.fill': 'xmark.circle.fill',
+  'close': 'xmark',
+  'xmark': 'xmark',
   'share': 'square.and.arrow.up.fill',
-  'arrow.clockwise': 'arrow.clockwise',
+  'square.and.arrow.up.fill': 'square.and.arrow.up.fill',
   'refresh': 'arrow.clockwise',
-  'magnifyingglass': 'magnifyingglass',
+  'arrow.clockwise': 'arrow.clockwise',
   'search': 'magnifyingglass',
+  'magnifyingglass': 'magnifyingglass',
   
   // Status
-  'info.circle.fill': 'info.circle.fill',
-  'info.circle': 'info.circle',
   'info': 'info.circle.fill',
-  'exclamationmark.triangle.fill': 'exclamationmark.triangle.fill',
-  'exclamationmark.triangle': 'exclamationmark.triangle',
+  'info.circle.fill': 'info.circle.fill',
   'warning': 'exclamationmark.triangle.fill',
-  'xmark.octagon.fill': 'xmark.octagon.fill',
-  'xmark.octagon': 'xmark.octagon',
+  'exclamationmark.triangle.fill': 'exclamationmark.triangle.fill',
   'error': 'xmark.octagon.fill',
-  'success': 'checkmark.circle.fill',
+  'xmark.octagon.fill': 'xmark.octagon.fill',
   
   // Calendar & Time
-  'calendar': 'calendar',
   'event': 'calendar',
-  'clock.fill': 'clock.fill',
-  'clock': 'clock',
-  'time': 'clock.fill',
+  'calendar': 'calendar',
   'schedule': 'clock.fill',
+  'clock.fill': 'clock.fill',
   'timer': 'timer',
   
   // Media
+  'photo': 'photo.fill',
   'photo.fill': 'photo.fill',
-  'photo': 'photo',
-  'camera.fill': 'camera.fill',
-  'camera': 'camera',
   'camera_alt': 'camera.fill',
-  'video.fill': 'video.fill',
-  'video': 'video',
+  'camera.fill': 'camera.fill',
   'videocam': 'video.fill',
-  'play.fill': 'play.fill',
-  'play': 'play',
+  'video.fill': 'video.fill',
   'play_arrow': 'play.fill',
+  'play.fill': 'play.fill',
+  'pause': 'pause.fill',
   'pause.fill': 'pause.fill',
-  'pause': 'pause',
   
   // Misc
+  'lightbulb': 'lightbulb.fill',
   'lightbulb.fill': 'lightbulb.fill',
-  'lightbulb': 'lightbulb',
-  'gearshape.fill': 'gearshape.fill',
-  'gearshape': 'gearshape',
   'settings': 'gearshape.fill',
-  'questionmark.circle.fill': 'questionmark.circle.fill',
-  'questionmark.circle': 'questionmark.circle',
+  'gearshape.fill': 'gearshape.fill',
   'help': 'questionmark.circle.fill',
+  'questionmark.circle.fill': 'questionmark.circle.fill',
+  'star': 'star.fill',
   'star.fill': 'star.fill',
-  'star': 'star',
-  'heart.fill': 'heart.fill',
-  'heart': 'heart',
   'favorite': 'heart.fill',
-  'bell.fill': 'bell.fill',
-  'bell': 'bell',
+  'heart.fill': 'heart.fill',
   'notifications': 'bell.fill',
+  'bell.fill': 'bell.fill',
+  'bookmark': 'bookmark.fill',
   'bookmark.fill': 'bookmark.fill',
-  'bookmark': 'bookmark',
 };
 
 /**
- * Resolves an icon name to a valid SF Symbol with comprehensive fallback
+ * Resolves an icon name to a valid SF Symbol
+ * Uses only verified symbols to prevent rendering issues
  */
 function resolveSymbolName(
   iosIconName?: string,
@@ -199,54 +154,43 @@ function resolveSymbolName(
 ): SymbolViewProps["name"] {
   // Try iOS icon name first
   if (iosIconName) {
-    // Direct mapping
-    if (iosIconName in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[iosIconName];
-    }
-
-    // Try lowercase
-    const lowerIos = iosIconName.toLowerCase();
-    if (lowerIos in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[lowerIos];
-    }
-
-    // Try to extract base name (remove .fill, .circle, etc.)
-    const baseName = iosIconName.split('.')[0].toLowerCase();
-    if (baseName in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[baseName];
+    const iconKey = iosIconName.toLowerCase().trim();
+    
+    if (iconKey in VERIFIED_SF_SYMBOLS) {
+      const resolvedSymbol = VERIFIED_SF_SYMBOLS[iconKey];
+      console.log(`[IconSymbol iOS] ✓ Resolved "${iosIconName}" -> "${resolvedSymbol}"`);
+      return resolvedSymbol;
     }
   }
 
-  // Try to map from Android icon name
+  // Try Android icon name
   if (androidIconName) {
-    // Direct mapping
-    if (androidIconName in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[androidIconName];
-    }
-
-    // Try lowercase
-    const lowerAndroid = androidIconName.toLowerCase();
-    if (lowerAndroid in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[lowerAndroid];
+    const iconKey = androidIconName.toLowerCase().trim();
+    
+    if (iconKey in VERIFIED_SF_SYMBOLS) {
+      const resolvedSymbol = VERIFIED_SF_SYMBOLS[iconKey];
+      console.log(`[IconSymbol iOS] ✓ Resolved from Android "${androidIconName}" -> "${resolvedSymbol}"`);
+      return resolvedSymbol;
     }
   }
 
-  // Ultimate fallback
+  // Fallback
   console.warn(
-    `[IconSymbol iOS] SF Symbol not found: iOS="${iosIconName}", Android="${androidIconName}". Using "questionmark.circle.fill" as fallback.`
+    `[IconSymbol iOS] ✗ SF Symbol not found: iOS="${iosIconName}", Android="${androidIconName}". Using fallback.`,
+    `\nAvailable symbols: ${Object.keys(VERIFIED_SF_SYMBOLS).slice(0, 10).join(', ')}...`
   );
   return 'questionmark.circle.fill';
 }
 
 /**
- * An icon component that uses native SF Symbols on iOS with support for colored icons.
- * Provides comprehensive fallback mechanism for icon resolution.
+ * IconSymbol component for iOS
+ * Uses SF Symbols with comprehensive error handling
  */
 export function IconSymbol({
   ios_icon_name,
   android_material_icon_name,
   size = 24,
-  color,
+  color = '#FFFFFF',
   colors: colorArray,
   style,
   weight = "regular",
@@ -266,12 +210,13 @@ export function IconSymbol({
   try {
     return (
       <SymbolView
-        weight={weight}
+        name={symbolName}
+        size={size}
         tintColor={color}
         colors={colorArray}
+        weight={weight}
         type={type}
         resizeMode="scaleAspectFit"
-        name={symbolName}
         style={[
           {
             width: size,
@@ -280,17 +225,67 @@ export function IconSymbol({
           style,
         ]}
         fallback={
-          <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-            <Text style={{ fontSize: size * 0.6, color: color as string || '#FFFFFF', fontWeight: 'bold' }}>?</Text>
+          <View
+            style={[
+              {
+                width: size,
+                height: size,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                borderRadius: size / 2,
+              },
+              style,
+            ]}
+          >
+            <Text
+              style={{
+                fontSize: size * 0.5,
+                color: color as string || '#FFFFFF',
+                fontWeight: 'bold',
+              }}
+            >
+              ?
+            </Text>
           </View>
         }
       />
     );
   } catch (error) {
-    console.error('[IconSymbol iOS] Error rendering SF Symbol:', error, 'Symbol:', symbolName);
+    console.error(
+      '[IconSymbol iOS] Error rendering SF Symbol:',
+      error,
+      '\nSymbol:',
+      symbolName,
+      '\nOriginal iOS:',
+      ios_icon_name,
+      '\nOriginal Android:',
+      android_material_icon_name
+    );
+    
     return (
-      <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-        <Text style={{ fontSize: size * 0.6, color: color as string || '#FFFFFF', fontWeight: 'bold' }}>?</Text>
+      <View
+        style={[
+          {
+            width: size,
+            height: size,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            borderRadius: size / 2,
+          },
+          style,
+        ]}
+      >
+        <Text
+          style={{
+            fontSize: size * 0.5,
+            color: color as string || '#FFFFFF',
+            fontWeight: 'bold',
+          }}
+        >
+          ?
+        </Text>
       </View>
     );
   }

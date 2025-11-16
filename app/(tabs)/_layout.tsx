@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { colors } from '@/styles/commonStyles';
+import { APP_ICONS } from '@/constants/AppIcons';
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -29,7 +30,6 @@ export default function TabLayout() {
     });
   }, [isAuthenticated, isAdmin, isLoading, user]);
 
-  // Show loading indicator while checking auth
   if (isLoading) {
     console.log('⏳ Tab Layout - Still loading auth state...');
     return (
@@ -39,7 +39,6 @@ export default function TabLayout() {
     );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     console.log('🚫 Tab Layout - Not authenticated, redirecting to login');
     return <Redirect href="/(auth)/login" />;
@@ -47,43 +46,46 @@ export default function TabLayout() {
 
   console.log('✅ Tab Layout - User is authenticated, showing tabs');
 
+  // Use centralized icon configuration
   const tabs: TabBarItem[] = [
     {
       name: '(home)',
       route: '/(tabs)/(home)/',
-      iosIcon: 'house.fill',
-      androidIcon: 'home',
-      label: 'Home',
+      iosIcon: APP_ICONS.home.ios,
+      androidIcon: APP_ICONS.home.android,
+      label: APP_ICONS.home.label,
     },
     {
       name: 'purchase',
       route: '/(tabs)/purchase',
-      iosIcon: 'cart.fill',
-      androidIcon: 'shopping_cart',
+      iosIcon: APP_ICONS.purchase.ios,
+      androidIcon: APP_ICONS.purchase.android,
       label: 'Buy',
     },
     {
       name: 'vesting',
       route: '/(tabs)/vesting',
-      iosIcon: 'chart.line.uptrend.xyaxis',
-      androidIcon: 'trending_up',
-      label: 'Vesting',
+      iosIcon: APP_ICONS.vesting.ios,
+      androidIcon: APP_ICONS.vesting.android,
+      label: APP_ICONS.vesting.label,
     },
     {
       name: 'referrals',
       route: '/(tabs)/referrals',
-      iosIcon: 'person.2.fill',
-      androidIcon: 'people',
-      label: 'Referrals',
+      iosIcon: APP_ICONS.referrals.ios,
+      androidIcon: APP_ICONS.referrals.android,
+      label: APP_ICONS.referrals.label,
     },
     {
       name: 'profile',
       route: '/(tabs)/profile',
-      iosIcon: 'person.fill',
-      androidIcon: 'person',
-      label: 'Profile',
+      iosIcon: APP_ICONS.profile.ios,
+      androidIcon: APP_ICONS.profile.android,
+      label: APP_ICONS.profile.label,
     },
   ];
+
+  console.log('📋 Tab Layout - Configured tabs:', tabs);
 
   return (
     <>
