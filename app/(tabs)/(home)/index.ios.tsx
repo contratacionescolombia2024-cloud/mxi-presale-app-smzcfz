@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import React, { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -37,6 +38,63 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  countdownCard: {
+    marginBottom: 24,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+  },
+  countdownGradient: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  countdownTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  countdownSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  countdownContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  countdownItem: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    minWidth: 70,
+  },
+  countdownNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  countdownLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+  },
+  launchDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.accent,
+    textAlign: 'center',
   },
   balanceCard: {
     ...commonStyles.card,
@@ -159,6 +217,38 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // Countdown to February 20, 2026
+  useEffect(() => {
+    const targetDate = new Date('2026-02-20T00:00:00').getTime();
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance > 0) {
+        setCountdown({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      } else {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -191,6 +281,40 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Text style={styles.greeting}>Welcome, {user?.name || 'User'}!</Text>
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
+        </View>
+
+        {/* Countdown Timer */}
+        <View style={styles.countdownCard}>
+          <LinearGradient
+            colors={[colors.primary, colors.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.countdownGradient}
+          >
+            <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
+            <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
+            
+            <View style={styles.countdownContainer}>
+              <View style={styles.countdownItem}>
+                <Text style={styles.countdownNumber}>{countdown.days}</Text>
+                <Text style={styles.countdownLabel}>Days</Text>
+              </View>
+              <View style={styles.countdownItem}>
+                <Text style={styles.countdownNumber}>{countdown.hours}</Text>
+                <Text style={styles.countdownLabel}>Hours</Text>
+              </View>
+              <View style={styles.countdownItem}>
+                <Text style={styles.countdownNumber}>{countdown.minutes}</Text>
+                <Text style={styles.countdownLabel}>Min</Text>
+              </View>
+              <View style={styles.countdownItem}>
+                <Text style={styles.countdownNumber}>{countdown.seconds}</Text>
+                <Text style={styles.countdownLabel}>Sec</Text>
+              </View>
+            </View>
+
+            <Text style={styles.launchDate}>February 20, 2026</Text>
+          </LinearGradient>
         </View>
 
         <View style={styles.balanceCard}>

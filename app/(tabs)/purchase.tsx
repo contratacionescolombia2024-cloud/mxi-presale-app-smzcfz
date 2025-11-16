@@ -12,8 +12,10 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import React, { useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -22,6 +24,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 100,
   },
   loadingContainer: {
@@ -76,6 +79,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  priceHighlight: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
   purchaseCard: {
     ...commonStyles.card,
     padding: 20,
@@ -107,6 +115,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   calculationRow: {
     flexDirection: 'row',
@@ -124,32 +134,68 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   paymentMethodsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   paymentMethods: {
-    gap: 12,
+    gap: 16,
   },
   paymentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: colors.border,
-    gap: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: 'transparent',
   },
   paymentButtonSelected: {
     borderColor: colors.primary,
-    backgroundColor: `${colors.primary}10`,
   },
-  paymentButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  paymentGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  paymentLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  paymentIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentInfo: {
+    flex: 1,
+  },
+  paymentName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  paymentDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  paymentPrice: {
+    alignItems: 'flex-end',
+  },
+  paymentPriceLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  paymentPriceValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: colors.text,
   },
   purchaseButton: {
@@ -181,6 +227,28 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  stagePriceInfo: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+  },
+  stagePriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stagePriceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  stagePriceValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
 });
 
@@ -214,7 +282,7 @@ export default function PurchaseScreen() {
       await purchaseMXI(amountNum, paymentMethod);
       Alert.alert(
         'Purchase Initiated',
-        'Your purchase is being processed. You will receive your MXI tokens shortly.',
+        `Your purchase via ${paymentMethod === 'paypal' ? 'PayPal' : 'Binance'} is being processed. You will receive your MXI tokens shortly.`,
         [
           {
             text: 'OK',
@@ -278,14 +346,32 @@ export default function PurchaseScreen() {
           <Text style={styles.stageTitle}>Stage {currentStage.stage} Details</Text>
           <View style={styles.stageInfo}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Price per MXI</Text>
-              <Text style={styles.infoValue}>${currentStage.price.toFixed(2)} USDT</Text>
+              <Text style={styles.infoLabel}>Current Price per MXI</Text>
+              <Text style={styles.priceHighlight}>${currentStage.price.toFixed(2)} USDT</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Available</Text>
               <Text style={styles.infoValue}>
                 {(currentStage.totalMXI - currentStage.soldMXI).toLocaleString()} MXI
               </Text>
+            </View>
+          </View>
+
+          <View style={styles.stagePriceInfo}>
+            <Text style={[styles.infoLabel, { marginBottom: 12, textAlign: 'center' }]}>
+              Pre-Sale Stage Prices
+            </Text>
+            <View style={styles.stagePriceRow}>
+              <Text style={styles.stagePriceLabel}>Stage 1:</Text>
+              <Text style={styles.stagePriceValue}>$0.40 USDT</Text>
+            </View>
+            <View style={styles.stagePriceRow}>
+              <Text style={styles.stagePriceLabel}>Stage 2:</Text>
+              <Text style={styles.stagePriceValue}>$0.70 USDT</Text>
+            </View>
+            <View style={styles.stagePriceRow}>
+              <Text style={styles.stagePriceLabel}>Stage 3:</Text>
+              <Text style={styles.stagePriceValue}>$1.00 USDT</Text>
             </View>
           </View>
         </View>
@@ -309,10 +395,14 @@ export default function PurchaseScreen() {
                 <Text style={styles.calculationLabel}>You will receive</Text>
                 <Text style={styles.calculationValue}>{mxiAmount.toFixed(2)} MXI</Text>
               </View>
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationLabel}>Price per MXI</Text>
+                <Text style={styles.calculationValue}>${currentStage.price.toFixed(2)}</Text>
+              </View>
             </View>
           )}
 
-          <Text style={styles.paymentMethodsTitle}>Select Payment Method</Text>
+          <Text style={styles.paymentMethodsTitle}>💳 Select Payment Method</Text>
           <View style={styles.paymentMethods}>
             <TouchableOpacity
               style={[
@@ -321,14 +411,33 @@ export default function PurchaseScreen() {
               ]}
               onPress={() => setPaymentMethod('paypal')}
               disabled={loading}
+              activeOpacity={0.8}
             >
-              <IconSymbol 
-                ios_icon_name="creditcard.fill" 
-                android_material_icon_name="payment" 
-                size={24} 
-                color={paymentMethod === 'paypal' ? colors.primary : colors.text} 
-              />
-              <Text style={styles.paymentButtonText}>PayPal</Text>
+              <LinearGradient
+                colors={['#0070BA', '#1546A0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.paymentGradient}
+              >
+                <View style={styles.paymentLeft}>
+                  <View style={styles.paymentIconContainer}>
+                    <IconSymbol 
+                      ios_icon_name="creditcard.fill" 
+                      android_material_icon_name="payment" 
+                      size={28} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={styles.paymentInfo}>
+                    <Text style={styles.paymentName}>PayPal</Text>
+                    <Text style={styles.paymentDescription}>Credit/Debit Card & PayPal Balance</Text>
+                  </View>
+                </View>
+                <View style={styles.paymentPrice}>
+                  <Text style={styles.paymentPriceLabel}>Current Price</Text>
+                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -338,14 +447,33 @@ export default function PurchaseScreen() {
               ]}
               onPress={() => setPaymentMethod('binance')}
               disabled={loading}
+              activeOpacity={0.8}
             >
-              <IconSymbol 
-                ios_icon_name="bitcoinsign.circle.fill" 
-                android_material_icon_name="currency_bitcoin" 
-                size={24} 
-                color={paymentMethod === 'binance' ? colors.primary : colors.text} 
-              />
-              <Text style={styles.paymentButtonText}>Binance</Text>
+              <LinearGradient
+                colors={['#F3BA2F', '#E8A825']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.paymentGradient}
+              >
+                <View style={styles.paymentLeft}>
+                  <View style={styles.paymentIconContainer}>
+                    <IconSymbol 
+                      ios_icon_name="bitcoinsign.circle.fill" 
+                      android_material_icon_name="currency_bitcoin" 
+                      size={28} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={styles.paymentInfo}>
+                    <Text style={styles.paymentName}>Binance</Text>
+                    <Text style={styles.paymentDescription}>Cryptocurrency Payment</Text>
+                  </View>
+                </View>
+                <View style={styles.paymentPrice}>
+                  <Text style={styles.paymentPriceLabel}>Current Price</Text>
+                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
+                </View>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
 
@@ -357,7 +485,9 @@ export default function PurchaseScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.purchaseButtonText}>Complete Purchase</Text>
+              <Text style={styles.purchaseButtonText}>
+                {paymentMethod ? `Complete Purchase via ${paymentMethod === 'paypal' ? 'PayPal' : 'Binance'}` : 'Select Payment Method'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>

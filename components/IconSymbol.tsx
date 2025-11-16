@@ -17,7 +17,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
 
 // Comprehensive icon mapping from SF Symbols to Material Icons
-const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
+const ICON_MAP: Record<string, MaterialIconName> = {
   // Home & Navigation
   'house.fill': 'home',
   'house': 'home',
@@ -27,17 +27,22 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'chevron.left': 'chevron_left',
   'arrow.right': 'arrow_forward',
   'arrow.left': 'arrow_back',
+  'arrow.up': 'arrow_upward',
+  'arrow.down': 'arrow_downward',
   
   // Shopping & Purchase
   'cart.fill': 'shopping_cart',
   'cart': 'shopping_cart',
   'shopping': 'shopping_cart',
+  'shopping_cart': 'shopping_cart',
   'creditcard.fill': 'credit_card',
   'creditcard': 'credit_card',
+  'credit_card': 'credit_card',
   'payment': 'payment',
   'bitcoinsign.circle.fill': 'currency_bitcoin',
   'bitcoinsign.circle': 'currency_bitcoin',
   'bitcoin': 'currency_bitcoin',
+  'currency_bitcoin': 'currency_bitcoin',
   
   // Charts & Analytics
   'chart.line.uptrend.xyaxis': 'trending_up',
@@ -45,7 +50,10 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'chart.bar': 'bar_chart',
   'chart': 'show_chart',
   'trending': 'trending_up',
+  'trending_up': 'trending_up',
   'analytics': 'analytics',
+  'bar_chart': 'bar_chart',
+  'show_chart': 'show_chart',
   
   // People & Social
   'person.fill': 'person',
@@ -70,8 +78,13 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'checkmark': 'check',
   'lock.shield.fill': 'lock',
   'lock.shield': 'lock',
+  'lock.fill': 'lock',
+  'lock': 'lock',
   'security': 'security',
-  'verified': 'verified_user',
+  'verified': 'verified',
+  'verified_user': 'verified_user',
+  'check': 'check',
+  'check_circle': 'check_circle',
   
   // Documents & Files
   'doc.fill': 'description',
@@ -81,7 +94,12 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'doc.on.doc.fill': 'content_copy',
   'doc.on.doc': 'content_copy',
   'document': 'description',
+  'description': 'description',
   'file': 'insert_drive_file',
+  'insert_drive_file': 'insert_drive_file',
+  'content_copy': 'content_copy',
+  'folder.fill': 'folder',
+  'folder': 'folder',
   
   // Communication
   'message.fill': 'message',
@@ -91,14 +109,19 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'envelope.open.fill': 'mail_outline',
   'envelope.open': 'mail_outline',
   'mail': 'email',
+  'email': 'email',
+  'mail_outline': 'mail_outline',
   'chat': 'chat',
   'bubble.left.and.bubble.right.fill': 'chat',
+  'phone.fill': 'phone',
+  'phone': 'phone',
   
   // Actions
   'plus.circle.fill': 'add_circle',
   'plus.circle': 'add_circle',
   'plus': 'add',
-  'add': 'add_circle',
+  'add': 'add',
+  'add_circle': 'add_circle',
   'trash.fill': 'delete',
   'trash': 'delete',
   'delete': 'delete',
@@ -110,9 +133,14 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'xmark.circle': 'cancel',
   'xmark': 'close',
   'close': 'close',
+  'cancel': 'cancel',
   'square.and.arrow.up.fill': 'share',
   'square.and.arrow.up': 'share',
   'share': 'share',
+  'arrow.clockwise': 'refresh',
+  'refresh': 'refresh',
+  'magnifyingglass': 'search',
+  'search': 'search',
   
   // Status
   'info.circle.fill': 'info',
@@ -133,6 +161,19 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'clock': 'schedule',
   'time': 'schedule',
   'schedule': 'schedule',
+  'timer': 'timer',
+  
+  // Media
+  'photo.fill': 'photo',
+  'photo': 'photo',
+  'camera.fill': 'camera_alt',
+  'camera': 'camera_alt',
+  'video.fill': 'videocam',
+  'video': 'videocam',
+  'play.fill': 'play_arrow',
+  'play': 'play_arrow',
+  'pause.fill': 'pause',
+  'pause': 'pause',
   
   // Misc
   'lightbulb.fill': 'lightbulb',
@@ -143,84 +184,67 @@ const SF_TO_MATERIAL_ICON_MAP: Record<string, MaterialIconName> = {
   'questionmark.circle.fill': 'help',
   'questionmark.circle': 'help',
   'help': 'help',
-};
-
-// Fallback icons for common categories
-const CATEGORY_FALLBACKS: Record<string, MaterialIconName> = {
-  'home': 'home',
-  'cart': 'shopping_cart',
-  'chart': 'trending_up',
-  'person': 'person',
-  'people': 'people',
-  'shield': 'verified_user',
-  'doc': 'description',
-  'message': 'message',
-  'add': 'add_circle',
-  'delete': 'delete',
-  'info': 'info',
-  'warning': 'warning',
-  'calendar': 'event',
-  'lightbulb': 'lightbulb',
-  'settings': 'settings',
+  'star.fill': 'star',
+  'star': 'star',
+  'heart.fill': 'favorite',
+  'heart': 'favorite',
+  'bell.fill': 'notifications',
+  'bell': 'notifications',
+  'bookmark.fill': 'bookmark',
+  'bookmark': 'bookmark',
 };
 
 /**
- * Resolves an icon name to a valid Material Icon
+ * Resolves an icon name to a valid Material Icon with comprehensive fallback
  */
 function resolveIconName(
   iosIconName?: string,
   androidIconName?: string | MaterialIconName
 ): MaterialIconName {
-  // First, try the provided Android icon name
-  if (androidIconName && androidIconName in MaterialIcons.glyphMap) {
-    return androidIconName as MaterialIconName;
+  // Try Android icon name first (if provided)
+  if (androidIconName) {
+    // Check if it's a valid Material Icon
+    if (androidIconName in MaterialIcons.glyphMap) {
+      return androidIconName as MaterialIconName;
+    }
+    
+    // Try mapping
+    const lowerAndroid = androidIconName.toLowerCase();
+    if (lowerAndroid in ICON_MAP) {
+      return ICON_MAP[lowerAndroid];
+    }
   }
 
-  // Try to map from iOS icon name
+  // Try iOS icon name
   if (iosIconName) {
     // Direct mapping
-    if (iosIconName in SF_TO_MATERIAL_ICON_MAP) {
-      return SF_TO_MATERIAL_ICON_MAP[iosIconName];
+    if (iosIconName in ICON_MAP) {
+      return ICON_MAP[iosIconName];
     }
 
-    // Try lowercase version
-    const lowerIosName = iosIconName.toLowerCase();
-    if (lowerIosName in SF_TO_MATERIAL_ICON_MAP) {
-      return SF_TO_MATERIAL_ICON_MAP[lowerIosName];
+    // Try lowercase
+    const lowerIos = iosIconName.toLowerCase();
+    if (lowerIos in ICON_MAP) {
+      return ICON_MAP[lowerIos];
     }
 
-    // Try to find a category match
-    for (const [category, fallback] of Object.entries(CATEGORY_FALLBACKS)) {
-      if (lowerIosName.includes(category)) {
-        console.log(`Icon "${iosIconName}" matched category "${category}", using "${fallback}"`);
-        return fallback;
-      }
-    }
-  }
-
-  // Try Android icon name as category
-  if (androidIconName) {
-    const lowerAndroidName = androidIconName.toLowerCase();
-    for (const [category, fallback] of Object.entries(CATEGORY_FALLBACKS)) {
-      if (lowerAndroidName.includes(category)) {
-        console.log(`Icon "${androidIconName}" matched category "${category}", using "${fallback}"`);
-        return fallback;
-      }
+    // Try to extract base name (remove .fill, .circle, etc.)
+    const baseName = iosIconName.split('.')[0].toLowerCase();
+    if (baseName in ICON_MAP) {
+      return ICON_MAP[baseName];
     }
   }
 
   // Ultimate fallback
   console.warn(
-    `Icon not found: iOS="${iosIconName}", Android="${androidIconName}". Using "help" as fallback.`
+    `[IconSymbol] Icon not found: iOS="${iosIconName}", Android="${androidIconName}". Using "help" as fallback.`
   );
   return 'help';
 }
 
 /**
- * An icon component that uses native SFSymbols on iOS, and MaterialIcons on Android and web.
- * This ensures a consistent look across platforms, and optimal resource usage.
- *
- * Icon `name`s are based on SFSymbols and require manual mapping to MaterialIcons.
+ * An icon component that uses MaterialIcons on Android and web.
+ * Provides comprehensive fallback mechanism for icon resolution.
  */
 export function IconSymbol({
   ios_icon_name = undefined,
@@ -248,11 +272,11 @@ export function IconSymbol({
       />
     );
   } catch (error) {
-    console.error('Error rendering Material Icon:', error);
+    console.error('[IconSymbol] Error rendering Material Icon:', error, 'Icon:', iconName);
     // Render a fallback text icon
     return (
       <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-        <Text style={{ fontSize: size * 0.7, color: color as string }}>?</Text>
+        <Text style={{ fontSize: size * 0.6, color: color as string, fontWeight: 'bold' }}>?</Text>
       </View>
     );
   }

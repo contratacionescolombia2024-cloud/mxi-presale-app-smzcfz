@@ -3,7 +3,7 @@ import { SymbolView, SymbolViewProps, SymbolWeight } from "expo-symbols";
 import { StyleProp, ViewStyle, Text, View } from "react-native";
 import React from "react";
 
-// Comprehensive SF Symbol name validation and fallback mapping
+// Comprehensive SF Symbol name validation and mapping
 const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   // Home & Navigation
   'house.fill': 'house.fill',
@@ -14,6 +14,12 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'chevron.left': 'chevron.left',
   'arrow.right': 'arrow.right',
   'arrow.left': 'arrow.left',
+  'arrow.up': 'arrow.up',
+  'arrow.down': 'arrow.down',
+  'arrow_forward': 'arrow.right',
+  'arrow_back': 'arrow.left',
+  'arrow_upward': 'arrow.up',
+  'arrow_downward': 'arrow.down',
   
   // Shopping & Purchase
   'cart.fill': 'cart.fill',
@@ -63,6 +69,8 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'checkmark': 'checkmark',
   'lock.shield.fill': 'lock.shield.fill',
   'lock.shield': 'lock.shield',
+  'lock.fill': 'lock.fill',
+  'lock': 'lock',
   'security': 'lock.shield.fill',
   'verified': 'checkmark.seal.fill',
   'verified_user': 'checkmark.shield.fill',
@@ -81,6 +89,8 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'file': 'doc.fill',
   'insert_drive_file': 'doc.fill',
   'content_copy': 'doc.on.doc.fill',
+  'folder.fill': 'folder.fill',
+  'folder': 'folder',
   
   // Communication
   'message.fill': 'message.fill',
@@ -94,6 +104,8 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'mail_outline': 'envelope.open',
   'chat': 'bubble.left.and.bubble.right.fill',
   'bubble.left.and.bubble.right.fill': 'bubble.left.and.bubble.right.fill',
+  'phone.fill': 'phone.fill',
+  'phone': 'phone',
   
   // Actions
   'plus.circle.fill': 'plus.circle.fill',
@@ -116,6 +128,10 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'square.and.arrow.up.fill': 'square.and.arrow.up.fill',
   'square.and.arrow.up': 'square.and.arrow.up',
   'share': 'square.and.arrow.up.fill',
+  'arrow.clockwise': 'arrow.clockwise',
+  'refresh': 'arrow.clockwise',
+  'magnifyingglass': 'magnifyingglass',
+  'search': 'magnifyingglass',
   
   // Status
   'info.circle.fill': 'info.circle.fill',
@@ -136,6 +152,22 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'clock': 'clock',
   'time': 'clock.fill',
   'schedule': 'clock.fill',
+  'timer': 'timer',
+  
+  // Media
+  'photo.fill': 'photo.fill',
+  'photo': 'photo',
+  'camera.fill': 'camera.fill',
+  'camera': 'camera',
+  'camera_alt': 'camera.fill',
+  'video.fill': 'video.fill',
+  'video': 'video',
+  'videocam': 'video.fill',
+  'play.fill': 'play.fill',
+  'play': 'play',
+  'play_arrow': 'play.fill',
+  'pause.fill': 'pause.fill',
+  'pause': 'pause',
   
   // Misc
   'lightbulb.fill': 'lightbulb.fill',
@@ -146,64 +178,42 @@ const SF_SYMBOL_MAP: Record<string, SymbolViewProps["name"]> = {
   'questionmark.circle.fill': 'questionmark.circle.fill',
   'questionmark.circle': 'questionmark.circle',
   'help': 'questionmark.circle.fill',
-};
-
-// Category-based fallbacks
-const CATEGORY_FALLBACKS: Record<string, SymbolViewProps["name"]> = {
-  'house': 'house.fill',
-  'home': 'house.fill',
-  'cart': 'cart.fill',
-  'shopping': 'cart.fill',
-  'chart': 'chart.line.uptrend.xyaxis',
-  'person': 'person.fill',
-  'people': 'person.2.fill',
-  'shield': 'checkmark.shield.fill',
-  'doc': 'doc.fill',
-  'document': 'doc.text.fill',
-  'message': 'message.fill',
-  'mail': 'envelope.fill',
-  'add': 'plus.circle.fill',
-  'delete': 'trash.fill',
-  'trash': 'trash.fill',
-  'edit': 'pencil.circle.fill',
-  'close': 'xmark.circle.fill',
-  'info': 'info.circle.fill',
-  'warning': 'exclamationmark.triangle.fill',
-  'error': 'xmark.octagon.fill',
-  'calendar': 'calendar',
-  'clock': 'clock.fill',
-  'time': 'clock.fill',
-  'lightbulb': 'lightbulb.fill',
-  'settings': 'gearshape.fill',
-  'help': 'questionmark.circle.fill',
+  'star.fill': 'star.fill',
+  'star': 'star',
+  'heart.fill': 'heart.fill',
+  'heart': 'heart',
+  'favorite': 'heart.fill',
+  'bell.fill': 'bell.fill',
+  'bell': 'bell',
+  'notifications': 'bell.fill',
+  'bookmark.fill': 'bookmark.fill',
+  'bookmark': 'bookmark',
 };
 
 /**
- * Resolves an icon name to a valid SF Symbol
+ * Resolves an icon name to a valid SF Symbol with comprehensive fallback
  */
 function resolveSymbolName(
   iosIconName?: string,
   androidIconName?: string
 ): SymbolViewProps["name"] {
-  // First, try the provided iOS icon name
+  // Try iOS icon name first
   if (iosIconName) {
     // Direct mapping
     if (iosIconName in SF_SYMBOL_MAP) {
       return SF_SYMBOL_MAP[iosIconName];
     }
 
-    // Try lowercase version
-    const lowerIosName = iosIconName.toLowerCase();
-    if (lowerIosName in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[lowerIosName];
+    // Try lowercase
+    const lowerIos = iosIconName.toLowerCase();
+    if (lowerIos in SF_SYMBOL_MAP) {
+      return SF_SYMBOL_MAP[lowerIos];
     }
 
-    // Try to find a category match
-    for (const [category, fallback] of Object.entries(CATEGORY_FALLBACKS)) {
-      if (lowerIosName.includes(category)) {
-        console.log(`iOS icon "${iosIconName}" matched category "${category}", using "${fallback}"`);
-        return fallback;
-      }
+    // Try to extract base name (remove .fill, .circle, etc.)
+    const baseName = iosIconName.split('.')[0].toLowerCase();
+    if (baseName in SF_SYMBOL_MAP) {
+      return SF_SYMBOL_MAP[baseName];
     }
   }
 
@@ -214,28 +224,24 @@ function resolveSymbolName(
       return SF_SYMBOL_MAP[androidIconName];
     }
 
-    // Try lowercase version
-    const lowerAndroidName = androidIconName.toLowerCase();
-    if (lowerAndroidName in SF_SYMBOL_MAP) {
-      return SF_SYMBOL_MAP[lowerAndroidName];
-    }
-
-    // Try to find a category match
-    for (const [category, fallback] of Object.entries(CATEGORY_FALLBACKS)) {
-      if (lowerAndroidName.includes(category)) {
-        console.log(`iOS icon mapped from Android "${androidIconName}" via category "${category}", using "${fallback}"`);
-        return fallback;
-      }
+    // Try lowercase
+    const lowerAndroid = androidIconName.toLowerCase();
+    if (lowerAndroid in SF_SYMBOL_MAP) {
+      return SF_SYMBOL_MAP[lowerAndroid];
     }
   }
 
   // Ultimate fallback
   console.warn(
-    `SF Symbol not found: iOS="${iosIconName}", Android="${androidIconName}". Using "questionmark.circle.fill" as fallback.`
+    `[IconSymbol iOS] SF Symbol not found: iOS="${iosIconName}", Android="${androidIconName}". Using "questionmark.circle.fill" as fallback.`
   );
   return 'questionmark.circle.fill';
 }
 
+/**
+ * An icon component that uses native SF Symbols on iOS.
+ * Provides comprehensive fallback mechanism for icon resolution.
+ */
 export function IconSymbol({
   ios_icon_name,
   android_material_icon_name,
@@ -269,16 +275,16 @@ export function IconSymbol({
         ]}
         fallback={
           <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-            <Text style={{ fontSize: size * 0.7, color }}>?</Text>
+            <Text style={{ fontSize: size * 0.6, color, fontWeight: 'bold' }}>?</Text>
           </View>
         }
       />
     );
   } catch (error) {
-    console.error('Error rendering SF Symbol:', error, 'Symbol:', symbolName);
+    console.error('[IconSymbol iOS] Error rendering SF Symbol:', error, 'Symbol:', symbolName);
     return (
       <View style={[{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }, style]}>
-        <Text style={{ fontSize: size * 0.7, color }}>?</Text>
+        <Text style={{ fontSize: size * 0.6, color, fontWeight: 'bold' }}>?</Text>
       </View>
     );
   }
