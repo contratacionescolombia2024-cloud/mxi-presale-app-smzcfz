@@ -1,170 +1,137 @@
 
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
-
-// Dark, professional wallet-like theme
 export const colors = {
-  // Dark backgrounds
+  // Dark theme colors
   background: '#0A0E27',
-  backgroundSecondary: '#131829',
+  card: '#1A1F3A',
+  border: '#2A2F4A',
   
   // Text colors
   text: '#FFFFFF',
-  textSecondary: '#8F92A1',
-  textTertiary: '#5A5D6E',
+  textSecondary: '#A0A0B8',
   
-  // Primary colors - Professional blue/purple gradient
+  // Brand colors
   primary: '#6C5CE7',
-  primaryLight: '#A29BFE',
-  primaryDark: '#5F3DC4',
-  
-  // Secondary colors - Accent teal
-  secondary: '#00CEC9',
-  secondaryLight: '#81ECEC',
-  
-  // Accent colors
-  accent: '#A29BFE',
-  accentGold: '#FDCB6E',
-  
-  // Card and surfaces
-  card: '#1A1F3A',
-  cardElevated: '#232A45',
+  secondary: '#00B894',
+  accent: '#FDCB6E',
+  highlight: '#FD79A8',
   
   // Status colors
-  success: '#00B894',
-  warning: '#FDCB6E',
-  error: '#FF7675',
-  info: '#74B9FF',
+  success: '#4CAF50',
+  warning: '#FF9800',
+  error: '#F44336',
+  info: '#2196F3',
   
-  // Borders and dividers
-  border: '#2D3348',
-  borderLight: '#3A4058',
-  
-  // Overlay and shadows
-  overlay: 'rgba(10, 14, 39, 0.9)',
-  shadow: 'rgba(0, 0, 0, 0.5)',
+  // Additional colors
+  dark: '#0A0E27',
+  light: '#FFFFFF',
 };
 
-export const buttonStyles = StyleSheet.create({
-  primary: {
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 4px 12px rgba(108, 92, 231, 0.3)',
-    elevation: 4,
-  },
-  secondary: {
-    backgroundColor: colors.secondary,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0px 4px 12px rgba(0, 206, 201, 0.3)',
-    elevation: 4,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  textOutline: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  primaryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-});
-
-export const commonStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
+export const commonStyles = {
   card: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  cardElevated: {
-    backgroundColor: colors.cardElevated,
-    borderRadius: 16,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
     padding: 20,
-    marginBottom: 16,
-    boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.4)',
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+    paddingBottom: 100,
+  },
+  header: {
+    marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     color: colors.text,
     marginBottom: 8,
-    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-    letterSpacing: 0.3,
-  },
-  text: {
     fontSize: 16,
-    color: colors.text,
-    lineHeight: 24,
-  },
-  textSecondary: {
-    fontSize: 14,
     color: colors.textSecondary,
-    lineHeight: 20,
   },
-  input: {
-    backgroundColor: colors.backgroundSecondary,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600' as const,
     color: colors.text,
     marginBottom: 16,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'center' as const,
+    paddingVertical: 12,
   },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  label: {
+    fontSize: 14,
+    color: colors.textSecondary,
   },
-});
+  value: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.text,
+  },
+};
+
+export const buttonStyles = {
+  primary: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  primaryText: {
+    color: colors.light,
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  secondary: {
+    backgroundColor: colors.secondary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  secondaryText: {
+    color: colors.light,
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  textOutline: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  text: {
+    color: colors.light,
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+};

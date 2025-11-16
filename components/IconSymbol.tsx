@@ -8,6 +8,7 @@ import {
   StyleProp,
   TextStyle,
   ViewStyle,
+  Text,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -28,16 +29,24 @@ export function IconSymbol({
   style,
 }: {
   ios_icon_name?: string | undefined;
-  android_material_icon_name: MaterialIconName;
+  android_material_icon_name: MaterialIconName | string;
   size?: number;
   color: string | OpaqueColorValue;
   style?: StyleProp<ViewStyle>;
   weight?: SymbolWeight;
 }) {
-  // Validate that the icon name exists
-  const iconName = android_material_icon_name in MaterialIcons.glyphMap 
-    ? android_material_icon_name 
-    : 'help' as MaterialIconName; // Fallback to 'help' icon if invalid
+  // Validate that the icon name exists, with better fallback
+  let iconName: MaterialIconName = 'help';
+  
+  try {
+    if (android_material_icon_name && android_material_icon_name in MaterialIcons.glyphMap) {
+      iconName = android_material_icon_name as MaterialIconName;
+    } else {
+      console.warn(`Icon "${android_material_icon_name}" not found in MaterialIcons, using fallback "help"`);
+    }
+  } catch (error) {
+    console.error('Error validating icon:', error);
+  }
 
   return (
     <MaterialIcons

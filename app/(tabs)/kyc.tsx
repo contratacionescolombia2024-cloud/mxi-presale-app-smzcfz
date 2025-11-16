@@ -50,25 +50,22 @@ export default function KYCScreen() {
     switch (user?.kycStatus) {
       case 'approved':
         return {
-          icon: 'checkmark.shield.fill',
-          androidIcon: 'verified_user',
-          color: colors.success,
+          icon: 'verified_user',
+          color: colors.success || '#4CAF50',
           title: 'KYC Verified',
           message: 'Your identity has been verified successfully.',
         };
       case 'rejected':
         return {
-          icon: 'xmark.shield.fill',
-          androidIcon: 'cancel',
-          color: colors.error,
+          icon: 'cancel',
+          color: colors.error || '#F44336',
           title: 'KYC Rejected',
           message: 'Your KYC submission was rejected. Please resubmit with correct documents.',
         };
       default:
         return {
-          icon: 'clock.fill',
-          androidIcon: 'schedule',
-          color: colors.warning,
+          icon: 'schedule',
+          color: colors.warning || '#FF9800',
           title: 'KYC Pending',
           message: 'Your KYC documents are under review. This usually takes 24-48 hours.',
         };
@@ -82,8 +79,8 @@ export default function KYCScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <IconSymbol 
-            ios_icon_name={statusInfo.icon as any} 
-            android_material_icon_name={statusInfo.androidIcon} 
+            ios_icon_name="person.badge.shield.checkmark.fill" 
+            android_material_icon_name={statusInfo.icon} 
             size={80} 
             color={statusInfo.color} 
           />
@@ -119,7 +116,7 @@ export default function KYCScreen() {
                     ios_icon_name="checkmark.circle.fill" 
                     android_material_icon_name="check_circle" 
                     size={20} 
-                    color={colors.success} 
+                    color={colors.success || '#4CAF50'} 
                   />
                   <Text style={styles.requirementText}>Government-issued ID (front and back)</Text>
                 </View>
@@ -128,7 +125,7 @@ export default function KYCScreen() {
                     ios_icon_name="checkmark.circle.fill" 
                     android_material_icon_name="check_circle" 
                     size={20} 
-                    color={colors.success} 
+                    color={colors.success || '#4CAF50'} 
                   />
                   <Text style={styles.requirementText}>Proof of address (utility bill, bank statement)</Text>
                 </View>
@@ -137,7 +134,7 @@ export default function KYCScreen() {
                     ios_icon_name="checkmark.circle.fill" 
                     android_material_icon_name="check_circle" 
                     size={20} 
-                    color={colors.success} 
+                    color={colors.success || '#4CAF50'} 
                   />
                   <Text style={styles.requirementText}>Selfie holding your ID</Text>
                 </View>
@@ -161,7 +158,7 @@ export default function KYCScreen() {
                       ios_icon_name="trash.fill" 
                       android_material_icon_name="delete" 
                       size={20} 
-                      color={colors.error} 
+                      color={colors.error || '#F44336'} 
                     />
                   </TouchableOpacity>
                 </View>
@@ -201,7 +198,7 @@ export default function KYCScreen() {
               ios_icon_name="checkmark.seal.fill" 
               android_material_icon_name="verified" 
               size={60} 
-              color={colors.success} 
+              color={colors.success || '#4CAF50'} 
             />
             <Text style={styles.approvedText}>
               You&apos;re all set! Your account is fully verified and you can access all features.
@@ -310,7 +307,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 32,
     borderWidth: 2,
-    borderColor: colors.success,
+    borderColor: colors.success || '#4CAF50',
   },
   approvedText: {
     fontSize: 16,

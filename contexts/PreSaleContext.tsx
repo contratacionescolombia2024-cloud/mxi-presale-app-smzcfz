@@ -35,7 +35,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .lte('start_date', now)
         .gte('end_date', now)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid error on no rows
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('❌ Error loading active stage:', error);
@@ -135,16 +135,18 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('💰 Loading vesting data...');
-      // Get current vesting data
+      
+      // Get current vesting data - use single() with error handling
       const { data, error } = await supabase
         .from('vesting')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle to handle no rows gracefully
+        .limit(1);
 
-      // PGRST116 means no rows returned - this is OK, user just doesn't have vesting data yet
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error loading vesting:', error);
+      // Handle errors gracefully
+      if (error) {
+        console.log('⚠️ Vesting query error (this is OK if user has no vesting yet):', error.message);
+        // Set default vesting data
         setVestingData({
           userId: user.id,
           totalMXI: 0,
@@ -160,13 +162,15 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (data) {
+      // Check if we got data
+      if (data && data.length > 0) {
+        const vestingRecord = data[0];
         console.log('✅ Loaded vesting data');
-        const totalMXI = Number(data.total_mxi || 0);
-        const monthlyRate = Number(data.monthly_rate || 0.03);
+        const totalMXI = Number(vestingRecord.total_mxi || 0);
+        const monthlyRate = Number(vestingRecord.monthly_rate || 0.03);
         
         // Calculate current rewards using the database function
-        let rewards = Number(data.current_rewards || 0);
+        let rewards = Number(vestingRecord.current_rewards || 0);
         try {
           const { data: currentRewards, error: rewardsError } = await supabase
             .rpc('calculate_vesting_rewards', { p_user_id: user.id });
@@ -183,7 +187,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           totalMXI,
           currentRewards: rewards,
           monthlyRate,
-          lastUpdate: data.last_update || new Date().toISOString(),
+          lastUpdate: vestingRecord.last_update || new Date().toISOString(),
           projections: {
             days7: (totalMXI * monthlyRate * 7) / 30,
             days15: (totalMXI * monthlyRate * 15) / 30,
@@ -402,6 +406,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Purchase created:', data.id);
 
+      // Refresh data after purchase
+      await refreshData();
+
       // Simulate payment processing (in production, integrate with PayPal/Binance)
       setTimeout(async () => {
         const { error: updateError } = await supabase
@@ -413,6 +420,8 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           console.error('❌ Purchase update error:', updateError);
         } else {
           console.log('✅ Purchase completed:', data.id);
+          // Refresh data again after completion
+          await refreshData();
         }
       }, 2000);
 

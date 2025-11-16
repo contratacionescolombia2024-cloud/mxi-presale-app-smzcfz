@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreSale } from '@/contexts/PreSaleContext';
@@ -12,12 +13,42 @@ import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function VestingScreen() {
-  const { vestingData } = usePreSale();
+  const { vestingData, isLoading } = usePreSale();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading vesting data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!vestingData) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.emptyContainer}>
+          <IconSymbol 
+            ios_icon_name="chart.line.uptrend.xyaxis" 
+            android_material_icon_name="trending_up" 
+            size={80} 
+            color={colors.textSecondary} 
+          />
+          <Text style={styles.emptyTitle}>No Vesting Data</Text>
+          <Text style={styles.emptyText}>
+            Purchase MXI tokens to start earning vesting rewards
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const projectionPeriods = [
-    { label: '7 Days', value: vestingData.projections.days7, days: 7 },
-    { label: '15 Days', value: vestingData.projections.days15, days: 15 },
-    { label: '30 Days', value: vestingData.projections.days30, days: 30 },
+    { label: '7 Days', value: vestingData.projections?.days7 || 0, days: 7 },
+    { label: '15 Days', value: vestingData.projections?.days15 || 0, days: 15 },
+    { label: '30 Days', value: vestingData.projections?.days30 || 0, days: 30 },
   ];
 
   return (
@@ -36,7 +67,9 @@ export default function VestingScreen() {
 
         <View style={[commonStyles.card, styles.currentCard]}>
           <Text style={styles.cardLabel}>Current Vesting Rewards</Text>
-          <Text style={styles.currentAmount}>{vestingData.currentRewards.toFixed(6)} MXI</Text>
+          <Text style={styles.currentAmount}>
+            {(vestingData.currentRewards || 0).toFixed(6)} MXI
+          </Text>
           <Text style={styles.updateText}>
             Updated in real-time • Last: {new Date(vestingData.lastUpdate).toLocaleTimeString()}
           </Text>
@@ -46,16 +79,20 @@ export default function VestingScreen() {
           <Text style={styles.cardTitle}>Your Investment</Text>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Total MXI Purchased</Text>
-            <Text style={styles.infoValue}>{vestingData.totalMXI.toFixed(2)} MXI</Text>
+            <Text style={styles.infoValue}>
+              {(vestingData.totalMXI || 0).toFixed(2)} MXI
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Monthly Rate</Text>
-            <Text style={styles.infoValue}>{(vestingData.monthlyRate * 100).toFixed(1)}%</Text>
+            <Text style={styles.infoValue}>
+              {((vestingData.monthlyRate || 0.03) * 100).toFixed(1)}%
+            </Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Monthly Earnings</Text>
             <Text style={styles.infoValue}>
-              {(vestingData.totalMXI * vestingData.monthlyRate).toFixed(4)} MXI
+              {((vestingData.totalMXI || 0) * (vestingData.monthlyRate || 0.03)).toFixed(4)} MXI
             </Text>
           </View>
         </View>
@@ -74,7 +111,7 @@ export default function VestingScreen() {
             </View>
             <Text style={styles.projectionValue}>+{period.value.toFixed(4)} MXI</Text>
             <Text style={styles.projectionSubtext}>
-              Total: {(vestingData.totalMXI + period.value).toFixed(4)} MXI
+              Total: {((vestingData.totalMXI || 0) + period.value).toFixed(4)} MXI
             </Text>
           </View>
         ))}
@@ -110,6 +147,36 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   header: {
     alignItems: 'center',

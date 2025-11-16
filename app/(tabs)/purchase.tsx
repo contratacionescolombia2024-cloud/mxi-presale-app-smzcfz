@@ -24,6 +24,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 16,
+  },
   header: {
     marginBottom: 24,
   },
@@ -152,10 +163,29 @@ const styles = StyleSheet.create({
     ...buttonStyles.primary,
     opacity: 0.5,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
 });
 
 export default function PurchaseScreen() {
-  const { currentStage, purchaseMXI } = usePreSale();
+  const { currentStage, purchaseMXI, isLoading } = usePreSale();
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'binance' | null>(null);
   const [loading, setLoading] = useState(false);
@@ -203,6 +233,36 @@ export default function PurchaseScreen() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading purchase data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!currentStage) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle" 
+            android_material_icon_name="warning" 
+            size={80} 
+            color={colors.textSecondary} 
+          />
+          <Text style={styles.emptyTitle}>No Active Stage</Text>
+          <Text style={styles.emptyText}>
+            There is no active presale stage at the moment. Please check back later.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const mxiAmount = calculateMXI();
   const canPurchase = mxiAmount > 0 && paymentMethod && !loading;
 
@@ -214,23 +274,21 @@ export default function PurchaseScreen() {
           <Text style={styles.subtitle}>Buy MXI tokens at current stage price</Text>
         </View>
 
-        {currentStage && (
-          <View style={styles.stageCard}>
-            <Text style={styles.stageTitle}>Stage {currentStage.stage} Details</Text>
-            <View style={styles.stageInfo}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Price per MXI</Text>
-                <Text style={styles.infoValue}>${currentStage.price.toFixed(2)} USDT</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Available</Text>
-                <Text style={styles.infoValue}>
-                  {(currentStage.totalMXI - currentStage.soldMXI).toLocaleString()} MXI
-                </Text>
-              </View>
+        <View style={styles.stageCard}>
+          <Text style={styles.stageTitle}>Stage {currentStage.stage} Details</Text>
+          <View style={styles.stageInfo}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Price per MXI</Text>
+              <Text style={styles.infoValue}>${currentStage.price.toFixed(2)} USDT</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Available</Text>
+              <Text style={styles.infoValue}>
+                {(currentStage.totalMXI - currentStage.soldMXI).toLocaleString()} MXI
+              </Text>
             </View>
           </View>
-        )}
+        </View>
 
         <View style={styles.purchaseCard}>
           <Text style={styles.inputLabel}>Amount (USDT)</Text>
