@@ -27,7 +27,8 @@ const { width: screenWidth } = Dimensions.get('window');
 export interface TabBarItem {
   name: string;
   route: Href;
-  icon: keyof typeof MaterialIcons.glyphMap;
+  iosIcon: string;
+  androidIcon: keyof typeof MaterialIcons.glyphMap;
   label: string;
 }
 
@@ -162,8 +163,8 @@ export default function FloatingTabBar({
                   >
                     <View style={styles.tabContent}>
                       <IconSymbol
-                        android_material_icon_name={tab.icon}
-                        ios_icon_name={tab.icon}
+                        ios_icon_name={tab.iosIcon}
+                        android_material_icon_name={tab.androidIcon}
                         size={24}
                         color={isActive ? '#FFFFFF' : colors.textSecondary}
                       />

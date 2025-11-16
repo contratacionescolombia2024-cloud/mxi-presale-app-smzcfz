@@ -39,11 +39,11 @@ export default function AdminScreen() {
   }
 
   const tabs = [
-    { id: 'metrics', label: 'Metrics', icon: 'bar_chart' },
-    { id: 'users', label: 'Users', icon: 'people' },
-    { id: 'kyc', label: 'KYC', icon: 'verified_user' },
-    { id: 'messages', label: 'Messages', icon: 'message' },
-    { id: 'settings', label: 'Settings', icon: 'settings' },
+    { id: 'metrics', label: 'Metrics', iosIcon: 'chart.bar.fill', androidIcon: 'bar_chart' },
+    { id: 'users', label: 'Users', iosIcon: 'person.3.fill', androidIcon: 'people' },
+    { id: 'kyc', label: 'KYC', iosIcon: 'checkmark.shield.fill', androidIcon: 'verified_user' },
+    { id: 'messages', label: 'Messages', iosIcon: 'message.fill', androidIcon: 'message' },
+    { id: 'settings', label: 'Settings', iosIcon: 'gearshape.fill', androidIcon: 'settings' },
   ];
 
   return (
@@ -66,8 +66,8 @@ export default function AdminScreen() {
             onPress={() => setActiveTab(tab.id as any)}
           >
             <IconSymbol 
-              ios_icon_name={tab.icon as any} 
-              android_material_icon_name={tab.icon} 
+              ios_icon_name={tab.iosIcon as any} 
+              android_material_icon_name={tab.androidIcon} 
               size={20} 
               color={activeTab === tab.id ? colors.card : colors.text} 
             />
