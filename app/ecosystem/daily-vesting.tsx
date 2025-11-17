@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,6 +55,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 24,
+  },
+  heroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 24,
+    resizeMode: 'cover',
   },
   title: {
     fontSize: 28,
@@ -152,6 +160,23 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     textAlign: 'center',
+    lineHeight: 20,
+  },
+  warningBox: {
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 193, 7, 0.4)',
+  },
+  successBox: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(76, 175, 80, 0.4)',
   },
 });
 
@@ -172,165 +197,210 @@ export default function DailyVestingScreen() {
           <IconSymbol name="schedule" size={40} color={colors.light} />
         </View>
 
-        <Text style={styles.title}>Vesting Diario</Text>
+        <Text style={styles.title}>💎 VESTING DIARIO MXI{'\n'}(VERSIÓN TÉCNICA)</Text>
+
+        <Image
+          source={require('@/assets/images/bd9bc855-f697-4940-b9a7-58f765498760.png')}
+          style={styles.heroImage}
+        />
 
         <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>⚡ Rendimientos en Tiempo Real</Text>
+          <Text style={styles.highlightTitle}>🎯 ¿Qué es el Vesting Diario?</Text>
           <Text style={styles.highlightText}>
-            El sistema de vesting de MXI te proporciona un rendimiento del 3% mensual sobre tus MXI comprados, calculado y actualizado cada segundo en tiempo real.
+            El vesting diario de MXI es un mecanismo programado que incrementa automáticamente el saldo total de MXI que posee cada usuario dentro del ecosistema. Su objetivo es incentivar la retención del token y generar un crecimiento progresivo sin afectar la liquidez del proyecto.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔢 ¿Cómo Funciona?</Text>
+          <Text style={styles.sectionTitle}>⚙️ ¿Cómo funciona el vesting?</Text>
           <Text style={styles.paragraph}>
-            El vesting es un sistema de recompensas automático que genera rendimientos pasivos sobre tus MXI comprados:
+            MXI aplica un rendimiento diario aproximado de 0.12%, equivalente a un 3% mensual sobre el saldo que el usuario mantiene en su wallet dentro del ecosistema. Este rendimiento se calcula de forma automática y se acredita diariamente en MXI adicionales.
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Tasa fija:</Text> 3% mensual sobre tus MXI comprados
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Actualización continua:</Text> Se calcula cada segundo, no tienes que esperar al final del mes
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Automático:</Text> No requiere ninguna acción de tu parte
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Acumulativo:</Text> Los rendimientos se suman a tu balance total
-            </Text>
-          </View>
+          <Text style={styles.paragraph}>
+            El vesting no entrega USDT ni divisas externas; únicamente distribuye MXI programado. Esto garantiza que el mecanismo sea sostenible, no genere presión de liquidez y pueda operar a largo plazo sin afectar la estabilidad económica del proyecto.
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📊 Fórmula de Cálculo</Text>
-          <Text style={styles.paragraph}>
-            El cálculo del vesting se realiza de la siguiente manera:
+          <Text style={styles.sectionTitle}>📐 Fórmula utilizada</Text>
+          
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text }]}>
+            Rendimiento diario estimado:
           </Text>
           <View style={styles.formulaBox}>
             <Text style={styles.formulaText}>
-              Rendimiento por segundo = {'\n'}
-              (MXI Comprados × 0.03) / (30 × 24 × 60 × 60)
+              Saldo MXI × 0.0012{'\n'}(0.12% diario)
             </Text>
           </View>
-          <Text style={styles.paragraph}>
-            Esto significa que cada segundo, tu balance aumenta proporcionalmente al 3% mensual.
-          </Text>
-        </View>
 
-        <View style={styles.exampleCard}>
-          <Text style={styles.exampleTitle}>💡 Ejemplo Práctico</Text>
-          <Text style={[styles.paragraph, { marginBottom: 16 }]}>
-            Si compras 1,000 MXI:
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 16 }]}>
+            Rendimiento mensual estimado:
           </Text>
-          <View style={styles.exampleRow}>
-            <Text style={styles.exampleLabel}>Inversión inicial:</Text>
-            <Text style={styles.exampleValue}>1,000 MXI</Text>
-          </View>
-          <View style={styles.exampleRow}>
-            <Text style={styles.exampleLabel}>Rendimiento mensual (3%):</Text>
-            <Text style={styles.exampleValue}>30 MXI</Text>
-          </View>
-          <View style={styles.exampleRow}>
-            <Text style={styles.exampleLabel}>Rendimiento diario:</Text>
-            <Text style={styles.exampleValue}>1 MXI</Text>
-          </View>
-          <View style={styles.exampleRow}>
-            <Text style={styles.exampleLabel}>Rendimiento por hora:</Text>
-            <Text style={styles.exampleValue}>0.0417 MXI</Text>
-          </View>
-          <View style={styles.exampleRow}>
-            <Text style={styles.exampleLabel}>Rendimiento por segundo:</Text>
-            <Text style={styles.exampleValue}>0.0000116 MXI</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📈 Proyecciones en la App</Text>
-          <Text style={styles.paragraph}>
-            En la pantalla de Vesting de la app, puedes ver proyecciones de tus ganancias:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>7 días:</Text> Cuánto ganarás en una semana
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>15 días:</Text> Proyección a dos semanas
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>30 días:</Text> Rendimiento mensual completo
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚠️ Importante</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              El vesting se calcula SOLO sobre los MXI que compraste directamente, no sobre comisiones de referidos
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Los rendimientos se acumulan automáticamente en tu balance de vesting
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Puedes ver tus rendimientos actualizándose en tiempo real en la pantalla principal
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              El porcentaje de vesting puede ser ajustado por los administradores según las condiciones del mercado
+          <View style={styles.formulaBox}>
+            <Text style={styles.formulaText}>
+              Saldo MXI × 0.03{'\n'}(3% mensual)
             </Text>
           </View>
         </View>
 
         <View style={styles.exampleCard}>
-          <Text style={styles.exampleTitle}>🚀 Ejemplo de Crecimiento a Largo Plazo</Text>
+          <Text style={styles.exampleTitle}>💡 Ejemplo práctico</Text>
+          <Text style={styles.paragraph}>
+            Si un usuario adquiere 500 MXI en preventa, el sistema aplicará un crecimiento automático de 3% mensual:
+          </Text>
+          
+          <View style={styles.formulaBox}>
+            <Text style={styles.formulaText}>
+              500 MXI × 0.03 = 15 MXI mensuales
+            </Text>
+          </View>
+
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 16 }]}>
+            En 6 meses:
+          </Text>
+          <View style={styles.formulaBox}>
+            <Text style={styles.formulaText}>
+              500 MXI × 0.18 = 90 MXI adicionales
+            </Text>
+          </View>
+
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 16 }]}>
+            Saldo total después de 6 meses:
+          </Text>
+          <View style={styles.exampleRow}>
+            <Text style={styles.exampleLabel}>Total acumulado:</Text>
+            <Text style={[styles.exampleValue, { color: colors.success, fontSize: 18 }]}>590 MXI</Text>
+          </View>
+
+          <Text style={[styles.paragraph, { marginTop: 16, fontStyle: 'italic' }]}>
+            Este incremento se obtiene únicamente por mantener los MXI dentro del ecosistema, sin bloquearlos y sin necesidad de realizar acciones adicionales.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📈 Beneficio adicional con valorización</Text>
+          <Text style={styles.paragraph}>
+            El vesting genera crecimiento en cantidad de MXI. Si el precio aumenta después del lanzamiento, el rendimiento acumulado potencia el valor final.
+          </Text>
+
+          <View style={styles.successBox}>
+            <Text style={[styles.highlightTitle, { marginBottom: 16 }]}>
+              💰 Ejemplo con valorización proyectada
+            </Text>
+            <Text style={[styles.paragraph, { marginBottom: 16 }]}>
+              Precio estimado del token post lanzamiento: 3 a 6 USDT
+            </Text>
+            
+            <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text }]}>
+              Saldo con vesting (590 MXI):
+            </Text>
+            <View style={styles.exampleRow}>
+              <Text style={styles.exampleLabel}>A 3 USDT:</Text>
+              <Text style={[styles.exampleValue, { color: colors.success }]}>1,770 USDT</Text>
+            </View>
+            <View style={styles.exampleRow}>
+              <Text style={styles.exampleLabel}>A 6 USDT:</Text>
+              <Text style={[styles.exampleValue, { color: colors.success }]}>3,540 USDT</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🛡️ ¿Por qué es sostenible?</Text>
+          
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>✓</Text>
+            <Text style={styles.bulletText}>
+              El vesting entrega MXI programado, no dinero externo.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>✓</Text>
+            <Text style={styles.bulletText}>
+              No compromete la liquidez del proyecto ni sus reservas.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>✓</Text>
+            <Text style={styles.bulletText}>
+              Está diseñado para acompañar el crecimiento natural del ecosistema.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>✓</Text>
+            <Text style={styles.bulletText}>
+              Fomenta la retención del token, lo que ayuda a estabilizar el precio.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>✓</Text>
+            <Text style={styles.bulletText}>
+              La generación de MXI está alineada con la adopción progresiva del ecosistema.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.warningBox}>
+          <Text style={styles.highlightTitle}>🎯 Objetivo técnico del vesting</Text>
+          <Text style={styles.paragraph}>
+            El vesting diario existe para:
+          </Text>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Premiar la retención del token
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Estabilizar la economía interna
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Fortalecer el precio a mediano plazo
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Crear un incentivo continuo para mantener participación dentro del ecosistema MXI
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.exampleCard}>
+          <Text style={styles.exampleTitle}>🚀 Proyección de Crecimiento a Largo Plazo</Text>
           <Text style={[styles.paragraph, { marginBottom: 16 }]}>
-            Con 10,000 MXI comprados:
+            Con una inversión inicial de 500 MXI:
           </Text>
           <View style={styles.exampleRow}>
             <Text style={styles.exampleLabel}>Mes 1:</Text>
-            <Text style={styles.exampleValue}>10,300 MXI</Text>
+            <Text style={styles.exampleValue}>515 MXI</Text>
           </View>
           <View style={styles.exampleRow}>
             <Text style={styles.exampleLabel}>Mes 3:</Text>
-            <Text style={styles.exampleValue}>10,900 MXI</Text>
+            <Text style={styles.exampleValue}>545 MXI</Text>
           </View>
           <View style={styles.exampleRow}>
             <Text style={styles.exampleLabel}>Mes 6:</Text>
-            <Text style={styles.exampleValue}>11,800 MXI</Text>
+            <Text style={styles.exampleValue}>590 MXI</Text>
           </View>
           <View style={styles.exampleRow}>
             <Text style={styles.exampleLabel}>Mes 12:</Text>
-            <Text style={styles.exampleValue}>13,600 MXI</Text>
+            <Text style={styles.exampleValue}>680 MXI</Text>
           </View>
           <Text style={[styles.paragraph, { marginTop: 12, fontSize: 13, fontStyle: 'italic' }]}>
-            * Estos cálculos asumen que el porcentaje de vesting se mantiene constante al 3% mensual.
+            * Cálculos basados en un rendimiento constante del 3% mensual sin reinversión de ganancias.
+          </Text>
+        </View>
+
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightTitle}>💎 Ventaja Competitiva</Text>
+          <Text style={styles.highlightText}>
+            El vesting diario de MXI no solo genera rendimientos pasivos, sino que crea un ecosistema donde mantener tus tokens es más rentable que venderlos. Esto reduce la volatilidad, aumenta la estabilidad del precio y beneficia a toda la comunidad a largo plazo.
           </Text>
         </View>
       </ScrollView>
