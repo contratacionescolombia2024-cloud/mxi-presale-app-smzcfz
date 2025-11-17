@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -61,6 +62,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
     textAlign: 'center',
+  },
+  heroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 24,
   },
   section: {
     marginBottom: 24,
@@ -136,6 +143,51 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
+  quoteBox: {
+    backgroundColor: colors.card,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.secondary,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+  },
+  quoteText: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: colors.text,
+    lineHeight: 24,
+  },
+  summaryBox: {
+    backgroundColor: colors.sectionGreen,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  summaryTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    marginBottom: 8,
+    paddingLeft: 8,
+  },
+  summaryBullet: {
+    fontSize: 16,
+    color: colors.text,
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+  summaryText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 24,
+  },
 });
 
 export default function SustainabilityScreen() {
@@ -155,169 +207,175 @@ export default function SustainabilityScreen() {
           <IconSymbol name="eco" size={40} color={colors.light} />
         </View>
 
-        <Text style={styles.title}>Sostenibilidad</Text>
+        <Text style={styles.title}>🌱 Sostenibilidad MAXCOIN</Text>
+
+        <Image
+          source={require('@/assets/images/9dbef4be-d2ff-4097-83be-1b962b9d36a0.png')}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
 
         <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>🌱 Modelo Sostenible</Text>
+          <Text style={styles.highlightTitle}>💡 Valor Real, No Especulación</Text>
           <Text style={styles.highlightText}>
-            La sostenibilidad de MXI se basa en múltiples fuentes de ingresos reales y un modelo económico equilibrado que beneficia a todos los participantes a largo plazo.
+            La sostenibilidad de MAXCOIN no se basa en la especulación, sino en la creación constante de valor y utilidad real.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💰 Fuentes de Ingresos del Ecosistema</Text>
+          <Text style={styles.sectionTitle}>🔄 Ecosistema Circular</Text>
           <Text style={styles.paragraph}>
-            A diferencia de modelos insostenibles, MXI genera valor real a través de:
+            Cada componente del ecosistema ha sido diseñado para alimentar al otro:
+          </Text>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>🎯</Text>
+            <Text style={styles.bulletText}>
+              <Text style={styles.boldText}>MXI Strategic</Text> gestiona preventivas y usuarios.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>💳</Text>
+            <Text style={styles.bulletText}>
+              <Text style={styles.boldText}>MXI Pay</Text> impulsa el uso cotidiano del token.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>💰</Text>
+            <Text style={styles.bulletText}>
+              <Text style={styles.boldText}>MXI Loan</Text> democratiza el acceso al crédito.
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>⛓️</Text>
+            <Text style={styles.bulletText}>
+              <Text style={styles.boldText}>MXI Chain</Text> garantiza transparencia y trazabilidad.
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.paragraph}>
+          Este modelo circular genera una economía autosuficiente, donde las recompensas provienen de actividad real dentro del ecosistema, no de la entrada de nuevos usuarios.
+        </Text>
+
+        <View style={styles.quoteBox}>
+          <Text style={styles.quoteText}>
+            💬 "MAXCOIN es sostenibilidad digital: un sistema que crece, se adapta y perdura."
+          </Text>
+        </View>
+
+        <Text style={styles.paragraph}>
+          Además, el proyecto integra criterios <Text style={styles.boldText}>ESG (Ambientales, Sociales y de Gobernanza)</Text> en sus procesos, contribuyendo a una adopción responsable, ética y escalable.
+        </Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🎯 POR QUÉ EL ECOSISTEMA MXI ES SOSTENIBLE</Text>
+          <Text style={styles.paragraph}>
+            MXI es sostenible porque su modelo se basa en algo simple: <Text style={styles.boldText}>El crecimiento depende del esfuerzo inicial de la comunidad y de la adopción temprana.</Text>
+          </Text>
+          <Text style={styles.paragraph}>
+            No es magia, es economía. 📊
           </Text>
         </View>
 
         <View style={styles.pillarCard}>
-          <Text style={styles.pillarTitle}>1. 🎮 Comisiones de Torneos</Text>
+          <Text style={styles.pillarTitle}>💎 El valor nace en la preventa</Text>
           <Text style={styles.pillarDescription}>
-            El 10% de cada premio de torneo va al fondo de premios del ecosistema. Con miles de torneos activos, esto genera un flujo constante de ingresos que sostiene el sistema de recompensas.
+            La preventa define la liquidez inicial, el precio base y el respaldo del token.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}Si la comunidad participa, el proyecto arranca con fuerza.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}Si no hay preventa, no existe un valor sólido para construir el ecosistema.
           </Text>
         </View>
 
         <View style={styles.pillarCard}>
-          <Text style={styles.pillarTitle}>2. 💱 Comisiones de Transacción</Text>
+          <Text style={styles.pillarTitle}>⚡ El ecosistema genera utilidad real</Text>
           <Text style={styles.pillarDescription}>
-            Pequeñas comisiones en las transacciones de compra, venta y transferencia de MXI generan ingresos que se reinvierten en el ecosistema y en el desarrollo de nuevas funcionalidades.
+            MXI crece por el uso: juegos, torneos, comisiones, vesting y transacciones internas.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}📈 A mayor actividad, mayor volumen.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            📊 A mayor volumen, mayor valoración.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}No depende de "entradas nuevas", sino del movimiento dentro del sistema.
           </Text>
         </View>
 
         <View style={styles.pillarCard}>
-          <Text style={styles.pillarTitle}>3. 🎯 Actividad del Ecosistema</Text>
+          <Text style={styles.pillarTitle}>🔒 El vesting y los premios no afectan la liquidez</Text>
           <Text style={styles.pillarDescription}>
-            Los juegos, torneos y competencias crean un ecosistema activo donde los usuarios intercambian valor constantemente, generando liquidez y demanda orgánica para el token.
+            El vesting genera MXI, no USDT.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}Los torneos se pagan con comisiones internas, no con fondos del proyecto. Esto hace que las recompensas no destruyan la economía.
           </Text>
         </View>
 
         <View style={styles.pillarCard}>
-          <Text style={styles.pillarTitle}>4. 📈 Apreciación del Token</Text>
+          <Text style={styles.pillarTitle}>🚀 El sistema de referidos impulsa la adopción, no la descapitalización</Text>
           <Text style={styles.pillarDescription}>
-            Con oferta limitada (25 millones en preventa) y demanda creciente, el valor del token aumenta naturalmente, beneficiando a todos los holders sin depender de nuevos inversores.
+            Son solo 3 niveles y porcentajes bajos.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}Estimula la expansión y el volumen sin poner en riesgo el fondo principal.
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚖️ Balance Económico</Text>
+        <View style={styles.pillarCard}>
+          <Text style={styles.pillarTitle}>🤝 Todo depende del trabajo conjunto</Text>
+          <Text style={styles.pillarDescription}>
+            MXI no ofrece ganancias pasivas "mágicas".
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}La valorización sucede cuando la comunidad comparte, participa, juega y promueve.
+          </Text>
+          <Text style={styles.pillarDescription}>
+            {'\n'}Cuanto más fuerte sea la preventa y la participación, mayor será el valor final del token.
+          </Text>
+        </View>
+
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryTitle}>✅ RESUMEN CLAVE PARA EL USUARIO</Text>
           <Text style={styles.paragraph}>
-            El sistema está diseñado para mantener un balance saludable:
+            <Text style={styles.boldText}>MXI es sostenible porque:</Text>
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Vesting controlado:</Text> El 3% mensual es sostenible y está respaldado por los ingresos del ecosistema
-            </Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryBullet}>–</Text>
+            <Text style={styles.summaryText}>El valor nace con la preventa</Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Comisiones equilibradas:</Text> Las comisiones de referidos (5%, 2%, 1%) incentivan el crecimiento sin comprometer la estabilidad
-            </Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryBullet}>–</Text>
+            <Text style={styles.summaryText}>La comunidad es el motor</Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Fondo de reserva:</Text> Parte de los ingresos se destina a un fondo de reserva para garantizar pagos incluso en períodos de baja actividad
-            </Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryBullet}>–</Text>
+            <Text style={styles.summaryText}>Las recompensas no afectan la liquidez</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryBullet}>–</Text>
+            <Text style={styles.summaryText}>La utilidad real del ecosistema genera crecimiento</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryBullet}>–</Text>
+            <Text style={styles.summaryText}>El precio sube cuando hay adopción, no promesas</Text>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔄 Ciclo Virtuoso</Text>
-          <Text style={styles.paragraph}>
-            MXI crea un ciclo virtuoso de crecimiento:
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightText}>
+            ✅ Si hay trabajo y preventa, todos ganan.
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>1.</Text>
-            <Text style={styles.bulletText}>
-              Usuarios compran MXI y participan en el ecosistema
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>2.</Text>
-            <Text style={styles.bulletText}>
-              La actividad genera ingresos reales (torneos, comisiones)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>3.</Text>
-            <Text style={styles.bulletText}>
-              Los ingresos sostienen el vesting y las recompensas
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>4.</Text>
-            <Text style={styles.bulletText}>
-              Los usuarios satisfechos atraen más participantes
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>5.</Text>
-            <Text style={styles.bulletText}>
-              El ciclo se repite, fortaleciendo el ecosistema
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🛡️ Protecciones Implementadas</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Límites de compra:</Text> Mínimo 10 USDT, máximo 50,000 USDT por transacción
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>KYC obligatorio:</Text> Verificación de identidad para prevenir fraudes
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Auditorías regulares:</Text> Revisión constante de la salud financiera del ecosistema
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={styles.boldText}>Transparencia total:</Text> Todos los movimientos registrados en blockchain
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Visión a Largo Plazo</Text>
-          <Text style={styles.paragraph}>
-            MXI no es un proyecto de corto plazo. Nuestra visión es construir un ecosistema digital sostenible que:
+          <Text style={styles.highlightText}>
+            {'\n'}❌ Si no hay preventa ni participación, no hay crecimiento.
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Genere valor real para todos los participantes
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Se mantenga activo y rentable durante años
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Evolucione con nuevas funcionalidades y mejoras
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Beneficie tanto a inversores tempranos como tardíos
-            </Text>
-          </View>
+          <Text style={styles.highlightText}>
+            {'\n'}🌟 <Text style={styles.boldText}>MXI es un ecosistema impulsado por la comunidad, no por la especulación.</Text>
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
