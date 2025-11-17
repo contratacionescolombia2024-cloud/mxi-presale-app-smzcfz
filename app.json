@@ -1,7 +1,8 @@
+
 {
   "expo": {
     "name": "Mxi Presale",
-    "slug": "Mxi Presale",
+    "slug": "mxi-presale",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -36,13 +37,12 @@
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "natively",
+    "scheme": "mxipresale",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {}
     }
-  },
-  "scheme": "Mxi Presale"
+  }
 }

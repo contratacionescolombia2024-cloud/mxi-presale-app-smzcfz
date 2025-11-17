@@ -68,15 +68,21 @@ export default function RootLayout() {
       
       const url = Linking.parse(event.url);
       console.log('🔗 Parsed URL:', url);
+      console.log('🔗 URL path:', url.path);
+      console.log('🔗 URL hostname:', url.hostname);
       
       // Handle password reset deep link
+      // The URL will be in format: mxipresale://reset-password
       if (url.path === 'reset-password' || url.hostname === 'reset-password') {
         console.log('🔐 Navigating to reset password screen');
-        router.push('/(auth)/reset-password');
+        // Use replace to avoid navigation stack issues
+        setTimeout(() => {
+          router.replace('/(auth)/reset-password');
+        }, 100);
       }
     };
 
-    // Listen for deep links
+    // Listen for deep links when app is already open
     const subscription = Linking.addEventListener('url', handleDeepLink);
 
     // Check if app was opened with a deep link
@@ -90,7 +96,7 @@ export default function RootLayout() {
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [router]);
 
   const { isConnected } = useNetworkState();
 

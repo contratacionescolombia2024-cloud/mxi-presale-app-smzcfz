@@ -347,7 +347,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🔐 Sending password reset email to:', email);
       
       // Use the app's custom scheme for deep linking
-      const redirectUrl = 'natively://reset-password';
+      // This URL must be added to Supabase's allowed redirect URLs
+      const redirectUrl = 'mxipresale://reset-password';
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
@@ -358,7 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
-      console.log('✅ Password reset email sent');
+      console.log('✅ Password reset email sent with redirect URL:', redirectUrl);
     } catch (error) {
       console.error('❌ Password reset failed:', error);
       throw error;
