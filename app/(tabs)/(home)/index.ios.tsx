@@ -1,9 +1,8 @@
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
-import { IconSymbol } from '@/components/IconSymbol';
+import { usePreSale } from '@/contexts/PreSaleContext';
 import { useRouter } from 'expo-router';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import React, { useEffect, useState } from 'react';
+import { IconSymbol } from '@/components/IconSymbol';
 import {
   View,
   Text,
@@ -12,9 +11,11 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from 'react-native';
-import { usePreSale } from '@/contexts/PreSaleContext';
-import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { colors, commonStyles } from '@/styles/commonStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const styles = StyleSheet.create({
   container: {
@@ -24,6 +25,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 150,
+    height: 60,
+    resizeMode: 'contain',
   },
   header: {
     marginBottom: 24,
@@ -402,12 +412,20 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* Logo at the top */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
+            style={styles.logo}
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.greeting}>Welcome, {user?.name || 'User'}!</Text>
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Translucent Orange */}
+        {/* Countdown Timer */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
@@ -434,7 +452,7 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - Moved directly below countdown */}
+        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -455,7 +473,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates */}
+        {/* Vesting Display */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -465,7 +483,6 @@ export default function HomeScreen() {
           </View>
           
           <View style={styles.vestingMetrics}>
-            {/* Real-time rewards display */}
             <View style={styles.vestingRewardsContainer}>
               <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
               <Text style={styles.vestingRewardsAmount}>
@@ -486,7 +503,6 @@ export default function HomeScreen() {
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
-            {/* Projections */}
             <View style={styles.projectionsContainer}>
               <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings</Text>
               
@@ -514,7 +530,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Phase Counter - Single counter for current phase */}
+        {/* Phase Status */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -568,7 +584,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/purchase')}
           >
             <IconSymbol 
-              ios_icon_name="cart.fill"
+              ios_icon_name="cart.fill" 
               android_material_icon_name="shopping_cart"
               size={40} 
               color={colors.accent}
@@ -581,7 +597,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/vesting')}
           >
             <IconSymbol 
-              ios_icon_name="chart.line.uptrend.xyaxis"
+              ios_icon_name="chart.line.uptrend.xyaxis" 
               android_material_icon_name="trending_up"
               size={40} 
               color={colors.success}
@@ -594,8 +610,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
-              ios_icon_name="person.3.fill"
-              android_material_icon_name="people"
+              ios_icon_name="person.3.fill" 
+              android_material_icon_name="group"
               size={40} 
               color={colors.highlight}
             />
@@ -607,7 +623,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/kyc')}
           >
             <IconSymbol 
-              ios_icon_name="checkmark.shield.fill"
+              ios_icon_name="checkmark.shield.fill" 
               android_material_icon_name="verified_user"
               size={40} 
               color="#14B8A6"

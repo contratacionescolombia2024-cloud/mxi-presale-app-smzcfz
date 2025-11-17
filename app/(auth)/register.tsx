@@ -181,7 +181,7 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Image
-            source={require('@/assets/images/147d13e8-074e-4fdc-8329-5701bd44e857.jpeg')}
+            source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
             style={styles.logo}
           />
           <Text style={styles.title}>Create Account</Text>
