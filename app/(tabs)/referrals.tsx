@@ -10,6 +10,8 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,11 +19,15 @@ import { usePreSale } from '@/contexts/PreSaleContext';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as Clipboard from 'expo-clipboard';
+import { supabase } from '@/app/integrations/supabase/client';
 
 export default function ReferralsScreen() {
   const { user } = useAuth();
   const { referralStats, forceReloadReferrals } = usePreSale();
   const [isReloading, setIsReloading] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferAmount, setTransferAmount] = useState('');
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Debug logging
   useEffect(() => {
@@ -78,6 +84,98 @@ export default function ReferralsScreen() {
     } finally {
       setIsReloading(false);
     }
+  };
+
+  const handleOpenTransferModal = () => {
+    if (!referralStats?.totalMXIEarned || referralStats.totalMXIEarned <= 0) {
+      Alert.alert('No Referral Earnings', 'You don\'t have any referral earnings to transfer.');
+      return;
+    }
+    setTransferAmount('');
+    setShowTransferModal(true);
+  };
+
+  const handleTransferToBalance = async () => {
+    if (!user?.id) {
+      Alert.alert('Error', 'User not found');
+      return;
+    }
+
+    const amount = parseFloat(transferAmount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid positive amount');
+      return;
+    }
+
+    const availableEarnings = referralStats?.totalMXIEarned || 0;
+    if (amount > availableEarnings) {
+      Alert.alert(
+        'Insufficient Earnings',
+        `You only have ${availableEarnings.toFixed(2)} MXI in referral earnings.\n\nPlease enter a smaller amount.`
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Confirm Transfer',
+      `Transfer ${amount} MXI from referral earnings to your main balance?\n\n✅ This will be counted as a purchase and generate commissions for your upline referrers.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Transfer',
+          onPress: async () => {
+            setIsTransferring(true);
+            try {
+              console.log(`💰 Transferring ${amount} MXI from referral earnings to balance`);
+              
+              const { data, error } = await supabase.rpc('user_transfer_referral_to_balance', {
+                p_user_id: user.id,
+                p_amount: amount,
+              });
+
+              if (error) {
+                console.error('❌ RPC Error:', error);
+                Alert.alert('Error', `Failed to transfer: ${error.message}`);
+                throw error;
+              }
+
+              console.log('📦 Transfer response:', data);
+
+              if (data && data.success) {
+                const commissionsMsg = data.commissions_distributed && data.commissions_distributed > 0
+                  ? `\n\n💰 Commissions Distributed:\n${data.commissions_distributed.toFixed(2)} MXI to ${data.referrers_paid} referrer(s)`
+                  : '';
+                
+                Alert.alert(
+                  'Success! ✅',
+                  `${data.message}${commissionsMsg}\n\n📊 Updated Balance:\n• Total MXI: ${data.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${data.available_referral_earnings.toFixed(2)} MXI`,
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        setShowTransferModal(false);
+                        setTransferAmount('');
+                        forceReloadReferrals();
+                      }
+                    }
+                  ]
+                );
+              } else {
+                const errorMsg = data?.error || 'Transfer failed';
+                console.error('❌ Transfer failed:', errorMsg);
+                Alert.alert('Error', errorMsg);
+              }
+            } catch (error: any) {
+              console.error('❌ Exception in handleTransferToBalance:', error);
+              Alert.alert('Error', error.message || 'Failed to transfer');
+            } finally {
+              setIsTransferring(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const levels = [
@@ -149,9 +247,21 @@ export default function ReferralsScreen() {
           <Text style={styles.totalSubtext}>
             From {(referralStats?.totalReferrals || 0)} total referrals
           </Text>
-          <Text style={styles.debugText}>
-            Debug: L1={referralStats?.level1Count || 0}, L2={referralStats?.level2Count || 0}, L3={referralStats?.level3Count || 0}
-          </Text>
+          
+          {/* UNIFY TO BALANCE BUTTON */}
+          <TouchableOpacity 
+            style={styles.unifyButton}
+            onPress={handleOpenTransferModal}
+            disabled={!referralStats?.totalMXIEarned || referralStats.totalMXIEarned <= 0}
+          >
+            <IconSymbol 
+              ios_icon_name="arrow.up.circle.fill" 
+              android_material_icon_name="upload" 
+              size={20} 
+              color={colors.card} 
+            />
+            <Text style={styles.unifyButtonText}>Unify to Balance</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={commonStyles.card}>
@@ -234,7 +344,8 @@ export default function ReferralsScreen() {
               - Level 2: 2% commission on their referrals{'\n'}
               - Level 3: 1% commission on third level{'\n'}
               - Commissions paid in MXI instantly{'\n'}
-              - No limit on referrals
+              - No limit on referrals{'\n'}
+              - Transfer earnings to main balance anytime
             </Text>
           </View>
         </View>
@@ -250,6 +361,87 @@ export default function ReferralsScreen() {
           <Text style={styles.debugInfo}>Total Earned: {(referralStats?.totalMXIEarned || 0).toFixed(2)} MXI</Text>
         </View>
       </ScrollView>
+
+      {/* Transfer to Balance Modal */}
+      <Modal
+        visible={showTransferModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowTransferModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Unify to Balance</Text>
+              <TouchableOpacity onPress={() => setShowTransferModal(false)}>
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel" 
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.availableBox}>
+                <Text style={styles.availableLabel}>Available Referral Earnings</Text>
+                <Text style={styles.availableAmount}>
+                  {(referralStats?.totalMXIEarned || 0).toFixed(2)} MXI
+                </Text>
+              </View>
+
+              <Text style={styles.inputLabel}>Amount to Transfer (MXI)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter amount"
+                placeholderTextColor={colors.textSecondary}
+                value={transferAmount}
+                onChangeText={setTransferAmount}
+                keyboardType="decimal-pad"
+                editable={!isTransferring}
+              />
+
+              <View style={styles.infoBox}>
+                <IconSymbol 
+                  ios_icon_name="info.circle.fill" 
+                  android_material_icon_name="info" 
+                  size={20} 
+                  color={colors.primary} 
+                />
+                <View style={styles.infoBoxContent}>
+                  <Text style={styles.infoBoxText}>
+                    • This transfer will be counted as a purchase{'\n'}
+                    • Your upline referrers will receive commissions{'\n'}
+                    • The amount will be added to your main balance{'\n'}
+                    • This action cannot be undone
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.transferButton, isTransferring && styles.transferButtonDisabled]}
+                onPress={handleTransferToBalance}
+                disabled={isTransferring || !transferAmount}
+              >
+                {isTransferring ? (
+                  <ActivityIndicator color={colors.card} />
+                ) : (
+                  <React.Fragment>
+                    <IconSymbol 
+                      ios_icon_name="arrow.up.circle.fill" 
+                      android_material_icon_name="upload" 
+                      size={24} 
+                      color={colors.card} 
+                    />
+                    <Text style={styles.transferButtonText}>Transfer to Balance</Text>
+                  </React.Fragment>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -307,12 +499,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.card,
     opacity: 0.8,
+    marginBottom: 16,
   },
-  debugText: {
-    fontSize: 10,
+  unifyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+    marginTop: 8,
+  },
+  unifyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.card,
-    opacity: 0.7,
-    marginTop: 4,
   },
   cardTitle: {
     fontSize: 16,
@@ -441,5 +643,99 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 4,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalBody: {
+    gap: 16,
+  },
+  availableBox: {
+    backgroundColor: `${colors.accent}20`,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.accent,
+  },
+  availableLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  availableAmount: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.accent,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    color: colors.text,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: `${colors.primary}10`,
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  infoBoxContent: {
+    flex: 1,
+  },
+  infoBoxText: {
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  transferButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: colors.primary,
+    padding: 18,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  transferButtonDisabled: {
+    opacity: 0.5,
+  },
+  transferButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
   },
 });

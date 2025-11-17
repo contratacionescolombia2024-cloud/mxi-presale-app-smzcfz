@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: email.split('@')[0],
               kyc_status: 'pending',
               is_admin: false,
+              account_blocked: false,
               referral_code: referralCode,
             })
             .select()
@@ -135,6 +136,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (data) {
         console.log('✅ Profile loaded:', data);
         console.log('🔑 Is Admin:', data.is_admin);
+        console.log('🔒 Account Blocked:', data.account_blocked);
+        
+        // Check if account is blocked
+        if (data.account_blocked) {
+          console.log('⚠️ Account is blocked, logging out...');
+          await supabase.auth.signOut();
+          throw new Error('Your account has been blocked. Please contact support for assistance.');
+        }
+        
         setUser({
           id: data.id,
           email: data.email,
@@ -159,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: email.split('@')[0],
             kyc_status: 'pending',
             is_admin: false,
+            account_blocked: false,
             referral_code: referralCode,
           })
           .select()
@@ -182,9 +193,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           referredBy: newProfile.referred_by,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to load user profile:', error);
-      Alert.alert('Error', 'Failed to load user profile. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to load user profile. Please try again.');
+      // If account is blocked, clear the session
+      if (error.message && error.message.includes('blocked')) {
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -300,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           address: userData.address,
           kyc_status: 'pending',
           is_admin: false,
+          account_blocked: false,
           referral_code: newUserReferralCode,
           referred_by: referralCode && referrerId ? referralCode.trim().toUpperCase() : null,
         });

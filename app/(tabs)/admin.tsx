@@ -31,6 +31,7 @@ interface UserProfile {
   referral_code: string;
   referred_by: string;
   is_admin: boolean;
+  account_blocked: boolean;
   created_at: string;
 }
 
@@ -318,6 +319,64 @@ export default function AdminScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleAccountBlock = async (blocked: boolean) => {
+    if (!selectedUser) return;
+
+    const action = blocked ? 'block' : 'unblock';
+    Alert.alert(
+      `${blocked ? 'Block' : 'Unblock'} Account`,
+      `Are you sure you want to ${action} ${selectedUser.name}'s account?\n\n${blocked ? '⚠️ The user will not be able to log in or access the application.' : '✅ The user will regain access to the application.'}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: blocked ? 'Block' : 'Unblock',
+          style: blocked ? 'destructive' : 'default',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              console.log(`🔒 ${blocked ? 'Blocking' : 'Unblocking'} account for user ${selectedUser.id}`);
+              
+              const { data, error } = await supabase.rpc('admin_toggle_account_block', {
+                p_user_id: selectedUser.id,
+                p_blocked: blocked,
+              });
+
+              if (error) {
+                console.error('❌ RPC Error toggling account block:', error);
+                Alert.alert('Error', `Failed to ${action} account: ${error.message}`);
+                throw error;
+              }
+
+              console.log('📦 Response:', data);
+
+              if (data && data.success) {
+                console.log(`✅ Account ${blocked ? 'blocked' : 'unblocked'} successfully`);
+                Alert.alert('Success', data.message);
+                await loadUsers();
+                await loadUserDetails(selectedUser.id);
+                
+                // Update selected user state
+                setSelectedUser({
+                  ...selectedUser,
+                  account_blocked: blocked,
+                });
+              } else {
+                const errorMsg = data?.error || `Failed to ${action} account`;
+                console.error('❌ Operation failed:', errorMsg);
+                Alert.alert('Error', errorMsg);
+              }
+            } catch (error: any) {
+              console.error('❌ Exception in handleToggleAccountBlock:', error);
+              Alert.alert('Error', error.message || `Failed to ${action} account`);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleUpdateUserProfile = async () => {
@@ -884,7 +943,20 @@ export default function AdminScreen() {
                   }}
                 >
                   <View style={styles.userInfo}>
-                    <Text style={styles.userName}>{u.name}</Text>
+                    <View style={styles.userNameRow}>
+                      <Text style={styles.userName}>{u.name}</Text>
+                      {u.account_blocked && (
+                        <View style={styles.blockedBadge}>
+                          <IconSymbol 
+                            ios_icon_name="lock.fill" 
+                            android_material_icon_name="lock" 
+                            size={12} 
+                            color={colors.card} 
+                          />
+                          <Text style={styles.blockedBadgeText}>BLOCKED</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.userEmail}>{u.email}</Text>
                     <Text style={styles.userDetail}>KYC: {u.kyc_status}</Text>
                     <Text style={styles.userDetail}>Referral Code: {u.referral_code}</Text>
@@ -1203,7 +1275,7 @@ export default function AdminScreen() {
         )}
       </ScrollView>
 
-      {/* User Management Modal - BALANCE MANAGEMENT SECTION REMOVED */}
+      {/* User Management Modal */}
       <Modal
         visible={showUserModal}
         animationType="slide"
@@ -1254,7 +1326,61 @@ export default function AdminScreen() {
                         KYC: {selectedUser.kyc_status}
                       </Text>
                     </View>
+                    {selectedUser.account_blocked && (
+                      <View style={[styles.badge, styles.badgeBlocked]}>
+                        <IconSymbol 
+                          ios_icon_name="lock.fill" 
+                          android_material_icon_name="lock" 
+                          size={12} 
+                          color={colors.card} 
+                        />
+                        <Text style={styles.badgeText}> BLOCKED</Text>
+                      </View>
+                    )}
                   </View>
+                </View>
+
+                {/* Account Access Control */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>
+                    <IconSymbol 
+                      ios_icon_name="lock.shield.fill" 
+                      android_material_icon_name="security" 
+                      size={20} 
+                      color={colors.error} 
+                    />
+                    {' '}Account Access Control
+                  </Text>
+                  <Text style={styles.modalSectionDescription}>
+                    {selectedUser.account_blocked 
+                      ? '⚠️ This account is currently BLOCKED. The user cannot log in or access the application.'
+                      : '✅ This account is currently ACTIVE. The user has full access to the application.'}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={[
+                      styles.modalButton, 
+                      selectedUser.account_blocked ? styles.modalButtonSuccess : styles.modalButtonDanger
+                    ]}
+                    onPress={() => handleToggleAccountBlock(!selectedUser.account_blocked)}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name={selectedUser.account_blocked ? "lock.open.fill" : "lock.fill"} 
+                          android_material_icon_name={selectedUser.account_blocked ? "lock_open" : "lock"} 
+                          size={20} 
+                          color={colors.card} 
+                        />
+                        <Text style={styles.modalButtonText}>
+                          {selectedUser.account_blocked ? 'Unblock Account' : 'Block Account'}
+                        </Text>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
                 </View>
 
                 {/* Balance Summary */}
@@ -1873,11 +1999,30 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
   userName: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 4,
+  },
+  blockedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.error,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  blockedBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.card,
   },
   userEmail: {
     fontSize: 14,
@@ -2158,8 +2303,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -2176,6 +2325,9 @@ const styles = StyleSheet.create({
   },
   badgeWarning: {
     backgroundColor: colors.warning,
+  },
+  badgeBlocked: {
+    backgroundColor: colors.error,
   },
   badgeText: {
     fontSize: 12,
