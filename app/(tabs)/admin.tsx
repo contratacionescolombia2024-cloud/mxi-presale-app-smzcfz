@@ -510,6 +510,7 @@ export default function AdminScreen() {
               console.log('💰 RPC CALL COMPLETED');
               console.log('💰 Error:', error);
               console.log('💰 Data:', JSON.stringify(data, null, 2));
+              console.log('💰 Data type:', typeof data);
               console.log('💰 ========================================');
 
               if (error) {
@@ -521,7 +522,9 @@ export default function AdminScreen() {
                 return;
               }
 
-              if (data && data.success) {
+              // The RPC function returns a JSONB object directly
+              // Check if data exists and has success property
+              if (data && typeof data === 'object' && data.success === true) {
                 let successMessage = `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance`;
                 
                 if (balanceType === 'with_commission' && data.total_commissions_distributed > 0) {
@@ -557,6 +560,7 @@ export default function AdminScreen() {
               } else {
                 const errorMsg = data?.error || 'Failed to add balance - no success flag in response';
                 console.error('❌ Balance addition failed:', errorMsg);
+                console.error('❌ Full response data:', data);
                 Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
