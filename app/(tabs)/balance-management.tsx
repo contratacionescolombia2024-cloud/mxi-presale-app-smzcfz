@@ -62,6 +62,7 @@ export default function BalanceManagementScreen() {
   const [operationHistory, setOperationHistory] = useState<BalanceOperation[]>([]);
 
   useEffect(() => {
+    console.log('🔐 Balance Management - isAdmin:', isAdmin);
     if (isAdmin) {
       loadUsers();
     }
@@ -69,6 +70,7 @@ export default function BalanceManagementScreen() {
 
   useEffect(() => {
     if (selectedUser) {
+      console.log('👤 Selected user changed:', selectedUser.email);
       loadUserVesting(selectedUser.id);
     }
   }, [selectedUser]);
@@ -135,48 +137,74 @@ export default function BalanceManagementScreen() {
   };
 
   const handleAddBalanceNoCommission = async () => {
+    console.log('🔘 ADD BALANCE NO COMMISSION BUTTON PRESSED');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+
     if (!selectedUser || !amount) {
+      console.log('❌ Validation failed: missing user or amount');
       Alert.alert('Error', 'Please select a user and enter an amount');
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
+      console.log('❌ Validation failed: invalid amount');
       Alert.alert('Error', 'Please enter a valid positive number');
       return;
     }
+
+    console.log('✅ Validation passed, showing confirmation dialog');
 
     Alert.alert(
       'Confirm Operation',
       `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n⚠️ This will NOT generate referral commissions.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => console.log('❌ User cancelled operation')
+        },
         {
           text: 'Confirm',
           onPress: async () => {
+            console.log('✅ User confirmed operation');
             setLoading(true);
             console.log('💰 ========================================');
-            console.log('💰 ADD BALANCE (NO COMMISSION)');
+            console.log('💰 ADD BALANCE (NO COMMISSION) - EXECUTING');
             console.log('💰 User:', selectedUser.name, '(', selectedUser.id, ')');
             console.log('💰 Amount:', amountNum, 'MXI');
             console.log('💰 ========================================');
 
             try {
               const oldBalance = vestingData?.total_mxi || 0;
+              console.log('📊 Old balance:', oldBalance);
+
+              console.log('📡 Calling RPC function: admin_add_balance_without_commissions');
+              console.log('   Parameters:', {
+                p_user_id: selectedUser.id,
+                p_mxi_amount: amountNum,
+              });
 
               const { data, error } = await supabase.rpc('admin_add_balance_without_commissions', {
                 p_user_id: selectedUser.id,
                 p_mxi_amount: amountNum,
               });
 
+              console.log('📦 RPC Response received');
+              console.log('   Data:', JSON.stringify(data, null, 2));
+              console.log('   Error:', error);
+
               if (error) {
                 console.error('❌ RPC Error:', error);
                 throw new Error(`RPC error: ${error.message}`);
               }
 
-              console.log('📦 RPC Response:', data);
-
               if (data && data.success) {
+                console.log('✅ Operation successful!');
+                console.log('   New total MXI:', data.new_total_mxi);
+                console.log('   New purchased MXI:', data.new_purchased_mxi);
+
                 addToHistory({
                   user_name: selectedUser.name,
                   user_email: selectedUser.email,
@@ -197,6 +225,7 @@ export default function BalanceManagementScreen() {
                     {
                       text: 'OK',
                       onPress: () => {
+                        console.log('✅ Clearing form and reloading data');
                         setAmount('');
                         loadUserVesting(selectedUser.id);
                       }
@@ -210,6 +239,7 @@ export default function BalanceManagementScreen() {
               }
             } catch (error: any) {
               console.error('❌ EXCEPTION:', error);
+              console.error('   Stack:', error.stack);
               addToHistory({
                 user_name: selectedUser.name,
                 user_email: selectedUser.email,
@@ -232,48 +262,75 @@ export default function BalanceManagementScreen() {
   };
 
   const handleAddBalanceWithCommission = async () => {
+    console.log('🔘 ADD BALANCE WITH COMMISSION BUTTON PRESSED');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+
     if (!selectedUser || !amount) {
+      console.log('❌ Validation failed: missing user or amount');
       Alert.alert('Error', 'Please select a user and enter an amount');
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
+      console.log('❌ Validation failed: invalid amount');
       Alert.alert('Error', 'Please enter a valid positive number');
       return;
     }
+
+    console.log('✅ Validation passed, showing confirmation dialog');
 
     Alert.alert(
       'Confirm Operation',
       `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n✅ This WILL generate referral commissions for their upline.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => console.log('❌ User cancelled operation')
+        },
         {
           text: 'Confirm',
           onPress: async () => {
+            console.log('✅ User confirmed operation');
             setLoading(true);
             console.log('💰 ========================================');
-            console.log('💰 ADD BALANCE (WITH COMMISSION)');
+            console.log('💰 ADD BALANCE (WITH COMMISSION) - EXECUTING');
             console.log('💰 User:', selectedUser.name, '(', selectedUser.id, ')');
             console.log('💰 Amount:', amountNum, 'MXI');
             console.log('💰 ========================================');
 
             try {
               const oldBalance = vestingData?.total_mxi || 0;
+              console.log('📊 Old balance:', oldBalance);
+
+              console.log('📡 Calling RPC function: admin_add_balance_with_commissions');
+              console.log('   Parameters:', {
+                p_user_id: selectedUser.id,
+                p_amount: amountNum,
+              });
 
               const { data, error } = await supabase.rpc('admin_add_balance_with_commissions', {
                 p_user_id: selectedUser.id,
                 p_amount: amountNum,
               });
 
+              console.log('📦 RPC Response received');
+              console.log('   Data:', JSON.stringify(data, null, 2));
+              console.log('   Error:', error);
+
               if (error) {
                 console.error('❌ RPC Error:', error);
                 throw new Error(`RPC error: ${error.message}`);
               }
 
-              console.log('📦 RPC Response:', data);
-
               if (data && data.success) {
+                console.log('✅ Operation successful!');
+                console.log('   New total MXI:', data.new_total_mxi);
+                console.log('   Total commissions:', data.total_commissions);
+                console.log('   Referrers paid:', data.referrers_paid);
+
                 addToHistory({
                   user_name: selectedUser.name,
                   user_email: selectedUser.email,
@@ -297,6 +354,7 @@ export default function BalanceManagementScreen() {
                     {
                       text: 'OK',
                       onPress: () => {
+                        console.log('✅ Clearing form and reloading data');
                         setAmount('');
                         loadUserVesting(selectedUser.id);
                       }
@@ -310,6 +368,7 @@ export default function BalanceManagementScreen() {
               }
             } catch (error: any) {
               console.error('❌ EXCEPTION:', error);
+              console.error('   Stack:', error.stack);
               addToHistory({
                 user_name: selectedUser.name,
                 user_email: selectedUser.email,
@@ -332,19 +391,26 @@ export default function BalanceManagementScreen() {
   };
 
   const handleRemoveBalance = async () => {
+    console.log('🔘 REMOVE BALANCE BUTTON PRESSED');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+
     if (!selectedUser || !amount) {
+      console.log('❌ Validation failed: missing user or amount');
       Alert.alert('Error', 'Please select a user and enter an amount');
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
+      console.log('❌ Validation failed: invalid amount');
       Alert.alert('Error', 'Please enter a valid positive number');
       return;
     }
 
     const currentBalance = vestingData?.total_mxi || 0;
     if (currentBalance < amountNum) {
+      console.log('❌ Insufficient balance');
       Alert.alert(
         'Insufficient Balance',
         `User only has ${currentBalance.toFixed(2)} MXI. Cannot remove ${amountNum} MXI.`
@@ -352,38 +418,58 @@ export default function BalanceManagementScreen() {
       return;
     }
 
+    console.log('✅ Validation passed, showing confirmation dialog');
+
     Alert.alert(
       'Confirm Removal',
       `Remove ${amountNum} MXI from ${selectedUser.name}'s balance?\n\n⚠️ This action cannot be undone.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => console.log('❌ User cancelled operation')
+        },
         {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
+            console.log('✅ User confirmed operation');
             setLoading(true);
             console.log('💸 ========================================');
-            console.log('💸 REMOVE BALANCE');
+            console.log('💸 REMOVE BALANCE - EXECUTING');
             console.log('💸 User:', selectedUser.name, '(', selectedUser.id, ')');
             console.log('💸 Amount:', amountNum, 'MXI');
             console.log('💸 ========================================');
 
             try {
               const oldBalance = vestingData?.total_mxi || 0;
+              console.log('📊 Old balance:', oldBalance);
+
+              console.log('📡 Calling RPC function: admin_remove_balance');
+              console.log('   Parameters:', {
+                p_user_id: selectedUser.id,
+                p_amount: amountNum,
+              });
 
               const { data, error } = await supabase.rpc('admin_remove_balance', {
                 p_user_id: selectedUser.id,
                 p_amount: amountNum,
               });
 
+              console.log('📦 RPC Response received');
+              console.log('   Data:', JSON.stringify(data, null, 2));
+              console.log('   Error:', error);
+
               if (error) {
                 console.error('❌ RPC Error:', error);
                 throw new Error(`RPC error: ${error.message}`);
               }
 
-              console.log('📦 RPC Response:', data);
-
               if (data && data.success) {
+                console.log('✅ Operation successful!');
+                console.log('   New total MXI:', data.new_total_mxi);
+                console.log('   New purchased MXI:', data.new_purchased_mxi);
+
                 addToHistory({
                   user_name: selectedUser.name,
                   user_email: selectedUser.email,
@@ -404,6 +490,7 @@ export default function BalanceManagementScreen() {
                     {
                       text: 'OK',
                       onPress: () => {
+                        console.log('✅ Clearing form and reloading data');
                         setAmount('');
                         loadUserVesting(selectedUser.id);
                       }
@@ -417,6 +504,7 @@ export default function BalanceManagementScreen() {
               }
             } catch (error: any) {
               console.error('❌ EXCEPTION:', error);
+              console.error('   Stack:', error.stack);
               addToHistory({
                 user_name: selectedUser.name,
                 user_email: selectedUser.email,
@@ -775,7 +863,7 @@ export default function BalanceManagementScreen() {
                       </Text>
                     )}
                     {op.status === 'error' && op.error_message && (
-                      <Text style={styles.historyItemError}>
+                      <Text style={styles.historyItemErrorText}>
                         Error: {op.error_message}
                       </Text>
                     )}
@@ -1051,6 +1139,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.secondary,
     marginBottom: 2,
+  },
+  historyItemErrorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 4,
   },
   historyItemTime: {
     fontSize: 11,
