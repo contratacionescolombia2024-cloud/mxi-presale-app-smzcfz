@@ -18,7 +18,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS } from '@/types/tournaments';
+import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS } from '@/types/tournaments';
 
 const styles = StyleSheet.create({
   container: {
@@ -188,6 +188,46 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     flex: 1,
   },
+  limitCard: {
+    backgroundColor: colors.sectionPurple,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(168, 85, 247, 0.4)',
+  },
+  limitTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  limitText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  limitProgress: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  limitBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  limitBarFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+  },
+  limitCount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
 });
 
 export default function TournamentsScreen() {
@@ -197,6 +237,7 @@ export default function TournamentsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
   const [activeTournaments, setActiveTournaments] = useState<Record<string, number>>({});
+  const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -235,10 +276,13 @@ export default function TournamentsScreen() {
         console.error('❌ Error loading tournaments:', tournamentsError);
       } else {
         const counts: Record<string, number> = {};
+        let total = 0;
         tournaments?.forEach((t) => {
           counts[t.game_type] = (counts[t.game_type] || 0) + 1;
+          total++;
         });
         setActiveTournaments(counts);
+        setTotalActiveTournaments(total);
       }
 
       console.log('✅ Tournaments data loaded');
@@ -276,9 +320,10 @@ export default function TournamentsScreen() {
     { type: 'jump_time', icon: 'fitness-center' },
     { type: 'slide_puzzle', icon: 'extension' },
     { type: 'memory_speed', icon: 'psychology' },
-    { type: 'spaceship_survival', icon: 'rocket-launch' },
     { type: 'snake_retro', icon: 'videogame-asset' },
   ];
+
+  const limitPercentage = (totalActiveTournaments / MAX_ACTIVE_TOURNAMENTS) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -302,6 +347,22 @@ export default function TournamentsScreen() {
           </Text>
         </View>
 
+        {/* Active Tournaments Limit */}
+        <View style={styles.limitCard}>
+          <Text style={styles.limitTitle}>📊 Active Tournaments</Text>
+          <Text style={styles.limitText}>
+            Current active tournaments will fill up as participants join. Maximum {MAX_ACTIVE_TOURNAMENTS} tournaments can be active at once.
+          </Text>
+          <View style={styles.limitProgress}>
+            <View style={styles.limitBar}>
+              <View style={[styles.limitBarFill, { width: `${limitPercentage}%` }]} />
+            </View>
+            <Text style={styles.limitCount}>
+              {totalActiveTournaments}/{MAX_ACTIVE_TOURNAMENTS}
+            </Text>
+          </View>
+        </View>
+
         {/* Info Card */}
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>ℹ️ How It Works</Text>
@@ -315,7 +376,7 @@ export default function TournamentsScreen() {
           </View>
           <View style={styles.infoRow}>
             <IconSymbol name={ICONS.CHECK_CIRCLE} size={20} color={colors.info} />
-            <Text style={styles.infoText}>Max players: 50 per tournament</Text>
+            <Text style={styles.infoText}>Choose 25 or 50 players per tournament</Text>
           </View>
           <View style={styles.infoRow}>
             <IconSymbol name={ICONS.CHECK_CIRCLE} size={20} color={colors.info} />
@@ -357,8 +418,8 @@ export default function TournamentsScreen() {
                     <Text style={styles.statValue}>135 MXI</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Max Players</Text>
-                    <Text style={styles.statValue}>50</Text>
+                    <Text style={styles.statLabel}>Players</Text>
+                    <Text style={styles.statValue}>25/50</Text>
                   </View>
                 </View>
 

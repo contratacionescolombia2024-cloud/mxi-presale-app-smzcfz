@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Modal,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,12 +18,11 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS } from '@/types/tournaments';
+import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS, PARTICIPANT_OPTIONS } from '@/types/tournaments';
 import ReactionTestGame from '@/components/games/ReactionTestGame';
 import JumpTimeGame from '@/components/games/JumpTimeGame';
 import SlidePuzzleGame from '@/components/games/SlidePuzzleGame';
 import MemorySpeedGame from '@/components/games/MemorySpeedGame';
-import SpaceshipSurvivalGame from '@/components/games/SpaceshipSurvivalGame';
 import SnakeRetroGame from '@/components/games/SnakeRetroGame';
 
 const styles = StyleSheet.create({
@@ -169,6 +169,89 @@ const styles = StyleSheet.create({
   gameContainer: {
     flex: 1,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  participantOption: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  participantOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionBlue,
+  },
+  participantOptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  participantOptionSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: colors.border,
+  },
+  modalButtonConfirm: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.light,
+  },
+  limitWarning: {
+    backgroundColor: colors.sectionOrange,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  limitWarningText: {
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+  },
 });
 
 export default function GameScreen() {
@@ -179,6 +262,9 @@ export default function GameScreen() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [activeTournament, setActiveTournament] = useState<Tournament | null>(null);
   const [isInGame, setIsInGame] = useState(false);
+  const [showParticipantModal, setShowParticipantModal] = useState(false);
+  const [selectedParticipants, setSelectedParticipants] = useState<25 | 50>(50);
+  const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
@@ -231,6 +317,19 @@ export default function GameScreen() {
     try {
       console.log('🎮 Loading tournaments for game:', gameType);
 
+      // Load total active tournaments count
+      const { data: allTournaments, error: countError } = await supabase
+        .from('tournaments')
+        .select('id', { count: 'exact' })
+        .eq('status', 'waiting');
+
+      if (countError) {
+        console.error('❌ Error loading tournament count:', countError);
+      } else {
+        setTotalActiveTournaments(allTournaments?.length || 0);
+      }
+
+      // Load tournaments for this game
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
@@ -253,14 +352,27 @@ export default function GameScreen() {
     }
   };
 
+  const handleCreateTournamentPress = () => {
+    if (totalActiveTournaments >= MAX_ACTIVE_TOURNAMENTS) {
+      Alert.alert(
+        'Tournament Limit Reached',
+        `Maximum of ${MAX_ACTIVE_TOURNAMENTS} active tournaments allowed. Please wait for some tournaments to complete.`
+      );
+      return;
+    }
+    setShowParticipantModal(true);
+  };
+
   const handleCreateTournament = async () => {
     if (!user?.id || !gameType) {
       console.log('⚠️ Missing user or game type');
       return;
     }
 
+    setShowParticipantModal(false);
+
     try {
-      console.log('🎮 Creating tournament for game:', gameType);
+      console.log('🎮 Creating tournament for game:', gameType, 'with', selectedParticipants, 'max players');
 
       const { data, error } = await supabase
         .from('tournaments')
@@ -268,7 +380,7 @@ export default function GameScreen() {
           game_type: gameType,
           entry_fee: 3,
           prize_pool: 135,
-          max_players: 50,
+          max_players: selectedParticipants,
           current_players: 0,
           status: 'waiting',
         })
@@ -411,7 +523,6 @@ export default function GameScreen() {
           {gameType === 'jump_time' && <JumpTimeGame {...gameProps} />}
           {gameType === 'slide_puzzle' && <SlidePuzzleGame {...gameProps} />}
           {gameType === 'memory_speed' && <MemorySpeedGame {...gameProps} />}
-          {gameType === 'spaceship_survival' && <SpaceshipSurvivalGame {...gameProps} />}
           {gameType === 'snake_retro' && <SnakeRetroGame {...gameProps} />}
         </View>
       </SafeAreaView>
@@ -420,6 +531,7 @@ export default function GameScreen() {
 
   const gameName = GAME_NAMES[gameType as keyof typeof GAME_NAMES] || 'Unknown Game';
   const gameDescription = GAME_DESCRIPTIONS[gameType as keyof typeof GAME_DESCRIPTIONS] || '';
+  const isAtLimit = totalActiveTournaments >= MAX_ACTIVE_TOURNAMENTS;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -434,7 +546,19 @@ export default function GameScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.createTournamentButton} onPress={handleCreateTournament}>
+        {isAtLimit && (
+          <View style={styles.limitWarning}>
+            <Text style={styles.limitWarningText}>
+              ⚠️ Maximum active tournaments reached ({totalActiveTournaments}/{MAX_ACTIVE_TOURNAMENTS}). Wait for tournaments to complete.
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity 
+          style={[styles.createTournamentButton, isAtLimit && styles.joinButtonDisabled]} 
+          onPress={handleCreateTournamentPress}
+          disabled={isAtLimit}
+        >
           <IconSymbol name={ICONS.ADD_CIRCLE} size={24} color={colors.light} />
           <Text style={styles.createTournamentButtonText}>Create New Tournament</Text>
         </TouchableOpacity>
@@ -509,6 +633,54 @@ export default function GameScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* Participant Selection Modal */}
+      <Modal
+        visible={showParticipantModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowParticipantModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choose Tournament Size</Text>
+            <Text style={styles.modalSubtitle}>
+              Select the maximum number of participants for this tournament
+            </Text>
+
+            {PARTICIPANT_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.participantOption,
+                  selectedParticipants === option && styles.participantOptionSelected,
+                ]}
+                onPress={() => setSelectedParticipants(option)}
+              >
+                <Text style={styles.participantOptionTitle}>{option} Players</Text>
+                <Text style={styles.participantOptionSubtitle}>
+                  {option === 25 ? 'Smaller tournament, faster to fill' : 'Larger tournament, bigger competition'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowParticipantModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleCreateTournament}
+              >
+                <Text style={styles.modalButtonText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

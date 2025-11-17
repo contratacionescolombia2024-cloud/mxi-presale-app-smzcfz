@@ -1,7 +1,7 @@
 
 export interface Tournament {
   id: string;
-  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'spaceship_survival' | 'snake_retro';
+  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro';
   entry_fee: number;
   prize_pool: number;
   max_players: number;
@@ -47,7 +47,6 @@ export const GAME_TYPES = {
   JUMP_TIME: 'jump_time',
   SLIDE_PUZZLE: 'slide_puzzle',
   MEMORY_SPEED: 'memory_speed',
-  SPACESHIP_SURVIVAL: 'spaceship_survival',
   SNAKE_RETRO: 'snake_retro',
 } as const;
 
@@ -56,7 +55,6 @@ export const GAME_NAMES = {
   jump_time: 'MXI JumpTime',
   slide_puzzle: 'Slide Puzzle',
   memory_speed: 'Memory Speed',
-  spaceship_survival: 'Retro Spaceship Survival',
   snake_retro: 'MXI Snake Retro',
 } as const;
 
@@ -65,6 +63,8 @@ export const GAME_DESCRIPTIONS = {
   jump_time: 'Jump over obstacles and survive as long as possible.',
   slide_puzzle: 'Solve the puzzle in the shortest time possible.',
   memory_speed: 'Remember and repeat the sequence. How far can you go?',
-  spaceship_survival: 'Dodge meteorites and survive in space.',
   snake_retro: 'Classic snake game. Grow longer and score higher!',
 } as const;
+
+export const MAX_ACTIVE_TOURNAMENTS = 30;
+export const PARTICIPANT_OPTIONS = [25, 50] as const;
