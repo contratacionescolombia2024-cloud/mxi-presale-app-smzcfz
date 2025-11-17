@@ -53,6 +53,9 @@ export default function ReferralsScreen() {
   };
 
   const handleOpenTransferModal = () => {
+    console.log('🔵 Opening transfer modal');
+    console.log('🔵 Current referral earnings:', referralStats?.totalMXIEarned);
+    
     if (!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50) {
       Alert.alert(
         'Insufficient Earnings', 
@@ -65,19 +68,33 @@ export default function ReferralsScreen() {
   };
 
   const handleTransferToBalance = async () => {
+    console.log('🟢 ========================================');
+    console.log('🟢 TRANSFER TO BALANCE BUTTON PRESSED');
+    console.log('🟢 ========================================');
+    
     if (!user?.id) {
+      console.error('❌ No user ID found');
       Alert.alert('Error', 'User not found');
       return;
     }
 
     const amount = parseFloat(transferAmount);
     
+    console.log('🟢 Transfer details:', {
+      userId: user.id,
+      amount: amount,
+      transferAmount: transferAmount,
+      availableEarnings: referralStats?.totalMXIEarned,
+    });
+    
     if (isNaN(amount) || amount <= 0) {
+      console.error('❌ Invalid amount:', amount);
       Alert.alert('Invalid Amount', 'Please enter a valid positive amount');
       return;
     }
 
     if (amount < 50) {
+      console.error('❌ Amount below minimum:', amount);
       Alert.alert(
         'Minimum Amount Required',
         'The minimum transfer amount is 50 MXI.\n\nPlease enter at least 50 MXI.'
@@ -87,6 +104,7 @@ export default function ReferralsScreen() {
 
     const availableEarnings = referralStats?.totalMXIEarned || 0;
     if (amount > availableEarnings) {
+      console.error('❌ Amount exceeds available earnings:', { amount, availableEarnings });
       Alert.alert(
         'Insufficient Earnings',
         `You only have ${availableEarnings.toFixed(2)} MXI in referral earnings.\n\nPlease enter a smaller amount.`
@@ -94,39 +112,86 @@ export default function ReferralsScreen() {
       return;
     }
 
+    console.log('🟢 All validations passed, showing confirmation dialog');
+
     Alert.alert(
       'Confirm Transfer',
       `Transfer ${amount} MXI from referral earnings to your main balance?\n\n⚠️ Important:\n• This will NOT generate commissions\n• The amount will be added to your main balance\n• This action cannot be undone`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => {
+            console.log('🔴 Transfer cancelled by user');
+          }
+        },
         {
           text: 'Transfer',
           onPress: async () => {
+            console.log('🟢 ========================================');
+            console.log('🟢 USER CONFIRMED TRANSFER');
+            console.log('🟢 Starting transfer process...');
+            console.log('🟢 ========================================');
+            
             setIsTransferring(true);
+            
             try {
-              console.log(`💰 Transferring ${amount} MXI from referral earnings to balance (NO COMMISSIONS)`);
+              console.log(`💰 Calling RPC function: user_transfer_referral_to_balance`);
+              console.log(`💰 Parameters:`, {
+                p_user_id: user.id,
+                p_amount: amount,
+              });
               
               const { data, error } = await supabase.rpc('user_transfer_referral_to_balance', {
                 p_user_id: user.id,
                 p_amount: amount,
               });
 
+              console.log('📦 RPC Response received:');
+              console.log('📦 Data:', JSON.stringify(data, null, 2));
+              console.log('📦 Error:', error);
+
               if (error) {
                 console.error('❌ RPC Error:', error);
+                console.error('❌ Error details:', {
+                  message: error.message,
+                  details: error.details,
+                  hint: error.hint,
+                  code: error.code,
+                });
                 Alert.alert('Error', `Failed to transfer: ${error.message}`);
-                throw error;
+                setIsTransferring(false);
+                return;
               }
 
-              console.log('📦 Transfer response:', data);
+              console.log('📦 Checking response data...');
 
-              if (data && data.success) {
+              // Handle the response - it might be wrapped in an array
+              let responseData = data;
+              if (Array.isArray(data) && data.length > 0) {
+                console.log('📦 Response is an array, extracting first element');
+                responseData = data[0];
+              }
+
+              console.log('📦 Processed response data:', responseData);
+
+              if (responseData && responseData.success) {
+                console.log('✅ Transfer successful!');
+                console.log('✅ Response details:', {
+                  message: responseData.message,
+                  new_total_mxi: responseData.new_total_mxi,
+                  new_purchased_mxi: responseData.new_purchased_mxi,
+                  available_referral_earnings: responseData.available_referral_earnings,
+                });
+                
                 Alert.alert(
                   'Success! ✅',
-                  `${data.message}\n\n📊 Updated Balance:\n• Total MXI: ${data.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${data.available_referral_earnings.toFixed(2)} MXI\n\n✅ No commissions were generated for this transfer`,
+                  `${responseData.message}\n\n📊 Updated Balance:\n• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${responseData.available_referral_earnings.toFixed(2)} MXI\n\n✅ No commissions were generated for this transfer`,
                   [
                     {
                       text: 'OK',
                       onPress: () => {
+                        console.log('🔄 Closing modal and reloading data');
                         setShowTransferModal(false);
                         setTransferAmount('');
                         forceReloadReferrals();
@@ -135,14 +200,21 @@ export default function ReferralsScreen() {
                   ]
                 );
               } else {
-                const errorMsg = data?.error || 'Transfer failed';
+                const errorMsg = responseData?.error || 'Transfer failed - no success flag in response';
                 console.error('❌ Transfer failed:', errorMsg);
+                console.error('❌ Full response:', responseData);
                 Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
-              console.error('❌ Exception in handleTransferToBalance:', error);
+              console.error('❌ ========================================');
+              console.error('❌ EXCEPTION IN TRANSFER PROCESS');
+              console.error('❌ ========================================');
+              console.error('❌ Exception:', error);
+              console.error('❌ Error message:', error.message);
+              console.error('❌ Error stack:', error.stack);
               Alert.alert('Error', error.message || 'Failed to transfer');
             } finally {
+              console.log('🔵 Setting isTransferring to false');
               setIsTransferring(false);
             }
           }
@@ -327,18 +399,31 @@ export default function ReferralsScreen() {
         visible={showTransferModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowTransferModal(false)}
+        onRequestClose={() => {
+          console.log('🔴 Modal close requested');
+          if (!isTransferring) {
+            setShowTransferModal(false);
+          }
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Unify to Balance</Text>
-              <TouchableOpacity onPress={() => setShowTransferModal(false)}>
+              <TouchableOpacity 
+                onPress={() => {
+                  console.log('🔴 Close button pressed');
+                  if (!isTransferring) {
+                    setShowTransferModal(false);
+                  }
+                }}
+                disabled={isTransferring}
+              >
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
                   android_material_icon_name="cancel" 
                   size={28} 
-                  color={colors.textSecondary} 
+                  color={isTransferring ? colors.textSecondary + '50' : colors.textSecondary} 
                 />
               </TouchableOpacity>
             </View>
@@ -357,7 +442,10 @@ export default function ReferralsScreen() {
                 placeholder="Minimum 50 MXI"
                 placeholderTextColor={colors.textSecondary}
                 value={transferAmount}
-                onChangeText={setTransferAmount}
+                onChangeText={(text) => {
+                  console.log('🔵 Transfer amount changed:', text);
+                  setTransferAmount(text);
+                }}
                 keyboardType="decimal-pad"
                 editable={!isTransferring}
               />
@@ -381,11 +469,17 @@ export default function ReferralsScreen() {
 
               <TouchableOpacity 
                 style={[styles.transferButton, (isTransferring || !transferAmount) && styles.transferButtonDisabled]}
-                onPress={handleTransferToBalance}
+                onPress={() => {
+                  console.log('🟢 Transfer button pressed in modal');
+                  handleTransferToBalance();
+                }}
                 disabled={isTransferring || !transferAmount}
               >
                 {isTransferring ? (
-                  <ActivityIndicator color={colors.card} />
+                  <React.Fragment>
+                    <ActivityIndicator color={colors.card} />
+                    <Text style={[styles.transferButtonText, { marginLeft: 12 }]}>Processing...</Text>
+                  </React.Fragment>
                 ) : (
                   <React.Fragment>
                     <IconSymbol 
