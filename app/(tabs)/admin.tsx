@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -124,34 +124,7 @@ export default function AdminScreen() {
   const [editAddress, setEditAddress] = useState('');
   const [editReferredBy, setEditReferredBy] = useState('');
 
-  useEffect(() => {
-    console.log('🔐 Admin Panel - isAdmin:', isAdmin);
-    if (isAdmin) {
-      loadAllData();
-    }
-  }, [isAdmin]);
-
-  const loadAllData = async () => {
-    console.log('📊 Loading all admin data...');
-    setRefreshing(true);
-    try {
-      await Promise.all([
-        loadMetrics(),
-        loadUsers(),
-        loadKYCSubmissions(),
-        loadMessages(),
-        loadPlatformSettings(),
-      ]);
-      console.log('✅ All admin data loaded successfully');
-    } catch (error) {
-      console.error('❌ Error loading admin data:', error);
-      Alert.alert('Error', 'Failed to load admin data. Please try again.');
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     try {
       console.log('📈 Loading metrics...');
       
@@ -197,9 +170,9 @@ export default function AdminScreen() {
     } catch (error) {
       console.error('❌ Error in loadMetrics:', error);
     }
-  };
+  }, []);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       console.log('👥 Loading users...');
       const { data, error } = await supabase
@@ -217,9 +190,9 @@ export default function AdminScreen() {
     } catch (error) {
       console.error('❌ Error in loadUsers:', error);
     }
-  };
+  }, []);
 
-  const loadKYCSubmissions = async () => {
+  const loadKYCSubmissions = useCallback(async () => {
     try {
       console.log('🔍 Loading KYC submissions...');
       const { data, error } = await supabase
@@ -238,9 +211,9 @@ export default function AdminScreen() {
     } catch (error) {
       console.error('❌ Error in loadKYCSubmissions:', error);
     }
-  };
+  }, []);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       console.log('💬 Loading messages...');
       const { data, error } = await supabase
@@ -258,9 +231,9 @@ export default function AdminScreen() {
     } catch (error) {
       console.error('❌ Error in loadMessages:', error);
     }
-  };
+  }, []);
 
-  const loadPlatformSettings = async () => {
+  const loadPlatformSettings = useCallback(async () => {
     try {
       console.log('⚙️ Loading platform settings...');
       const { data, error } = await supabase
@@ -279,7 +252,34 @@ export default function AdminScreen() {
     } catch (error) {
       console.error('❌ Error in loadPlatformSettings:', error);
     }
-  };
+  }, []);
+
+  const loadAllData = useCallback(async () => {
+    console.log('📊 Loading all admin data...');
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        loadMetrics(),
+        loadUsers(),
+        loadKYCSubmissions(),
+        loadMessages(),
+        loadPlatformSettings(),
+      ]);
+      console.log('✅ All admin data loaded successfully');
+    } catch (error) {
+      console.error('❌ Error loading admin data:', error);
+      Alert.alert('Error', 'Failed to load admin data. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadMetrics, loadUsers, loadKYCSubmissions, loadMessages, loadPlatformSettings]);
+
+  useEffect(() => {
+    console.log('🔐 Admin Panel - isAdmin:', isAdmin);
+    if (isAdmin) {
+      loadAllData();
+    }
+  }, [isAdmin, loadAllData]);
 
   const loadUserDetails = async (userId: string) => {
     setLoading(true);

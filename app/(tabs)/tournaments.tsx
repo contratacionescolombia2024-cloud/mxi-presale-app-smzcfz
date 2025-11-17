@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -170,6 +170,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
+  playButtonText: {
+    color: colors.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   activeTournamentsBadge: {
     backgroundColor: colors.success,
     paddingHorizontal: 12,
@@ -279,11 +284,7 @@ export default function TournamentsScreen() {
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
   const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
 
-  useEffect(() => {
-    loadData();
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping tournaments data load');
       setIsLoading(false);
@@ -340,7 +341,11 @@ export default function TournamentsScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const onRefresh = async () => {
     setRefreshing(true);

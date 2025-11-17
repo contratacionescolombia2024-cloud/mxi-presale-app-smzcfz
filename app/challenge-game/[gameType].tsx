@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -42,11 +42,7 @@ export default function ChallengeGameScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
 
-  useEffect(() => {
-    loadChallenge();
-  }, [challengeId]);
-
-  const loadChallenge = async () => {
+  const loadChallenge = useCallback(async () => {
     if (!challengeId) {
       console.log('⚠️ No challenge ID');
       setIsLoading(false);
@@ -76,7 +72,11 @@ export default function ChallengeGameScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [challengeId, router]);
+
+  useEffect(() => {
+    loadChallenge();
+  }, [loadChallenge]);
 
   const handleGameComplete = async (score: number) => {
     if (!challenge || !user?.id) {

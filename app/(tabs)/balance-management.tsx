@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -63,22 +63,7 @@ export default function BalanceManagementScreen() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingOperation, setPendingOperation] = useState<'add_no_commission' | 'add_with_commission' | 'remove' | null>(null);
 
-  useEffect(() => {
-    console.log('🔐 Balance Management - isAdmin:', isAdmin);
-    console.log('🔐 Balance Management - user:', user?.email);
-    if (isAdmin) {
-      loadUsers();
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
-    if (selectedUser) {
-      console.log('👤 Selected user changed:', selectedUser.email);
-      loadUserVesting(selectedUser.id);
-    }
-  }, [selectedUser]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       console.log('👥 Loading users for balance management...');
       const { data, error } = await supabase
@@ -97,9 +82,9 @@ export default function BalanceManagementScreen() {
       console.error('❌ Exception in loadUsers:', error);
       Alert.alert('Error', 'Failed to load users');
     }
-  };
+  }, []);
 
-  const loadUserVesting = async (userId: string) => {
+  const loadUserVesting = useCallback(async (userId: string) => {
     try {
       console.log('📊 Loading vesting data for user:', userId);
       const { data, error } = await supabase
@@ -119,7 +104,22 @@ export default function BalanceManagementScreen() {
       console.error('❌ Exception in loadUserVesting:', error);
       Alert.alert('Error', 'Failed to load user balance');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    console.log('🔐 Balance Management - isAdmin:', isAdmin);
+    console.log('🔐 Balance Management - user:', user?.email);
+    if (isAdmin) {
+      loadUsers();
+    }
+  }, [isAdmin, user?.email, loadUsers]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      console.log('👤 Selected user changed:', selectedUser.email);
+      loadUserVesting(selectedUser.id);
+    }
+  }, [selectedUser, loadUserVesting]);
 
   const onRefresh = async () => {
     setRefreshing(true);

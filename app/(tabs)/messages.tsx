@@ -14,7 +14,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
@@ -155,35 +155,7 @@ export default function MessagesScreen() {
   const [loadingMessages, setLoadingMessages] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      loadMessages();
-      
-      // Subscribe to real-time updates
-      const subscription = supabase
-        .channel('messages_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages',
-            filter: `user_id=eq.${user.id}`,
-          },
-          () => {
-            console.log('Messages changed, reloading...');
-            loadMessages();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [user]);
-
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -214,7 +186,35 @@ export default function MessagesScreen() {
     } finally {
       setLoadingMessages(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadMessages();
+      
+      // Subscribe to real-time updates
+      const subscription = supabase
+        .channel('messages_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            console.log('Messages changed, reloading...');
+            loadMessages();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user, loadMessages]);
 
   const handleSend = async () => {
     if (!message.trim()) {

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -46,13 +46,7 @@ export default function ReferralsScreen() {
 
   const referralLink = `https://mxi-presale.com/register?ref=${user?.referralCode}`;
 
-  useEffect(() => {
-    if (user?.id) {
-      loadTransferHistory();
-    }
-  }, [user?.id]);
-
-  const loadTransferHistory = async () => {
+  const loadTransferHistory = useCallback(async () => {
     if (!user?.id) return;
     
     setLoadingHistory(true);
@@ -77,7 +71,13 @@ export default function ReferralsScreen() {
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadTransferHistory();
+    }
+  }, [user?.id, loadTransferHistory]);
 
   const handleCopyCode = async () => {
     if (user?.referralCode) {

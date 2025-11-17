@@ -169,7 +169,7 @@ export default function LoginScreen() {
     if (isAuthenticated) {
       router.replace('/(tabs)/(home)/');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const handleLogin = async () => {
     if (!email || !password) {
