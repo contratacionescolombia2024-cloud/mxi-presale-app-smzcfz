@@ -62,7 +62,7 @@ export default function VestingScreen() {
             color={colors.secondary} 
           />
           <Text style={styles.title}>Vesting Rewards</Text>
-          <Text style={styles.subtitle}>3% Monthly Returns</Text>
+          <Text style={styles.subtitle}>3% Monthly Returns on Purchased MXI</Text>
         </View>
 
         <View style={[commonStyles.card, styles.currentCard]}>
@@ -73,12 +73,21 @@ export default function VestingScreen() {
           <Text style={styles.updateText}>
             Updated in real-time • Last: {new Date(vestingData.lastUpdate).toLocaleTimeString()}
           </Text>
+          <Text style={styles.noteText}>
+            💡 Calculated only on purchased MXI
+          </Text>
         </View>
 
         <View style={commonStyles.card}>
           <Text style={styles.cardTitle}>Your Investment</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Total MXI Purchased</Text>
+            <Text style={styles.infoLabel}>💎 MXI Purchased (Vesting Base)</Text>
+            <Text style={styles.infoValue}>
+              {(vestingData.purchasedMXI || 0).toFixed(2)} MXI
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Total MXI Balance</Text>
             <Text style={styles.infoValue}>
               {(vestingData.totalMXI || 0).toFixed(2)} MXI
             </Text>
@@ -90,14 +99,29 @@ export default function VestingScreen() {
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Monthly Earnings</Text>
+            <Text style={styles.infoLabel}>Monthly Earnings (on Purchased)</Text>
             <Text style={styles.infoValue}>
-              {((vestingData.totalMXI || 0) * (vestingData.monthlyRate || 0.03)).toFixed(4)} MXI
+              {((vestingData.purchasedMXI || 0) * (vestingData.monthlyRate || 0.03)).toFixed(4)} MXI
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Projected Earnings</Text>
+        <View style={styles.importantNote}>
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle.fill" 
+            android_material_icon_name="warning" 
+            size={24} 
+            color={colors.accent} 
+          />
+          <View style={styles.noteContent}>
+            <Text style={styles.noteTitle}>Important Note</Text>
+            <Text style={styles.noteDescription}>
+              Vesting rewards are calculated ONLY on your purchased MXI tokens, not on referral commissions. This ensures fair and transparent reward distribution.
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Projected Earnings (on Purchased MXI)</Text>
         {projectionPeriods.map((period, index) => (
           <View key={index} style={[commonStyles.card, styles.projectionCard]}>
             <View style={styles.projectionHeader}>
@@ -111,7 +135,7 @@ export default function VestingScreen() {
             </View>
             <Text style={styles.projectionValue}>+{period.value.toFixed(4)} MXI</Text>
             <Text style={styles.projectionSubtext}>
-              Total: {((vestingData.totalMXI || 0) + period.value).toFixed(4)} MXI
+              Total: {((vestingData.purchasedMXI || 0) + period.value).toFixed(4)} MXI
             </Text>
           </View>
         ))}
@@ -126,11 +150,12 @@ export default function VestingScreen() {
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How Vesting Works</Text>
             <Text style={styles.infoText}>
-              - Earn 3% monthly on your total MXI holdings{'\n'}
+              - Earn 3% monthly on your PURCHASED MXI only{'\n'}
+              - Referral commissions do NOT generate vesting rewards{'\n'}
               - Rewards calculated per second{'\n'}
               - Updates in real-time{'\n'}
               - Automatically added to your balance{'\n'}
-              - Compound interest on total holdings
+              - Compound interest on purchased holdings
             </Text>
           </View>
         </View>
@@ -192,6 +217,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     marginTop: 8,
+    textAlign: 'center',
   },
   currentCard: {
     alignItems: 'center',
@@ -215,6 +241,13 @@ const styles = StyleSheet.create({
     color: colors.card,
     opacity: 0.8,
   },
+  noteText: {
+    fontSize: 12,
+    color: colors.card,
+    opacity: 0.9,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -232,11 +265,36 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 14,
     color: colors.textSecondary,
+    flex: 1,
   },
   infoValue: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  importantNote: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderRadius: 12,
+    gap: 12,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+  },
+  noteContent: {
+    flex: 1,
+  },
+  noteTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.accent,
+    marginBottom: 8,
+  },
+  noteDescription: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
   },
   sectionTitle: {
     fontSize: 20,

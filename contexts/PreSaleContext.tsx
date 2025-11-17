@@ -134,13 +134,14 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id, isAuthenticated]);
 
-  // Real-time vesting updates
+  // Real-time vesting updates - NOW ONLY ON PURCHASED MXI
   useEffect(() => {
-    if (!isAuthenticated || !user || !vestingData?.totalMXI) {
+    if (!isAuthenticated || !user || !vestingData?.purchasedMXI) {
       return;
     }
 
     console.log('⏱️ Starting real-time vesting updates for user:', user.id);
+    console.log('💰 Vesting calculated ONLY on purchased MXI:', vestingData.purchasedMXI);
 
     const interval = setInterval(() => {
       setVestingData((prev) => {
@@ -148,7 +149,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
         const monthlyRate = prev.monthlyRate || 0.03;
         const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
-        const increment = prev.totalMXI * secondlyRate;
+        
+        // IMPORTANT: Calculate rewards ONLY on purchased_mxi, NOT total_mxi
+        const increment = prev.purchasedMXI * secondlyRate;
 
         const newRewards = (prev.currentRewards || 0) + increment;
 
@@ -157,9 +160,10 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           currentRewards: newRewards,
           lastUpdate: new Date().toISOString(),
           projections: {
-            days7: prev.totalMXI * monthlyRate * (7 / 30),
-            days15: prev.totalMXI * monthlyRate * (15 / 30),
-            days30: prev.totalMXI * monthlyRate,
+            // Projections also based ONLY on purchased_mxi
+            days7: prev.purchasedMXI * monthlyRate * (7 / 30),
+            days15: prev.purchasedMXI * monthlyRate * (15 / 30),
+            days30: prev.purchasedMXI * monthlyRate,
           },
         };
       });
@@ -169,7 +173,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.log('🛑 Stopping real-time vesting updates');
       clearInterval(interval);
     };
-  }, [user, isAuthenticated, vestingData?.totalMXI]);
+  }, [user, isAuthenticated, vestingData?.purchasedMXI]);
 
   const loadCurrentStage = async () => {
     try {
@@ -260,6 +264,14 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         const purchasedMXI = safeNumeric(data.purchased_mxi);
         const currentRewards = safeNumeric(data.current_rewards);
         
+        console.log('💰 Vesting breakdown:', {
+          totalMXI,
+          purchasedMXI,
+          commissionMXI: totalMXI - purchasedMXI,
+          currentRewards,
+          note: 'Vesting rewards calculated ONLY on purchasedMXI'
+        });
+        
         setVestingData({
           id: data.id,
           userId: data.user_id,
@@ -269,9 +281,10 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           monthlyRate: monthlyRate,
           lastUpdate: data.last_update || new Date().toISOString(),
           projections: {
-            days7: totalMXI * monthlyRate * (7 / 30),
-            days15: totalMXI * monthlyRate * (15 / 30),
-            days30: totalMXI * monthlyRate,
+            // Projections based ONLY on purchased_mxi
+            days7: purchasedMXI * monthlyRate * (7 / 30),
+            days15: purchasedMXI * monthlyRate * (15 / 30),
+            days30: purchasedMXI * monthlyRate,
           },
         });
       } else {

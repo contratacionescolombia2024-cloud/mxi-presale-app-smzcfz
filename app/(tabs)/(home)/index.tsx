@@ -135,19 +135,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   balanceRowLabel: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   balanceRowValue: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.text,
   },
   balanceRowHighlight: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    color: colors.accent,
+    color: colors.text,
   },
   divider: {
     height: 1,
@@ -215,6 +215,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  vestingNote: {
+    fontSize: 12,
+    color: colors.primary,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   metricRow: {
     flexDirection: 'row',
@@ -380,6 +386,7 @@ export default function HomeScreen() {
       totalMXI: vestingData?.totalMXI,
       purchasedMXI: vestingData?.purchasedMXI,
       currentRewards: vestingData?.currentRewards,
+      note: 'Vesting rewards calculated ONLY on purchasedMXI'
     });
     console.log('🏠 Referral Stats:', {
       totalReferrals: referralStats?.totalReferrals,
@@ -502,22 +509,22 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - Detailed breakdown with PROMINENT commission display */}
+        {/* Balance Card - STANDARDIZED FORMAT AND COLORS */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
+            {/* STANDARDIZED: MXI Purchased */}
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>MXI Purchased</Text>
-              <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)}</Text>
+              <Text style={styles.balanceRowLabel}>💎 MXI Purchased</Text>
+              <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
             
+            {/* STANDARDIZED: Referral Commission - Same format and color */}
             <View style={styles.balanceRow}>
-              <Text style={[styles.balanceRowLabel, { fontWeight: '700', fontSize: 16 }]}>
-                🎁 Referral Commissions
-              </Text>
-              <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)} MXI</Text>
+              <Text style={styles.balanceRowLabel}>🎁 Referral Commission</Text>
+              <Text style={styles.balanceRowValue}>{referralMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.divider} />
@@ -529,21 +536,21 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0} refs)</Text>
-              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+              <Text style={styles.balanceRowValue}>
                 {(referralStats?.level1MXI || 0).toFixed(2)} MXI
               </Text>
             </View>
 
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0} refs)</Text>
-              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+              <Text style={styles.balanceRowValue}>
                 {(referralStats?.level2MXI || 0).toFixed(2)} MXI
               </Text>
             </View>
 
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0} refs)</Text>
-              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+              <Text style={styles.balanceRowValue}>
                 {(referralStats?.level3MXI || 0).toFixed(2)} MXI
               </Text>
             </View>
@@ -552,12 +559,12 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
-              <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)}</Text>
+              <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)} MXI</Text>
             </View>
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates */}
+        {/* Vesting Display with Real-Time Updates - ONLY ON PURCHASED MXI */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -576,11 +583,14 @@ export default function HomeScreen() {
               <Text style={styles.vestingRewardsUpdate}>
                 ⚡ Updating every second
               </Text>
+              <Text style={styles.vestingNote}>
+                💡 Calculated only on purchased MXI
+              </Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Total Vesting MXI</Text>
-              <Text style={styles.metricValue}>{totalMXI.toFixed(2)} MXI</Text>
+              <Text style={styles.metricLabel}>Purchased MXI (Vesting Base)</Text>
+              <Text style={styles.metricValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.metricRow}>
@@ -588,9 +598,9 @@ export default function HomeScreen() {
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
-            {/* Projections */}
+            {/* Projections - Based ONLY on purchased MXI */}
             <View style={styles.projectionsContainer}>
-              <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings</Text>
+              <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings (on Purchased MXI)</Text>
               
               <View style={styles.projectionRow}>
                 <Text style={styles.projectionLabel}>7 Days</Text>
