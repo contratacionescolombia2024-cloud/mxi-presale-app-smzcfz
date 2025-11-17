@@ -24,29 +24,9 @@ import { supabase } from '@/app/integrations/supabase/client';
 export default function ReferralsScreen() {
   const { user } = useAuth();
   const { referralStats, forceReloadReferrals } = usePreSale();
-  const [isReloading, setIsReloading] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferAmount, setTransferAmount] = useState('');
   const [isTransferring, setIsTransferring] = useState(false);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🔍 ========================================');
-    console.log('🔍 REFERRALS SCREEN - CURRENT STATE');
-    console.log('🔍 ========================================');
-    console.log('🔍 User ID:', user?.id);
-    console.log('🔍 Referral Stats:', {
-      totalReferrals: referralStats?.totalReferrals,
-      level1Count: referralStats?.level1Count,
-      level2Count: referralStats?.level2Count,
-      level3Count: referralStats?.level3Count,
-      level1MXI: referralStats?.level1MXI,
-      level2MXI: referralStats?.level2MXI,
-      level3MXI: referralStats?.level3MXI,
-      totalMXIEarned: referralStats?.totalMXIEarned,
-    });
-    console.log('🔍 ========================================');
-  }, [referralStats, user?.id]);
 
   const referralLink = `https://mxi-presale.com/register?ref=${user?.referralCode}`;
 
@@ -69,20 +49,6 @@ export default function ReferralsScreen() {
       });
     } catch (error) {
       console.log('Share error:', error);
-    }
-  };
-
-  const handleForceReload = async () => {
-    console.log('🔥 FORCE RELOAD BUTTON PRESSED');
-    setIsReloading(true);
-    try {
-      await forceReloadReferrals();
-      Alert.alert('Success', 'Referral data reloaded!');
-    } catch (error) {
-      console.error('Error reloading:', error);
-      Alert.alert('Error', 'Failed to reload data');
-    } finally {
-      setIsReloading(false);
     }
   };
 
@@ -223,27 +189,6 @@ export default function ReferralsScreen() {
           <Text style={styles.subtitle}>Earn up to 5% commission</Text>
         </View>
 
-        {/* FORCE RELOAD BUTTON - DRASTIC MEASURE */}
-        <TouchableOpacity 
-          style={[buttonStyles.primary, styles.forceReloadButton]}
-          onPress={handleForceReload}
-          disabled={isReloading}
-        >
-          {isReloading ? (
-            <ActivityIndicator color={colors.card} />
-          ) : (
-            <React.Fragment>
-              <IconSymbol 
-                ios_icon_name="arrow.clockwise.circle.fill" 
-                android_material_icon_name="refresh" 
-                size={20} 
-                color={colors.card} 
-              />
-              <Text style={[buttonStyles.text, { marginLeft: 8 }]}>Force Reload Data</Text>
-            </React.Fragment>
-          )}
-        </TouchableOpacity>
-
         <View style={[commonStyles.card, styles.totalCard]}>
           <Text style={styles.totalLabel}>Total Referral Earnings</Text>
           <Text style={styles.totalAmount}>
@@ -253,6 +198,15 @@ export default function ReferralsScreen() {
           </Text>
           <Text style={styles.totalSubtext}>
             From {(referralStats?.totalReferrals || 0)} total referrals
+          </Text>
+          <Text style={styles.realtimeIndicator}>
+            <IconSymbol 
+              ios_icon_name="circle.fill" 
+              android_material_icon_name="circle" 
+              size={8} 
+              color="#4ade80" 
+            />
+            {' '}Updating in real-time
           </Text>
           
           {/* UNIFY TO BALANCE BUTTON */}
@@ -366,17 +320,6 @@ export default function ReferralsScreen() {
             </Text>
           </View>
         </View>
-
-        {/* Debug Info Card */}
-        <View style={[commonStyles.card, styles.debugCard]}>
-          <Text style={styles.debugTitle}>🔍 Debug Information</Text>
-          <Text style={styles.debugInfo}>User ID: {user?.id}</Text>
-          <Text style={styles.debugInfo}>Total Referrals: {referralStats?.totalReferrals || 0}</Text>
-          <Text style={styles.debugInfo}>Level 1: {referralStats?.level1Count || 0} referrals, {(referralStats?.level1MXI || 0).toFixed(2)} MXI</Text>
-          <Text style={styles.debugInfo}>Level 2: {referralStats?.level2Count || 0} referrals, {(referralStats?.level2MXI || 0).toFixed(2)} MXI</Text>
-          <Text style={styles.debugInfo}>Level 3: {referralStats?.level3Count || 0} referrals, {(referralStats?.level3MXI || 0).toFixed(2)} MXI</Text>
-          <Text style={styles.debugInfo}>Total Earned: {(referralStats?.totalMXIEarned || 0).toFixed(2)} MXI</Text>
-        </View>
       </ScrollView>
 
       {/* Transfer to Balance Modal */}
@@ -488,13 +431,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 8,
   },
-  forceReloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    backgroundColor: colors.error,
-  },
   totalCard: {
     alignItems: 'center',
     backgroundColor: colors.accent,
@@ -516,7 +452,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.card,
     opacity: 0.8,
+    marginBottom: 8,
+  },
+  realtimeIndicator: {
+    fontSize: 12,
+    color: colors.card,
+    opacity: 0.9,
     marginBottom: 16,
+    fontWeight: '600',
   },
   unifyButton: {
     flexDirection: 'row',
@@ -652,24 +595,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 20,
-  },
-  debugCard: {
-    marginTop: 20,
-    backgroundColor: '#1a1a1a',
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  debugTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 12,
-  },
-  debugInfo: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   modalOverlay: {
     flex: 1,
