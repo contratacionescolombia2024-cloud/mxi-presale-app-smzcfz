@@ -122,6 +122,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginLeft: 8,
   },
+  referralInfoBox: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  referralInfoText: {
+    fontSize: 12,
+    color: colors.primary,
+    lineHeight: 18,
+    fontStyle: 'italic',
+  },
 });
 
 export default function RegisterScreen() {
@@ -150,7 +165,7 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      console.log('🔐 Registering user with referral code:', formData.referralCode);
+      console.log('🔐 Registering user with referral code:', formData.referralCode || 'None (auto-link to admin)');
       
       await register(
         {
@@ -317,13 +332,18 @@ export default function RegisterScreen() {
                 editable={!loading}
               />
             </View>
+            <View style={styles.referralInfoBox}>
+              <Text style={styles.referralInfoText}>
+                💡 If you don&apos;t have a referral code, your account will be automatically linked to the administrator to ensure you receive all platform benefits.
+              </Text>
+            </View>
           </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>📧 Important: After registration</Text>
-            <Text style={styles.infoBullet}>• Check your email inbox</Text>
-            <Text style={styles.infoBullet}>• Click the verification link</Text>
-            <Text style={styles.infoBullet}>• Then you can log in to your account</Text>
+            <Text style={styles.infoBullet}>- Check your email inbox</Text>
+            <Text style={styles.infoBullet}>- Click the verification link</Text>
+            <Text style={styles.infoBullet}>- Then you can log in to your account</Text>
           </View>
 
           <TouchableOpacity

@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               is_admin: false,
               account_blocked: false,
               referral_code: referralCode,
+              // Don't set referred_by here - the trigger will handle it
             })
             .select()
             .single();
@@ -171,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             is_admin: false,
             account_blocked: false,
             referral_code: referralCode,
+            // Don't set referred_by here - the trigger will handle it
           })
           .select()
           .single();
@@ -248,7 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = async (userData: Partial<User>, password: string, referralCode?: string) => {
     try {
       console.log('📝 Attempting registration for:', userData.email);
-      console.log('🔗 Referral code provided:', referralCode);
+      console.log('🔗 Referral code provided:', referralCode || 'None (will auto-link to admin)');
       
       if (!userData.email) {
         throw new Error('Email is required');
@@ -256,11 +258,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Validate referral code if provided
       let referrerId: string | null = null;
+      let validReferralCode: string | null = null;
+      
       if (referralCode && referralCode.trim() !== '') {
         console.log('🔍 Validating referral code:', referralCode);
         const { data: referrerData, error: referrerError } = await supabase
           .from('users_profiles')
-          .select('id, email, name')
+          .select('id, email, name, referral_code')
           .eq('referral_code', referralCode.trim().toUpperCase())
           .maybeSingle();
 
@@ -268,11 +272,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('❌ Error validating referral code:', referrerError);
         } else if (referrerData) {
           referrerId = referrerData.id;
+          validReferralCode = referrerData.referral_code;
           console.log('✅ Valid referral code from user:', referrerData.email);
         } else {
           console.log('⚠️ Invalid referral code provided:', referralCode);
-          Alert.alert('Invalid Referral Code', 'The referral code you entered is not valid. Registration will continue without a referral.');
+          Alert.alert('Invalid Referral Code', 'The referral code you entered is not valid. Your account will be automatically linked to the administrator.');
         }
+      } else {
+        console.log('ℹ️ No referral code provided - user will be auto-linked to admin by database trigger');
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -305,6 +312,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Use a small delay to ensure auth.users record is committed
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      // If no valid referral code was provided, don't set referred_by
+      // The database trigger will automatically link to admin
       const { error: profileError } = await supabase
         .from('users_profiles')
         .insert({
@@ -317,7 +326,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           is_admin: false,
           account_blocked: false,
           referral_code: newUserReferralCode,
-          referred_by: referralCode && referrerId ? referralCode.trim().toUpperCase() : null,
+          // Only set referred_by if a valid referral code was provided
+          // Otherwise, the trigger will set it to admin's code
+          referred_by: validReferralCode || undefined,
         });
 
       if (profileError) {
@@ -326,10 +337,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('⚠️ Profile creation failed, but trigger will handle it on email confirmation');
       } else {
         console.log('✅ Profile created with referral code:', newUserReferralCode);
+        if (validReferralCode) {
+          console.log('✅ Linked to referrer with code:', validReferralCode);
+        } else {
+          console.log('✅ Auto-linked to admin by database trigger');
+        }
       }
 
       // Create referral relationship if referral code was valid
-      if (referrerId) {
+      if (referrerId && validReferralCode) {
         console.log('🔗 Creating referral relationship...');
         const { error: referralError } = await supabase
           .from('referrals')
@@ -347,6 +363,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           console.log('✅ Referral relationship created');
         }
+      } else {
+        console.log('ℹ️ Referral relationship will be created by database trigger (auto-link to admin)');
       }
 
       console.log('✅ Registration complete');
