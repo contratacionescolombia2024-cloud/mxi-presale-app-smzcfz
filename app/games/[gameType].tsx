@@ -18,12 +18,18 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS, PARTICIPANT_OPTIONS } from '@/types/tournaments';
+import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, VIRAL_ZONE_GAME_NAMES, VIRAL_ZONE_GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS, PARTICIPANT_OPTIONS, VIRAL_ZONE_MAX_PLAYERS, VIRAL_ZONE_ENTRY_FEE } from '@/types/tournaments';
 import ReactionTestGame from '@/components/games/ReactionTestGame';
 import JumpTimeGame from '@/components/games/JumpTimeGame';
 import SlidePuzzleGame from '@/components/games/SlidePuzzleGame';
 import MemorySpeedGame from '@/components/games/MemorySpeedGame';
 import SnakeRetroGame from '@/components/games/SnakeRetroGame';
+import CatchItGame from '@/components/games/CatchItGame';
+import ShurikenAimGame from '@/components/games/ShurikenAimGame';
+import WhisperChallengeGame from '@/components/games/WhisperChallengeGame';
+import FloorIsLavaGame from '@/components/games/FloorIsLavaGame';
+import NumberTrackerGame from '@/components/games/NumberTrackerGame';
+import ReflexBombGame from '@/components/games/ReflexBombGame';
 
 const styles = StyleSheet.create({
   container: {
@@ -254,6 +260,8 @@ const styles = StyleSheet.create({
   },
 });
 
+const VIRAL_ZONE_GAMES = ['catch_it', 'shuriken_aim', 'whisper_challenge', 'floor_is_lava', 'number_tracker', 'reflex_bomb'];
+
 export default function GameScreen() {
   const { gameType } = useLocalSearchParams<{ gameType: string }>();
   const { user } = useAuth();
@@ -266,6 +274,8 @@ export default function GameScreen() {
   const [selectedParticipants, setSelectedParticipants] = useState<25 | 50>(50);
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
   const channelRef = useRef<any>(null);
+
+  const isViralZone = VIRAL_ZONE_GAMES.includes(gameType || '');
 
   useEffect(() => {
     loadTournaments();
@@ -317,7 +327,6 @@ export default function GameScreen() {
     try {
       console.log('🎮 Loading tournaments for game:', gameType);
 
-      // Load total active tournaments count
       const { data: allTournaments, error: countError } = await supabase
         .from('tournaments')
         .select('id', { count: 'exact' })
@@ -329,7 +338,6 @@ export default function GameScreen() {
         setTotalActiveTournaments(allTournaments?.length || 0);
       }
 
-      // Load tournaments for this game
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
@@ -360,10 +368,15 @@ export default function GameScreen() {
       );
       return;
     }
-    setShowParticipantModal(true);
+    
+    if (isViralZone) {
+      handleCreateTournament(VIRAL_ZONE_MAX_PLAYERS);
+    } else {
+      setShowParticipantModal(true);
+    }
   };
 
-  const handleCreateTournament = async () => {
+  const handleCreateTournament = async (maxPlayers: number = selectedParticipants) => {
     if (!user?.id || !gameType) {
       console.log('⚠️ Missing user or game type');
       return;
@@ -371,16 +384,19 @@ export default function GameScreen() {
 
     setShowParticipantModal(false);
 
+    const entryFee = isViralZone ? VIRAL_ZONE_ENTRY_FEE : 3;
+    const prizePool = isViralZone ? maxPlayers * entryFee : 135;
+
     try {
-      console.log('🎮 Creating tournament for game:', gameType, 'with', selectedParticipants, 'max players');
+      console.log('🎮 Creating tournament for game:', gameType, 'with', maxPlayers, 'max players');
 
       const { data, error } = await supabase
         .from('tournaments')
         .insert({
           game_type: gameType,
-          entry_fee: 3,
-          prize_pool: 135,
-          max_players: selectedParticipants,
+          entry_fee: entryFee,
+          prize_pool: prizePool,
+          max_players: maxPlayers,
           current_players: 0,
           status: 'waiting',
         })
@@ -428,7 +444,6 @@ export default function GameScreen() {
       console.log('✅ Joined tournament successfully');
       Alert.alert('Success', 'You have joined the tournament! Good luck!');
 
-      // Find the tournament and start the game
       const tournament = tournaments.find((t) => t.id === tournamentId);
       if (tournament) {
         setActiveTournament(tournament);
@@ -449,7 +464,6 @@ export default function GameScreen() {
     try {
       console.log('🎮 Submitting score:', score);
 
-      // Submit score
       const { error: scoreError } = await supabase.from('game_scores').upsert({
         tournament_id: activeTournament.id,
         user_id: user.id,
@@ -465,7 +479,6 @@ export default function GameScreen() {
       console.log('✅ Score submitted successfully');
       Alert.alert('Score Submitted', `Your score of ${score} has been recorded!`);
 
-      // Exit game
       setIsInGame(false);
       setActiveTournament(null);
       await loadTournaments();
@@ -509,7 +522,6 @@ export default function GameScreen() {
   }
 
   if (isInGame && activeTournament) {
-    // Render the appropriate game component
     const gameProps = {
       tournamentId: activeTournament.id,
       onComplete: handleGameComplete,
@@ -524,13 +536,23 @@ export default function GameScreen() {
           {gameType === 'slide_puzzle' && <SlidePuzzleGame {...gameProps} />}
           {gameType === 'memory_speed' && <MemorySpeedGame {...gameProps} />}
           {gameType === 'snake_retro' && <SnakeRetroGame {...gameProps} />}
+          {gameType === 'catch_it' && <CatchItGame {...gameProps} />}
+          {gameType === 'shuriken_aim' && <ShurikenAimGame {...gameProps} />}
+          {gameType === 'whisper_challenge' && <WhisperChallengeGame {...gameProps} />}
+          {gameType === 'floor_is_lava' && <FloorIsLavaGame {...gameProps} />}
+          {gameType === 'number_tracker' && <NumberTrackerGame {...gameProps} />}
+          {gameType === 'reflex_bomb' && <ReflexBombGame {...gameProps} />}
         </View>
       </SafeAreaView>
     );
   }
 
-  const gameName = GAME_NAMES[gameType as keyof typeof GAME_NAMES] || 'Unknown Game';
-  const gameDescription = GAME_DESCRIPTIONS[gameType as keyof typeof GAME_DESCRIPTIONS] || '';
+  const gameName = isViralZone 
+    ? VIRAL_ZONE_GAME_NAMES[gameType as keyof typeof VIRAL_ZONE_GAME_NAMES] 
+    : GAME_NAMES[gameType as keyof typeof GAME_NAMES] || 'Unknown Game';
+  const gameDescription = isViralZone
+    ? VIRAL_ZONE_GAME_DESCRIPTIONS[gameType as keyof typeof VIRAL_ZONE_GAME_DESCRIPTIONS]
+    : GAME_DESCRIPTIONS[gameType as keyof typeof GAME_DESCRIPTIONS] || '';
   const isAtLimit = totalActiveTournaments >= MAX_ACTIVE_TOURNAMENTS;
 
   return (
@@ -634,53 +656,54 @@ export default function GameScreen() {
         )}
       </ScrollView>
 
-      {/* Participant Selection Modal */}
-      <Modal
-        visible={showParticipantModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowParticipantModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choose Tournament Size</Text>
-            <Text style={styles.modalSubtitle}>
-              Select the maximum number of participants for this tournament
-            </Text>
+      {!isViralZone && (
+        <Modal
+          visible={showParticipantModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowParticipantModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choose Tournament Size</Text>
+              <Text style={styles.modalSubtitle}>
+                Select the maximum number of participants for this tournament
+              </Text>
 
-            {PARTICIPANT_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.participantOption,
-                  selectedParticipants === option && styles.participantOptionSelected,
-                ]}
-                onPress={() => setSelectedParticipants(option)}
-              >
-                <Text style={styles.participantOptionTitle}>{option} Players</Text>
-                <Text style={styles.participantOptionSubtitle}>
-                  {option === 25 ? 'Smaller tournament, faster to fill' : 'Larger tournament, bigger competition'}
-                </Text>
-              </TouchableOpacity>
-            ))}
+              {PARTICIPANT_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.participantOption,
+                    selectedParticipants === option && styles.participantOptionSelected,
+                  ]}
+                  onPress={() => setSelectedParticipants(option)}
+                >
+                  <Text style={styles.participantOptionTitle}>{option} Players</Text>
+                  <Text style={styles.participantOptionSubtitle}>
+                    {option === 25 ? 'Smaller tournament, faster to fill' : 'Larger tournament, bigger competition'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setShowParticipantModal(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handleCreateTournament}
-              >
-                <Text style={styles.modalButtonText}>Create</Text>
-              </TouchableOpacity>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => setShowParticipantModal(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={() => handleCreateTournament()}
+                >
+                  <Text style={styles.modalButtonText}>Create</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }

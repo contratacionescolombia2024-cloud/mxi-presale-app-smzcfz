@@ -1,7 +1,7 @@
 
 export interface Tournament {
   id: string;
-  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro';
+  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro' | 'catch_it' | 'shuriken_aim' | 'whisper_challenge' | 'floor_is_lava' | 'number_tracker' | 'reflex_bomb';
   entry_fee: number;
   prize_pool: number;
   max_players: number;
@@ -42,14 +42,13 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
-// Challenge types (1 vs 1-4 opponents, 2-5 total players)
 export interface Challenge {
   id: string;
   game_type: 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
   creator_id: string;
   entry_fee: number;
   prize_pool: number;
-  max_players: number; // 2-5 players
+  max_players: number;
   current_players: number;
   status: 'waiting' | 'in_progress' | 'completed' | 'cancelled';
   invite_code: string;
@@ -90,6 +89,15 @@ export const GAME_TYPES = {
   SNAKE_RETRO: 'snake_retro',
 } as const;
 
+export const VIRAL_ZONE_GAME_TYPES = {
+  CATCH_IT: 'catch_it',
+  SHURIKEN_AIM: 'shuriken_aim',
+  WHISPER_CHALLENGE: 'whisper_challenge',
+  FLOOR_IS_LAVA: 'floor_is_lava',
+  NUMBER_TRACKER: 'number_tracker',
+  REFLEX_BOMB: 'reflex_bomb',
+} as const;
+
 export const CHALLENGE_GAME_TYPES = {
   QUICK_DRAW_DUEL: 'quick_draw_duel',
   TAP_RUSH: 'tap_rush',
@@ -105,6 +113,15 @@ export const GAME_NAMES = {
   slide_puzzle: 'Slide Puzzle',
   memory_speed: 'Memory Speed',
   snake_retro: 'MXI Snake Retro',
+} as const;
+
+export const VIRAL_ZONE_GAME_NAMES = {
+  catch_it: 'Catch It!',
+  shuriken_aim: 'Shuriken Aim',
+  whisper_challenge: 'Whisper Challenge Retro',
+  floor_is_lava: 'Floor is Lava',
+  number_tracker: 'Number Tracker',
+  reflex_bomb: 'Reflex Bomb',
 } as const;
 
 export const CHALLENGE_GAME_NAMES = {
@@ -124,6 +141,15 @@ export const GAME_DESCRIPTIONS = {
   snake_retro: 'Classic snake game. Grow longer and score higher!',
 } as const;
 
+export const VIRAL_ZONE_GAME_DESCRIPTIONS = {
+  catch_it: 'Catch correct objects falling from above. Highest score in 30 seconds wins!',
+  shuriken_aim: 'Throw ninja stars at the target. Precision determines your score!',
+  whisper_challenge: 'Speak as quietly as possible without going silent. Very viral!',
+  floor_is_lava: 'Jump between platforms without falling. Last the longest to win!',
+  number_tracker: 'Tap numbers in order from a full screen. Fast and addictive!',
+  reflex_bomb: 'Tap the bomb just before it explodes. Reaction and precision!',
+} as const;
+
 export const CHALLENGE_GAME_DESCRIPTIONS = {
   quick_draw_duel: 'When "FIRE" appears, tap as fast as you can! Fastest wins.',
   tap_rush: 'Tap the button as many times as possible in 10 seconds.',
@@ -135,6 +161,8 @@ export const CHALLENGE_GAME_DESCRIPTIONS = {
 
 export const MAX_ACTIVE_TOURNAMENTS = 30;
 export const PARTICIPANT_OPTIONS = [25, 50] as const;
+export const VIRAL_ZONE_ENTRY_FEE = 1;
+export const VIRAL_ZONE_MAX_PLAYERS = 100;
 export const CHALLENGE_MIN_ENTRY = 5;
 export const CHALLENGE_MAX_ENTRY = 1000;
 export const CHALLENGE_MIN_PLAYERS = 2;
