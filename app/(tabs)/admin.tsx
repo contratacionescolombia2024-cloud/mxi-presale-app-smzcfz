@@ -495,18 +495,32 @@ export default function AdminScreen() {
                 ? 'admin_add_balance_with_commissions'
                 : 'admin_add_balance_without_commissions';
 
-              console.log(`💰 Calling ${functionName} for user ${selectedUser.id} with amount ${amount}`);
-              console.log(`📤 Request params:`, { p_user_id: selectedUser.id, p_mxi_amount: amount });
+              console.log('💰 ========================================');
+              console.log(`💰 CALLING ${functionName}`);
+              console.log('💰 User ID:', selectedUser.id);
+              console.log('💰 Amount:', amount);
+              console.log('💰 ========================================');
               
+              // CRITICAL FIX: Make sure we're passing the correct parameter types
               const { data, error } = await supabase.rpc(functionName, {
                 p_user_id: selectedUser.id,
                 p_mxi_amount: amount,
               });
 
+              console.log('💰 ========================================');
+              console.log('💰 RPC CALL COMPLETED');
+              console.log('💰 Error:', error);
+              console.log('💰 Data:', JSON.stringify(data, null, 2));
+              console.log('💰 ========================================');
+
               if (error) {
                 console.error(`❌ RPC Error in ${functionName}:`, error);
-                Alert.alert('Error', `Failed to add balance: ${error.message}\n\nPlease check the logs and try again.`);
-                throw error;
+                console.error('❌ Error details:', JSON.stringify(error, null, 2));
+                Alert.alert(
+                  'Error', 
+                  `Failed to add balance: ${error.message}\n\nDetails: ${error.details || 'No details'}\n\nHint: ${error.hint || 'No hint'}`
+                );
+                return;
               }
 
               console.log(`📦 ${functionName} response:`, data);
@@ -537,13 +551,15 @@ export default function AdminScreen() {
                   }
                 ]);
               } else {
-                const errorMsg = data?.error || 'Failed to add balance';
+                const errorMsg = data?.error || 'Failed to add balance - no success flag in response';
                 console.error('❌ Balance addition failed:', errorMsg);
+                console.error('❌ Full response:', JSON.stringify(data, null, 2));
                 Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
               console.error('❌ Exception in handleAddBalance:', error);
-              Alert.alert('Error', error.message || 'Failed to add balance. Please check the console logs.');
+              console.error('❌ Exception stack:', error.stack);
+              Alert.alert('Error', `Exception: ${error.message || 'Unknown error'}\n\nPlease check the console logs.`);
             } finally {
               setLoading(false);
             }
