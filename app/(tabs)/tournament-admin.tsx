@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
@@ -238,10 +238,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.light,
   },
+  quickAccessContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  gameSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+  },
+  gameSettingsButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
+  },
 });
 
 export default function TournamentAdminScreen() {
   const { isAdmin } = useAuth();
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -481,6 +500,28 @@ export default function TournamentAdminScreen() {
           ) : (
             <IconSymbol ios_icon_name="arrow.clockwise" android_material_icon_name="refresh" size={24} color={colors.primary} />
           )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Quick Access to Game Settings */}
+      <View style={styles.quickAccessContainer}>
+        <TouchableOpacity 
+          style={styles.gameSettingsButton}
+          onPress={() => router.push('/game-settings' as any)}
+        >
+          <IconSymbol 
+            ios_icon_name="gearshape.fill" 
+            android_material_icon_name="settings" 
+            size={24} 
+            color={colors.card} 
+          />
+          <Text style={styles.gameSettingsButtonText}>Game Settings (Limits & Config)</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.card} 
+          />
         </TouchableOpacity>
       </View>
 

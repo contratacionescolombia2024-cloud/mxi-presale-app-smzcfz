@@ -307,6 +307,7 @@ export default function TournamentsScreen() {
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
   const [activeTournaments, setActiveTournaments] = useState<Record<string, number>>({});
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
+  const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
 
   useEffect(() => {
     loadData();
@@ -350,6 +351,17 @@ export default function TournamentsScreen() {
         });
         setActiveTournaments(counts);
         setTotalActiveTournaments(total);
+      }
+
+      // Load max active tournaments from game settings
+      const { data: gameSettings, error: settingsError } = await supabase
+        .from('game_settings')
+        .select('max_active_tournaments')
+        .limit(1)
+        .maybeSingle();
+
+      if (!settingsError && gameSettings) {
+        setMaxActiveTournaments(gameSettings.max_active_tournaments);
       }
 
       console.log('✅ Tournaments data loaded');
@@ -403,7 +415,7 @@ export default function TournamentsScreen() {
     { type: 'reflex_bomb', icon: 'alarm' },
   ];
 
-  const limitPercentage = (totalActiveTournaments / MAX_ACTIVE_TOURNAMENTS) * 100;
+  const limitPercentage = (totalActiveTournaments / maxActiveTournaments) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -429,14 +441,14 @@ export default function TournamentsScreen() {
         <View style={styles.limitCard}>
           <Text style={styles.limitTitle}>📊 Active Tournaments</Text>
           <Text style={styles.limitText}>
-            Current active tournaments will fill up as participants join. Maximum {MAX_ACTIVE_TOURNAMENTS} tournaments can be active at once.
+            Current active tournaments will fill up as participants join. Maximum {maxActiveTournaments} tournaments can be active at once.
           </Text>
           <View style={styles.limitProgress}>
             <View style={styles.limitBar}>
               <View style={[styles.limitBarFill, { width: `${limitPercentage}%` }]} />
             </View>
             <Text style={styles.limitCount}>
-              {totalActiveTournaments}/{MAX_ACTIVE_TOURNAMENTS}
+              {totalActiveTournaments}/{maxActiveTournaments}
             </Text>
           </View>
         </View>

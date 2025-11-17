@@ -273,6 +273,7 @@ export default function GameScreen() {
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<25 | 50>(50);
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
+  const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
   const channelRef = useRef<any>(null);
 
   const isViralZone = VIRAL_ZONE_GAMES.includes(gameType || '');
@@ -338,6 +339,17 @@ export default function GameScreen() {
         setTotalActiveTournaments(allTournaments?.length || 0);
       }
 
+      // Load max active tournaments from game settings for this specific game
+      const { data: gameSettings, error: settingsError } = await supabase
+        .from('game_settings')
+        .select('max_active_tournaments')
+        .eq('game_type', gameType)
+        .maybeSingle();
+
+      if (!settingsError && gameSettings) {
+        setMaxActiveTournaments(gameSettings.max_active_tournaments);
+      }
+
       const { data, error } = await supabase
         .from('tournaments')
         .select('*')
@@ -361,10 +373,10 @@ export default function GameScreen() {
   };
 
   const handleCreateTournamentPress = () => {
-    if (totalActiveTournaments >= MAX_ACTIVE_TOURNAMENTS) {
+    if (totalActiveTournaments >= maxActiveTournaments) {
       Alert.alert(
         'Tournament Limit Reached',
-        `Maximum of ${MAX_ACTIVE_TOURNAMENTS} active tournaments allowed. Please wait for some tournaments to complete.`
+        `Maximum of ${maxActiveTournaments} active tournaments allowed for this game. Please wait for some tournaments to complete.`
       );
       return;
     }
@@ -553,7 +565,7 @@ export default function GameScreen() {
   const gameDescription = isViralZone
     ? VIRAL_ZONE_GAME_DESCRIPTIONS[gameType as keyof typeof VIRAL_ZONE_GAME_DESCRIPTIONS]
     : GAME_DESCRIPTIONS[gameType as keyof typeof GAME_DESCRIPTIONS] || '';
-  const isAtLimit = totalActiveTournaments >= MAX_ACTIVE_TOURNAMENTS;
+  const isAtLimit = totalActiveTournaments >= maxActiveTournaments;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -571,7 +583,7 @@ export default function GameScreen() {
         {isAtLimit && (
           <View style={styles.limitWarning}>
             <Text style={styles.limitWarningText}>
-              ⚠️ Maximum active tournaments reached ({totalActiveTournaments}/{MAX_ACTIVE_TOURNAMENTS}). Wait for tournaments to complete.
+              ⚠️ Maximum active tournaments reached ({totalActiveTournaments}/{maxActiveTournaments}). Wait for tournaments to complete.
             </Text>
           </View>
         )}

@@ -167,3 +167,18 @@ export const CHALLENGE_MIN_ENTRY = 5;
 export const CHALLENGE_MAX_ENTRY = 1000;
 export const CHALLENGE_MIN_PLAYERS = 2;
 export const CHALLENGE_MAX_PLAYERS = 5;
+
+export interface GameSettings {
+  id: string;
+  game_type: string;
+  max_active_tournaments: number;
+  entry_fee: number;
+  max_players: number;
+  prize_distribution: {
+    first: number;
+    second?: number;
+    third?: number;
+  };
+  created_at: string;
+  updated_at: string;
+}
