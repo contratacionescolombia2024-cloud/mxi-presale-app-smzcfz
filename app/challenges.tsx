@@ -343,6 +343,38 @@ const styles = StyleSheet.create({
   gamesScrollView: {
     maxHeight: 300,
   },
+  participantSelector: {
+    marginBottom: 16,
+  },
+  participantOptions: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  participantOption: {
+    flex: 1,
+    minWidth: 60,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  participantOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionPurple,
+  },
+  participantOptionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  participantOptionLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
 });
 
 export default function ChallengesScreen() {
@@ -356,8 +388,10 @@ export default function ChallengesScreen() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>('quick_draw_duel');
   const [entryFee, setEntryFee] = useState('50');
+  const [maxPlayers, setMaxPlayers] = useState(4);
   const [allowRandomJoin, setAllowRandomJoin] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const challengeGames = [
     { type: 'quick_draw_duel', icon: '🔫' },
@@ -367,6 +401,8 @@ export default function ChallengesScreen() {
     { type: 'danger_path', icon: '🎯' },
     { type: 'mxi_climber', icon: '⛰️' },
   ];
+
+  const participantOptions = [2, 3, 4, 5];
 
   useEffect(() => {
     loadData();
@@ -425,6 +461,7 @@ export default function ChallengesScreen() {
   const handleCreateChallenge = async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID');
+      Alert.alert('Error', 'You must be logged in to create a challenge.');
       return;
     }
 
@@ -439,38 +476,24 @@ export default function ChallengesScreen() {
       return;
     }
 
-    setShowCreateModal(false);
+    setIsCreating(true);
 
     try {
-      console.log('🎮 Creating challenge:', selectedGame, 'with entry fee:', fee);
+      console.log('🎮 Creating challenge:', {
+        game: selectedGame,
+        entryFee: fee,
+        maxPlayers: maxPlayers,
+        allowRandomJoin: allowRandomJoin,
+      });
 
-      // Generate invite code
-      const { data: inviteCodeData, error: inviteCodeError } = await supabase.rpc('generate_challenge_invite_code');
-
-      if (inviteCodeError) {
-        console.error('❌ Error generating invite code:', inviteCodeError);
-        throw inviteCodeError;
-      }
-
-      const inviteCode = inviteCodeData;
-      const prizePool = fee * 4; // 4 players total
-
-      // Create challenge
-      const { data, error } = await supabase
-        .from('challenges')
-        .insert({
-          game_type: selectedGame,
-          creator_id: user.id,
-          entry_fee: fee,
-          prize_pool: prizePool,
-          max_players: 4,
-          current_players: 0,
-          status: 'waiting',
-          invite_code: inviteCode,
-          allow_random_join: allowRandomJoin,
-        })
-        .select()
-        .single();
+      // Call the new RPC function
+      const { data, error } = await supabase.rpc('create_challenge_with_creator', {
+        p_user_id: user.id,
+        p_game_type: selectedGame,
+        p_entry_fee: fee,
+        p_max_players: maxPlayers,
+        p_allow_random_join: allowRandomJoin,
+      });
 
       if (error) {
         console.error('❌ Error creating challenge:', error);
@@ -478,17 +501,39 @@ export default function ChallengesScreen() {
       }
 
       console.log('✅ Challenge created:', data);
-      Alert.alert('Success', `Challenge created! Invite code: ${inviteCode}`);
+
+      if (!data.success) {
+        Alert.alert('Error', data.message || 'Failed to create challenge');
+        return;
+      }
+
+      setShowCreateModal(false);
+      Alert.alert(
+        'Success! 🎉',
+        `Challenge created!\n\nInvite Code: ${data.invite_code}\n\nShare this code with your friends to invite them!`,
+        [
+          {
+            text: 'Copy Code',
+            onPress: async () => {
+              await Clipboard.setStringAsync(data.invite_code);
+            },
+          },
+          { text: 'OK' },
+        ]
+      );
       await loadData();
     } catch (error) {
       console.error('❌ Failed to create challenge:', error);
       Alert.alert('Error', 'Failed to create challenge. Please try again.');
+    } finally {
+      setIsCreating(false);
     }
   };
 
   const handleJoinChallenge = async (challengeId: string) => {
     if (!user?.id) {
       console.log('⚠️ No user ID');
+      Alert.alert('Error', 'You must be logged in to join a challenge.');
       return;
     }
 
@@ -564,6 +609,7 @@ export default function ChallengesScreen() {
   const handleCancelChallenge = async (challengeId: string) => {
     if (!user?.id) {
       console.log('⚠️ No user ID');
+      Alert.alert('Error', 'You must be logged in.');
       return;
     }
 
@@ -640,7 +686,7 @@ export default function ChallengesScreen() {
             <IconSymbol name={ICONS.BACK} size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={styles.title}>⚔️ 1 vs 3 Challenges</Text>
+            <Text style={styles.title}>⚔️ Challenges</Text>
             <Text style={styles.subtitle}>Create or join custom challenges!</Text>
           </View>
         </View>
@@ -800,7 +846,7 @@ export default function ChallengesScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create Challenge</Text>
-            <Text style={styles.modalSubtitle}>Choose a game and set the entry fee</Text>
+            <Text style={styles.modalSubtitle}>Choose a game, set entry fee, and select number of players</Text>
 
             <ScrollView style={styles.gamesScrollView}>
               {challengeGames.map((game) => (
@@ -818,6 +864,25 @@ export default function ChallengesScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
+            <View style={styles.participantSelector}>
+              <Text style={styles.inputLabel}>Number of Players (including you)</Text>
+              <View style={styles.participantOptions}>
+                {participantOptions.map((num) => (
+                  <TouchableOpacity
+                    key={num}
+                    style={[
+                      styles.participantOption,
+                      maxPlayers === num && styles.participantOptionSelected,
+                    ]}
+                    onPress={() => setMaxPlayers(num)}
+                  >
+                    <Text style={styles.participantOptionText}>{num}</Text>
+                    <Text style={styles.participantOptionLabel}>players</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
 
             <Text style={styles.inputLabel}>Entry Fee (MXI)</Text>
             <TextInput
@@ -843,14 +908,20 @@ export default function ChallengesScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => setShowCreateModal(false)}
+                disabled={isCreating}
               >
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
                 onPress={handleCreateChallenge}
+                disabled={isCreating}
               >
-                <Text style={styles.modalButtonText}>Create</Text>
+                {isCreating ? (
+                  <ActivityIndicator size="small" color={colors.light} />
+                ) : (
+                  <Text style={styles.modalButtonText}>Create</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>

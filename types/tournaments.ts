@@ -42,14 +42,14 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
-// Challenge types (1 vs 3)
+// Challenge types (1 vs 1-4 opponents, 2-5 total players)
 export interface Challenge {
   id: string;
   game_type: 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
   creator_id: string;
   entry_fee: number;
   prize_pool: number;
-  max_players: number;
+  max_players: number; // 2-5 players
   current_players: number;
   status: 'waiting' | 'in_progress' | 'completed' | 'cancelled';
   invite_code: string;
@@ -137,3 +137,5 @@ export const MAX_ACTIVE_TOURNAMENTS = 30;
 export const PARTICIPANT_OPTIONS = [25, 50] as const;
 export const CHALLENGE_MIN_ENTRY = 5;
 export const CHALLENGE_MAX_ENTRY = 1000;
+export const CHALLENGE_MIN_PLAYERS = 2;
+export const CHALLENGE_MAX_PLAYERS = 5;
