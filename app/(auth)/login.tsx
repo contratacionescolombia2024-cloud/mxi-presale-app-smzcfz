@@ -182,6 +182,7 @@ export default function LoginScreen() {
     
     try {
       await login(email, password);
+      // Success - user will be redirected by useEffect
     } catch (err: any) {
       console.error('Login error:', err);
       const errorMessage = err.message || 'Login failed. Please try again.';
@@ -191,7 +192,7 @@ export default function LoginScreen() {
       if (errorMessage.includes('verify your email')) {
         Alert.alert(
           '📧 Email Verification Required',
-          errorMessage + '\n\nWould you like us to resend the verification email?',
+          'Your email address has not been verified yet. Please check your inbox (and spam folder) for the verification link.\n\nWould you like us to resend the verification email?',
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -304,7 +305,7 @@ export default function LoginScreen() {
 
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>
-              ℹ️ New users must verify their email address before logging in. Check your inbox for the verification link after registration.
+              ℹ️ After registration, you must verify your email before logging in. Check your inbox (and spam folder) for the verification link.
             </Text>
           </View>
 

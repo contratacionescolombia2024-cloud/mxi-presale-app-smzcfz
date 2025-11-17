@@ -216,6 +216,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Login failed - no user data returned');
       }
 
+      // Check if user's email is confirmed
+      if (!data.user.email_confirmed_at) {
+        console.error('❌ Email not confirmed for user:', email);
+        throw new Error('Please verify your email address before logging in. Check your inbox for the verification link.');
+      }
+
       console.log('✅ Login successful for:', email);
       await loadUserProfile(data.user.id, email);
     } catch (error: any) {
@@ -259,6 +265,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         options: {
           emailRedirectTo: 'https://natively.dev/email-confirmed',
+          data: {
+            name: userData.name,
+            referral_code: referralCode?.trim().toUpperCase() || null,
+          }
         },
       });
 
@@ -271,12 +281,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Registration failed - no user data returned');
       }
 
-      console.log('✅ Registration successful, creating profile...');
+      console.log('✅ Registration successful, user ID:', data.user.id);
 
       // Generate unique referral code for new user
       const newUserReferralCode = generateReferralCode();
 
       // Create user profile with referral information
+      // Use a small delay to ensure auth.users record is committed
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const { error: profileError } = await supabase
         .from('users_profiles')
         .insert({
@@ -293,10 +306,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error('❌ Profile creation error:', profileError);
-        throw profileError;
+        // Don't throw error here - the trigger will create the profile on email confirmation
+        console.log('⚠️ Profile creation failed, but trigger will handle it on email confirmation');
+      } else {
+        console.log('✅ Profile created with referral code:', newUserReferralCode);
       }
-
-      console.log('✅ Profile created with referral code:', newUserReferralCode);
 
       // Create referral relationship if referral code was valid
       if (referrerId) {
@@ -324,7 +338,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Show success message with clear instructions
       Alert.alert(
         '✅ Registration Successful!',
-        'Please check your email inbox and click the verification link to activate your account. You must verify your email before you can log in.',
+        'Please check your email inbox and click the verification link to activate your account. You must verify your email before you can log in.\n\nNote: Check your spam folder if you don\'t see the email within a few minutes.',
         [{ text: 'OK' }]
       );
     } catch (error: any) {
@@ -399,7 +413,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Verification email sent');
       Alert.alert(
         'Email Sent!',
-        'A new verification email has been sent to your inbox. Please check your email and click the verification link.',
+        'A new verification email has been sent to your inbox. Please check your email and click the verification link.\n\nNote: Check your spam folder if you don\'t see the email.',
         [{ text: 'OK' }]
       );
     } catch (error) {
