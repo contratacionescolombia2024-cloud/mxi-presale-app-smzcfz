@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,14 +46,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.highlight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+  heroImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
     marginBottom: 24,
   },
   title: {
@@ -62,37 +59,71 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  paragraph: {
+  introText: {
     fontSize: 16,
     color: colors.textSecondary,
     lineHeight: 24,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: 32,
+  },
+  phaseCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  phaseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  phaseNumber: {
+    fontSize: 32,
+  },
+  phaseTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  phaseSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.highlight,
     marginBottom: 12,
   },
-  bulletPoint: {
+  phaseDescription: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  benefitsList: {
+    marginTop: 12,
+  },
+  benefitItem: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     marginBottom: 8,
     paddingLeft: 8,
   },
-  bullet: {
+  benefitBullet: {
     fontSize: 16,
     color: colors.highlight,
     marginRight: 8,
     fontWeight: 'bold',
   },
-  bulletText: {
+  benefitText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   highlightBox: {
     backgroundColor: colors.sectionPink,
@@ -113,28 +144,59 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
   },
-  componentCard: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: colors.border,
+  modulesList: {
+    marginTop: 12,
   },
-  componentIcon: {
-    fontSize: 32,
-    marginBottom: 12,
+  moduleItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingLeft: 8,
   },
-  componentTitle: {
-    fontSize: 18,
+  moduleBullet: {
+    fontSize: 16,
+    color: colors.primary,
+    marginRight: 8,
     fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
   },
-  componentDescription: {
+  moduleText: {
+    flex: 1,
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
+  },
+  moduleName: {
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  finalMessageBox: {
+    backgroundColor: colors.highlight,
+    borderRadius: 16,
+    padding: 24,
+    marginTop: 12,
+    marginBottom: 24,
+  },
+  finalMessageTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.light,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  finalMessageText: {
+    fontSize: 16,
+    color: colors.light,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emphasisText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: colors.light,
+    lineHeight: 26,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 
@@ -151,152 +213,231 @@ export default function EcosystemDetailsScreen() {
           <Text style={styles.headerTitle}>Ecosistema</Text>
         </View>
 
-        <View style={styles.iconContainer}>
-          <IconSymbol name="hub" size={40} color={colors.light} />
-        </View>
+        <Image
+          source={require('@/assets/images/e3ef372d-4f76-414b-8444-ccd518ba2807.png')}
+          style={styles.heroImage}
+          resizeMode="cover"
+        />
 
-        <Text style={styles.title}>Ecosistema MXI</Text>
+        <Text style={styles.title}>🌐 Ecosistema MXI</Text>
 
-        <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>🌐 Un Ecosistema Completo</Text>
-          <Text style={styles.highlightText}>
-            MXI no es solo un token, es un ecosistema completo con múltiples componentes interconectados que crean valor para todos los participantes.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏗️ Componentes del Ecosistema</Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>💰</Text>
-          <Text style={styles.componentTitle}>1. Sistema de Preventa</Text>
-          <Text style={styles.componentDescription}>
-            Distribución inicial de 25 millones de MXI en tres fases con precios progresivos. Permite a los inversores tempranos obtener el mejor precio y beneficiarse de la apreciación del token.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>📈</Text>
-          <Text style={styles.componentTitle}>2. Sistema de Vesting</Text>
-          <Text style={styles.componentDescription}>
-            Rendimientos pasivos del 3% mensual sobre MXI comprados, calculados en tiempo real cada segundo. Proporciona ingresos constantes sin requerir acción del usuario.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>🎁</Text>
-          <Text style={styles.componentTitle}>3. Programa de Referidos</Text>
-          <Text style={styles.componentDescription}>
-            Sistema multinivel (5%, 2%, 1%) que recompensa a los usuarios por hacer crecer la comunidad. Cada referido genera comisiones automáticas en tres niveles de profundidad.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>🏆</Text>
-          <Text style={styles.componentTitle}>4. Torneos Estándar</Text>
-          <Text style={styles.componentDescription}>
-            Competencias de 25-50 jugadores con entrada de 3 MXI y premios de 135 MXI. Incluye juegos como Reaction Test, Jump Time, Slide Puzzle, Memory Speed y Snake Retro.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>🔥</Text>
-          <Text style={styles.componentTitle}>5. MXI Viral Zone</Text>
-          <Text style={styles.componentDescription}>
-            Torneos masivos de 100 jugadores con entrada de 1 MXI. Juegos virales como Catch It, Shuriken Aim, Floor is Lava, Number Tracker y Reflex Bomb.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>⚔️</Text>
-          <Text style={styles.componentTitle}>6. MXI Mini Battles</Text>
-          <Text style={styles.componentDescription}>
-            Batallas rápidas entre 2-4 jugadores donde el ganador se lleva todo. Entrada flexible de 5-1000 MXI. Incluye juegos como Beat Bounce, Perfect Distance y Swipe Master.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>🔒</Text>
-          <Text style={styles.componentTitle}>7. Sistema KYC</Text>
-          <Text style={styles.componentDescription}>
-            Verificación robusta de identidad para garantizar la seguridad del ecosistema. Protege contra fraudes y cumple con regulaciones internacionales.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>💳</Text>
-          <Text style={styles.componentTitle}>8. Sistema de Pagos</Text>
-          <Text style={styles.componentDescription}>
-            Integración con PayPal y Binance para compras fáciles y seguras. Soporte para múltiples métodos de pago y retiros.
-          </Text>
-        </View>
-
-        <View style={styles.componentCard}>
-          <Text style={styles.componentIcon}>📊</Text>
-          <Text style={styles.componentTitle}>9. Panel de Administración</Text>
-          <Text style={styles.componentDescription}>
-            Herramientas completas para gestionar el ecosistema, monitorear métricas, ajustar parámetros y garantizar el funcionamiento óptimo de todas las funcionalidades.
-          </Text>
-        </View>
+        <Text style={styles.introText}>
+          MXI es un ecosistema diseñado para crecer por etapas, iniciando hoy con la preventa y expandiéndose progresivamente a medida que la comunidad crece. Su valor no nace de promesas, sino de utilidad real y desarrollo tecnológico planificado.
+        </Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔄 Interconexión</Text>
-          <Text style={styles.paragraph}>
-            Todos estos componentes trabajan juntos de manera sinérgica:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Los MXI comprados en la preventa generan vesting automáticamente
+          <View style={styles.phaseCard}>
+            <View style={styles.phaseHeader}>
+              <Text style={styles.phaseNumber}>🚀</Text>
+              <Text style={styles.phaseTitle}>1. Fase actual: Preventa y crecimiento inicial</Text>
+            </View>
+            
+            <Text style={styles.phaseDescription}>
+              La preventa define el precio base, la liquidez inicial y permite que los primeros participantes entren antes que el mercado general.
+            </Text>
+            
+            <Text style={styles.phaseDescription}>
+              <Text style={{ fontWeight: 'bold', color: colors.text }}>Sin preventa no hay liquidez, sin liquidez no hay ecosistema.</Text>
+              {'\n'}Por eso, el éxito de MXI comienza con esta etapa.
+            </Text>
+
+            <Text style={styles.phaseSubtitle}>💎 Aquí nacen tres beneficios inmediatos:</Text>
+            
+            <View style={styles.benefitsList}>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>•</Text>
+                <Text style={styles.benefitText}>
+                  Compra anticipada a precios preferenciales
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>•</Text>
+                <Text style={styles.benefitText}>
+                  Acceso al vesting diario (≈3% mensual en MXI)
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>•</Text>
+                <Text style={styles.benefitText}>
+                  Comisiones por referidos para quienes promueven el proyecto
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.phaseDescription, { marginTop: 12, fontStyle: 'italic' }]}>
+              Esta es la etapa donde los primeros usuarios construyen las bases del valor futuro.
             </Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Las comisiones de referidos se pueden usar en torneos
+
+          <View style={styles.phaseCard}>
+            <View style={styles.phaseHeader}>
+              <Text style={styles.phaseNumber}>⚡</Text>
+              <Text style={styles.phaseTitle}>2. Fase de Activación: Después del lanzamiento</Text>
+            </View>
+            
+            <Text style={styles.phaseDescription}>
+              Cuando MXI entre oficialmente al mercado, comenzarán a desplegarse los módulos del ecosistema:
+            </Text>
+
+            <View style={styles.modulesList}>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  <Text style={styles.moduleName}>MXI Pay:</Text> pagos rápidos con MXI, conversión y billetera.
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  <Text style={styles.moduleName}>MXI Games y Torneos:</Text> competencia con premios reales.
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  <Text style={styles.moduleName}>MXI Loan:</Text> acceso a liquidez usando MXI como garantía.
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  <Text style={styles.moduleName}>Staking y sistemas de quema:</Text> soporte al precio y estabilidad.
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  <Text style={styles.moduleName}>MXI ONE:</Text> una app unificada donde todo se integra.
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.phaseDescription, { marginTop: 12, fontStyle: 'italic' }]}>
+              Cada módulo aumenta la utilidad del token y la demanda real dentro de la comunidad.
             </Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Los premios de torneos aumentan tu balance total
+
+          <View style={styles.phaseCard}>
+            <View style={styles.phaseHeader}>
+              <Text style={styles.phaseNumber}>🌍</Text>
+              <Text style={styles.phaseTitle}>3. Fase de Expansión: Crecimiento global</Text>
+            </View>
+            
+            <Text style={styles.phaseDescription}>
+              Con la comunidad ya activa, los procesos técnicos avanzan:
+            </Text>
+
+            <View style={styles.modulesList}>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  Integración de comercios
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  Alianzas internacionales
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  Ampliación de torneos y servicios
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  Transición hacia una blockchain propia (MXI Chain)
+                </Text>
+              </View>
+              <View style={styles.moduleItem}>
+                <Text style={styles.moduleBullet}>▸</Text>
+                <Text style={styles.moduleText}>
+                  Futura gobernanza descentralizada (DAO MXI)
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.phaseDescription, { marginTop: 12, fontStyle: 'italic' }]}>
+              Cada paso está diseñado para fortalecer el valor del token y construir un ecosistema que evoluciona con sus usuarios.
             </Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Todo el ecosistema está protegido por KYC y seguridad robusta
+
+          <View style={styles.phaseCard}>
+            <View style={styles.phaseHeader}>
+              <Text style={styles.phaseNumber}>♻️</Text>
+              <Text style={styles.phaseTitle}>4. ¿Por qué MXI es sostenible?</Text>
+            </View>
+            
+            <Text style={styles.phaseDescription}>
+              Porque su crecimiento depende de factores reales:
+            </Text>
+
+            <View style={styles.benefitsList}>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>✓</Text>
+                <Text style={styles.benefitText}>
+                  Utilidad dentro de las aplicaciones
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>✓</Text>
+                <Text style={styles.benefitText}>
+                  Actividad de transacciones
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>✓</Text>
+                <Text style={styles.benefitText}>
+                  Vesting gestionado en MXI, no en dinero externo
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>✓</Text>
+                <Text style={styles.benefitText}>
+                  Torneos y comisiones financiados por la actividad interna
+                </Text>
+              </View>
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitBullet}>✓</Text>
+                <Text style={styles.benefitText}>
+                  Adopción progresiva en países hispanohablantes
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.phaseDescription, { marginTop: 12, fontWeight: 'bold', color: colors.text }]}>
+              No se sostiene por entradas nuevas, sino por uso real.
             </Text>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🚀 Roadmap Futuro</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Q1 2026:</Text> Lanzamiento oficial del token en exchanges
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Q2 2026:</Text> Expansión de juegos y nuevos tipos de torneos
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Q3 2026:</Text> Marketplace de NFTs y coleccionables
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Q4 2026:</Text> Asociaciones estratégicas y expansión global
-            </Text>
-          </View>
+        <View style={styles.finalMessageBox}>
+          <Text style={styles.finalMessageTitle}>💫 Mensaje Final</Text>
+          
+          <Text style={styles.finalMessageText}>
+            MXI es un ecosistema en construcción inteligente.
+          </Text>
+          
+          <Text style={styles.finalMessageText}>
+            Hoy estás en la preventa; mañana serás parte del lanzamiento; después formarás parte de la expansión global.
+          </Text>
+
+          <Text style={styles.emphasisText}>
+            Cada etapa construye valor.
+          </Text>
+          <Text style={styles.emphasisText}>
+            Cada usuario que entra fortalece el sistema.
+          </Text>
+          <Text style={styles.emphasisText}>
+            Y cada avance del ecosistema hace más valiosos los MXI que ya tienes.
+          </Text>
+
+          <Text style={[styles.finalMessageText, { marginTop: 16, fontSize: 18, fontWeight: 'bold' }]}>
+            Este es el momento. El crecimiento comienza Hoy. 🚀
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
