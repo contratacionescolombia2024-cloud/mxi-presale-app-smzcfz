@@ -501,6 +501,7 @@ export default function AdminScreen() {
               console.log('💰 Error:', error);
               console.log('💰 Data:', JSON.stringify(data, null, 2));
               console.log('💰 Data type:', typeof data);
+              console.log('💰 Is Array:', Array.isArray(data));
               console.log('💰 ========================================');
 
               if (error) {
@@ -512,9 +513,18 @@ export default function AdminScreen() {
                 return;
               }
 
-              // The RPC function returns a JSONB object directly
-              if (data && typeof data === 'object' && data.success === true) {
-                const successMessage = `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance\n\n📊 New Balance:\n• Total MXI: ${data.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}`;
+              // Handle the response - it could be an object directly or wrapped in an array
+              let responseData = data;
+              
+              // If data is an array, get the first element
+              if (Array.isArray(data) && data.length > 0) {
+                responseData = data[0];
+                console.log('📦 Extracted data from array:', responseData);
+              }
+
+              // Check if the operation was successful
+              if (responseData && responseData.success === true) {
+                const successMessage = `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance\n\n📊 New Balance:\n• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
                 
                 console.log('✅ Balance added successfully');
                 
@@ -532,9 +542,9 @@ export default function AdminScreen() {
                   }
                 ]);
               } else {
-                const errorMsg = data?.error || 'Failed to add balance - no success flag in response';
+                const errorMsg = responseData?.error || 'Failed to add balance - no success flag in response';
                 console.error('❌ Balance addition failed:', errorMsg);
-                console.error('❌ Full response data:', data);
+                console.error('❌ Full response data:', responseData);
                 Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
@@ -595,12 +605,17 @@ export default function AdminScreen() {
               }
 
               const newTotal = Math.max(0, currentBalance - amount);
+              const currentPurchased = parseFloat(vestingData.purchased_mxi || '0');
+              const newPurchased = Math.max(0, currentPurchased - amount);
+              
               console.log(`📊 New balance will be: ${newTotal} MXI`);
+              console.log(`📊 New purchased will be: ${newPurchased} MXI`);
 
               const { error: updateError } = await supabase
                 .from('vesting')
                 .update({
                   total_mxi: newTotal,
+                  purchased_mxi: newPurchased,
                   last_update: new Date().toISOString(),
                 })
                 .eq('user_id', selectedUser.id);
@@ -615,6 +630,7 @@ export default function AdminScreen() {
               Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\nNew balance: ${newTotal.toFixed(2)} MXI`);
               setBalanceAmount('');
               await loadUsers();
+              await loadMetrics();
               await loadUserDetails(selectedUser.id);
             } catch (error: any) {
               console.error('❌ Exception in handleRemoveBalance:', error);
@@ -721,6 +737,7 @@ export default function AdminScreen() {
       setReferralAmount('');
       setReferralLevel('1');
       await loadUsers();
+      await loadMetrics();
       await loadUserDetails(selectedUser.id);
     } catch (error: any) {
       console.error('❌ Exception in handleAddReferral:', error);
