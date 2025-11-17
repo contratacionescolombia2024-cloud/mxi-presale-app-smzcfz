@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -45,15 +46,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+  heroImage: {
+    width: '100%',
+    height: 240,
+    borderRadius: 16,
     marginBottom: 24,
+    resizeMode: 'cover',
   },
   title: {
     fontSize: 26,
@@ -77,22 +75,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 12,
   },
-  bulletPoint: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingLeft: 8,
-  },
-  bullet: {
-    fontSize: 16,
-    color: colors.success,
-    marginRight: 8,
+  boldText: {
     fontWeight: 'bold',
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.textSecondary,
-    lineHeight: 24,
+    color: colors.text,
   },
   highlightBox: {
     backgroundColor: colors.sectionGreen,
@@ -102,18 +87,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(16, 185, 129, 0.4)',
   },
-  highlightTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
+  highlightText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 24,
     marginBottom: 8,
   },
-  highlightText: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
-  methodCard: {
+  phaseCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
@@ -121,22 +101,125 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  methodNumber: {
-    fontSize: 32,
+  phaseHeader: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.success,
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  methodTitle: {
+  phasePrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  phaseBenefit: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  quoteBox: {
+    backgroundColor: colors.card,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+  },
+  quoteText: {
+    fontSize: 17,
+    fontStyle: 'italic',
+    color: colors.text,
+    lineHeight: 26,
+    textAlign: 'center',
+  },
+  growthCard: {
+    backgroundColor: colors.sectionGreen,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  growthTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
   },
-  methodDescription: {
+  growthItem: {
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
+    marginBottom: 6,
+  },
+  exampleCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  exampleTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.success,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  exampleSubtitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+    marginTop: 12,
+  },
+  calculationText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  resultBox: {
+    backgroundColor: colors.sectionGreen,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  resultText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    lineHeight: 24,
+    marginBottom: 4,
+  },
+  finalResultBox: {
+    backgroundColor: colors.success,
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  finalResultTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.light,
+    marginBottom: 12,
+  },
+  finalResultValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.light,
+    marginBottom: 4,
+  },
+  finalResultSubtext: {
+    fontSize: 15,
+    color: colors.light,
+    opacity: 0.9,
   },
 });
 
@@ -153,163 +236,160 @@ export default function GenerateResourcesScreen() {
           <Text style={styles.headerTitle}>Generar Recursos</Text>
         </View>
 
-        <View style={styles.iconContainer}>
-          <IconSymbol name="attach-money" size={40} color={colors.light} />
+        <Image
+          source={require('@/assets/images/5c71087c-e9d8-472d-9687-a6930f294549.png')}
+          style={styles.heroImage}
+        />
+
+        <Text style={styles.title}>💰 ¿Cómo generar recursos con MXI en preventa?</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.paragraph}>
+            La preventa oficial de MAXCOIN es la puerta de entrada a su ecosistema. 🚀
+          </Text>
+          <Text style={styles.paragraph}>
+            Está dividido en tres fases, cada una con beneficios progresivos y exclusivos:
+          </Text>
         </View>
 
-        <Text style={styles.title}>¿Cómo generar recursos con MXI en preventa?</Text>
+        <View style={styles.phaseCard}>
+          <Text style={styles.phaseHeader}>1️⃣ Primera fase</Text>
+          <Text style={styles.phasePrice}>0.40 USDT</Text>
+          <Text style={styles.phaseBenefit}>✅ Participación en staking anticipado</Text>
+          <Text style={styles.phaseBenefit}>✅ Acceso prioritario</Text>
+          <Text style={styles.phaseBenefit}>✅ Bonificación en referidos</Text>
+          <Text style={styles.phaseBenefit}>✅ Minería temprana</Text>
+        </View>
+
+        <View style={styles.phaseCard}>
+          <Text style={styles.phaseHeader}>2️⃣ Segunda fase</Text>
+          <Text style={styles.phasePrice}>0.70 USDT</Text>
+          <Text style={styles.phaseBenefit}>✅ Participación en staking anticipado</Text>
+          <Text style={styles.phaseBenefit}>✅ Acceso prioritario</Text>
+          <Text style={styles.phaseBenefit}>✅ Bonificación en referidos</Text>
+          <Text style={styles.phaseBenefit}>✅ Minería temprana</Text>
+        </View>
+
+        <View style={styles.phaseCard}>
+          <Text style={styles.phaseHeader}>3️⃣ Tercera fase</Text>
+          <Text style={styles.phasePrice}>1.00 USDT</Text>
+          <Text style={styles.phaseBenefit}>✅ Acceso a MXI Strategic</Text>
+          <Text style={styles.phaseBenefit}>✅ Minería</Text>
+        </View>
 
         <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>💰 Múltiples Fuentes de Ingresos</Text>
           <Text style={styles.highlightText}>
-            Durante la preventa de MXI, tienes acceso a tres formas principales de generar recursos de manera simultánea.
+            🤝 Además, cada participante puede ganar comisiones con el sistema de referidos, creando una red que crece contigo.
+          </Text>
+          <Text style={styles.highlightText}>
+            💡 No necesitas experiencia previa - solo visión.
           </Text>
         </View>
 
-        <View style={styles.methodCard}>
-          <Text style={styles.methodNumber}>1</Text>
-          <Text style={styles.methodTitle}>🎁 Sistema de Referidos Multinivel</Text>
-          <Text style={styles.methodDescription}>
-            Gana comisiones por cada persona que se registre usando tu código o enlace de referido:
+        <View style={styles.quoteBox}>
+          <Text style={styles.quoteText}>
+            💬 &quot;Quien entendió Bitcoin en 2011, hoy entiende MAXCOIN&quot;
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Nivel 1:</Text> 5% de todas las compras de tus referidos directos
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Nivel 2:</Text> 2% de las compras de los referidos de tus referidos
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Nivel 3:</Text> 1% de las compras del tercer nivel
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.methodCard}>
-          <Text style={styles.methodNumber}>2</Text>
-          <Text style={styles.methodTitle}>📈 Vesting Diario (3% Mensual)</Text>
-          <Text style={styles.methodDescription}>
-            Todos los MXI que compres generan rendimientos automáticos:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Rendimiento del 3% mensual sobre tus MXI comprados
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Se calcula y actualiza en tiempo real (cada segundo)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Los rendimientos se acumulan automáticamente en tu balance
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Puedes ver proyecciones a 7, 15 y 30 días en la app
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.methodCard}>
-          <Text style={styles.methodNumber}>3</Text>
-          <Text style={styles.methodTitle}>🏆 Torneos y Competencias</Text>
-          <Text style={styles.methodDescription}>
-            Participa en juegos y competencias para ganar premios en MXI:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Torneos estándar con premios de hasta 135 MXI
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              MXI Viral Zone con 100 jugadores y premios de 100 MXI
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Mini Battles entre 2-4 jugadores donde el ganador se lleva todo
-            </Text>
-          </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Estrategia Recomendada</Text>
+          <Text style={styles.sectionTitle}>📈 Tres Vías de Crecimiento</Text>
           <Text style={styles.paragraph}>
-            Para maximizar tus ganancias durante la preventa:
+            MXI ofrece tres vías simultáneas de crecimiento incluso antes del lanzamiento oficial:
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>1.</Text>
-            <Text style={styles.bulletText}>
-              Compra MXI en las primeras etapas para obtener el mejor precio
-            </Text>
+        </View>
+
+        <View style={styles.growthCard}>
+          <Text style={styles.growthTitle}>🚀 Valorización temprana del token</Text>
+          <Text style={styles.growthItem}>Preventa → Mercado</Text>
+        </View>
+
+        <View style={styles.growthCard}>
+          <Text style={styles.growthTitle}>💸 Comisiones por referidos</Text>
+          <Text style={styles.growthItem}>Sistema multinivel corto y sostenible</Text>
+        </View>
+
+        <View style={styles.growthCard}>
+          <Text style={styles.growthTitle}>📊 Vesting diario</Text>
+          <Text style={styles.growthItem}>Aprox. 3% mensual</Text>
+        </View>
+
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightText}>
+            ⚡ Esto combina ganancias activas y pasivas, sin necesidad de grandes inversiones.
+          </Text>
+        </View>
+
+        <View style={styles.exampleCard}>
+          <Text style={styles.exampleTitle}>💵 Ejemplo Práctico Completo</Text>
+          
+          <Text style={styles.exampleSubtitle}>1️⃣ Ganancia por Valorización Temprana</Text>
+          <Text style={styles.calculationText}>
+            <Text style={styles.boldText}>Compra:</Text> 200 USDT en Fase 1 (0.40 USDT)
+          </Text>
+          <Text style={styles.calculationText}>
+            <Text style={styles.boldText}>MXI recibidos:</Text> 200 / 0.40 = 500 MXI
+          </Text>
+          <Text style={[styles.calculationText, { marginTop: 8 }]}>
+            Si luego MXI vale entre 3 y 6 USDT:
+          </Text>
+          <View style={styles.resultBox}>
+            <Text style={styles.resultText}>📈 A 3 USDT → 1.500 USDT</Text>
+            <Text style={styles.resultText}>📈 A 6 USDT → 3.000 USDT</Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>2.</Text>
-            <Text style={styles.bulletText}>
-              Comparte tu código de referido con amigos y familiares
-            </Text>
+
+          <Text style={styles.exampleSubtitle}>2️⃣ Ganancia por Referidos (3 niveles)</Text>
+          <Text style={styles.calculationText}>Ejemplo moderado:</Text>
+          <Text style={styles.calculationText}>• 10 invitados directos → generan 25 USDT</Text>
+          <Text style={styles.calculationText}>• Sus invitados → generan 60 USDT</Text>
+          <Text style={styles.calculationText}>• Tercer nivel → 100 USDT</Text>
+          <View style={styles.resultBox}>
+            <Text style={styles.resultText}>💰 Total solo por referidos: 185 USDT</Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>3.</Text>
-            <Text style={styles.bulletText}>
-              Deja que el vesting trabaje para ti generando rendimientos pasivos
-            </Text>
+
+          <Text style={styles.exampleSubtitle}>3️⃣ Ganancia por Vesting (≈3% mensual)</Text>
+          <Text style={styles.calculationText}>Sobre 500 MXI, en 6 meses:</Text>
+          <Text style={styles.calculationText}>500 × 0.18 = 90 MXI extra</Text>
+          <Text style={[styles.calculationText, { marginTop: 8 }]}>
+            Si MXI vale entre 3 y 6 USDT:
+          </Text>
+          <View style={styles.resultBox}>
+            <Text style={styles.resultText}>📊 90 × 3 = 270 USDT</Text>
+            <Text style={styles.resultText}>📊 90 × 6 = 540 USDT</Text>
           </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>4.</Text>
-            <Text style={styles.bulletText}>
-              Participa en torneos para aumentar tu balance de MXI
+
+          <Text style={styles.exampleSubtitle}>🎯 Resumen Total</Text>
+          <Text style={styles.calculationText}>
+            <Text style={styles.boldText}>MXI totales con vesting:</Text> 500 + 90 = 590 MXI
+          </Text>
+          <Text style={[styles.calculationText, { marginTop: 8 }]}>
+            Valor futuro:
+          </Text>
+          <Text style={styles.calculationText}>• A 3 USDT → 590 × 3 = 1.770 USDT</Text>
+          <Text style={styles.calculationText}>• A 6 USDT → 590 × 6 = 3.540 USDT</Text>
+          <Text style={[styles.calculationText, { marginTop: 8 }]}>
+            <Text style={styles.boldText}>Suma de referidos:</Text> +185 USDT
+          </Text>
+
+          <View style={styles.finalResultBox}>
+            <Text style={styles.finalResultTitle}>🏆 Resultado Total (Completo)</Text>
+            <Text style={styles.finalResultValue}>1.955 USDT</Text>
+            <Text style={styles.finalResultSubtext}>
+              (escenario 3 USD)
+            </Text>
+            <Text style={[styles.finalResultValue, { marginTop: 12 }]}>
+              3.725 USDT
+            </Text>
+            <Text style={styles.finalResultSubtext}>
+              (escenario 6 USD)
             </Text>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📊 Ejemplo Práctico</Text>
-          <Text style={styles.paragraph}>
-            Si compras 1,000 MXI en la Fase 1 (0.4 USDT):
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightText}>
+            ✨ Este ejemplo demuestra cómo una inversión inicial de 200 USDT puede multiplicarse significativamente combinando las tres vías de crecimiento: valorización, referidos y vesting.
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Inversión inicial: 400 USDT
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Vesting mensual: 30 MXI (3% de 1,000)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Si 5 referidos compran 1,000 MXI cada uno: 250 MXI en comisiones (5% de 5,000)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Total en 30 días: 1,280 MXI (sin contar torneos)
-            </Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
