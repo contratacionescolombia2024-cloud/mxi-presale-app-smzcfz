@@ -25,6 +25,7 @@ export default function ReferralsScreen() {
   const { user } = useAuth();
   const { referralStats, forceReloadReferrals } = usePreSale();
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [transferAmount, setTransferAmount] = useState('');
   const [isTransferring, setIsTransferring] = useState(false);
 
@@ -67,9 +68,9 @@ export default function ReferralsScreen() {
     setShowTransferModal(true);
   };
 
-  const handleTransferToBalance = async () => {
+  const handleInitiateTransfer = () => {
     console.log('🟢 ========================================');
-    console.log('🟢 TRANSFER TO BALANCE BUTTON PRESSED');
+    console.log('🟢 INITIATE TRANSFER BUTTON PRESSED');
     console.log('🟢 ========================================');
     
     if (!user?.id) {
@@ -112,115 +113,103 @@ export default function ReferralsScreen() {
       return;
     }
 
-    console.log('🟢 All validations passed, showing confirmation dialog');
+    console.log('🟢 All validations passed, showing confirmation modal');
+    setShowConfirmModal(true);
+  };
 
-    Alert.alert(
-      'Confirm Transfer',
-      `Transfer ${amount} MXI from referral earnings to your main balance?\n\n⚠️ Important:\n• This will NOT generate commissions\n• The amount will be added to your main balance\n• This action cannot be undone`,
-      [
-        { 
-          text: 'Cancel', 
-          style: 'cancel',
-          onPress: () => {
-            console.log('🔴 Transfer cancelled by user');
-          }
-        },
-        {
-          text: 'Transfer',
-          onPress: async () => {
-            console.log('🟢 ========================================');
-            console.log('🟢 USER CONFIRMED TRANSFER');
-            console.log('🟢 Starting transfer process...');
-            console.log('🟢 ========================================');
-            
-            setIsTransferring(true);
-            
-            try {
-              console.log(`💰 Calling RPC function: user_transfer_referral_to_balance`);
-              console.log(`💰 Parameters:`, {
-                p_user_id: user.id,
-                p_amount: amount,
-              });
-              
-              const { data, error } = await supabase.rpc('user_transfer_referral_to_balance', {
-                p_user_id: user.id,
-                p_amount: amount,
-              });
+  const handleConfirmTransfer = async () => {
+    console.log('🟢 ========================================');
+    console.log('🟢 USER CONFIRMED TRANSFER');
+    console.log('🟢 Starting transfer process...');
+    console.log('🟢 ========================================');
+    
+    setShowConfirmModal(false);
+    setIsTransferring(true);
+    
+    const amount = parseFloat(transferAmount);
+    
+    try {
+      console.log(`💰 Calling RPC function: user_transfer_referral_to_balance`);
+      console.log(`💰 Parameters:`, {
+        p_user_id: user!.id,
+        p_amount: amount,
+      });
+      
+      const { data, error } = await supabase.rpc('user_transfer_referral_to_balance', {
+        p_user_id: user!.id,
+        p_amount: amount,
+      });
 
-              console.log('📦 RPC Response received:');
-              console.log('📦 Data:', JSON.stringify(data, null, 2));
-              console.log('📦 Error:', error);
+      console.log('📦 RPC Response received:');
+      console.log('📦 Data:', JSON.stringify(data, null, 2));
+      console.log('📦 Error:', error);
 
-              if (error) {
-                console.error('❌ RPC Error:', error);
-                console.error('❌ Error details:', {
-                  message: error.message,
-                  details: error.details,
-                  hint: error.hint,
-                  code: error.code,
-                });
-                Alert.alert('Error', `Failed to transfer: ${error.message}`);
-                setIsTransferring(false);
-                return;
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        });
+        Alert.alert('Error', `Failed to transfer: ${error.message}`);
+        setIsTransferring(false);
+        return;
+      }
+
+      console.log('📦 Checking response data...');
+
+      // Handle the response - it might be wrapped in an array
+      let responseData = data;
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('📦 Response is an array, extracting first element');
+        responseData = data[0];
+      }
+
+      console.log('📦 Processed response data:', responseData);
+
+      if (responseData && responseData.success) {
+        console.log('✅ Transfer successful!');
+        console.log('✅ Response details:', {
+          message: responseData.message,
+          new_total_mxi: responseData.new_total_mxi,
+          new_purchased_mxi: responseData.new_purchased_mxi,
+          available_referral_earnings: responseData.available_referral_earnings,
+        });
+        
+        Alert.alert(
+          'Success! ✅',
+          `${responseData.message}\n\n📊 Updated Balance:\n• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${responseData.available_referral_earnings.toFixed(2)} MXI\n\n✅ No commissions were generated for this transfer`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                console.log('🔄 Closing modal and reloading data');
+                setShowTransferModal(false);
+                setTransferAmount('');
+                forceReloadReferrals();
               }
-
-              console.log('📦 Checking response data...');
-
-              // Handle the response - it might be wrapped in an array
-              let responseData = data;
-              if (Array.isArray(data) && data.length > 0) {
-                console.log('📦 Response is an array, extracting first element');
-                responseData = data[0];
-              }
-
-              console.log('📦 Processed response data:', responseData);
-
-              if (responseData && responseData.success) {
-                console.log('✅ Transfer successful!');
-                console.log('✅ Response details:', {
-                  message: responseData.message,
-                  new_total_mxi: responseData.new_total_mxi,
-                  new_purchased_mxi: responseData.new_purchased_mxi,
-                  available_referral_earnings: responseData.available_referral_earnings,
-                });
-                
-                Alert.alert(
-                  'Success! ✅',
-                  `${responseData.message}\n\n📊 Updated Balance:\n• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${responseData.available_referral_earnings.toFixed(2)} MXI\n\n✅ No commissions were generated for this transfer`,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        console.log('🔄 Closing modal and reloading data');
-                        setShowTransferModal(false);
-                        setTransferAmount('');
-                        forceReloadReferrals();
-                      }
-                    }
-                  ]
-                );
-              } else {
-                const errorMsg = responseData?.error || 'Transfer failed - no success flag in response';
-                console.error('❌ Transfer failed:', errorMsg);
-                console.error('❌ Full response:', responseData);
-                Alert.alert('Error', errorMsg);
-              }
-            } catch (error: any) {
-              console.error('❌ ========================================');
-              console.error('❌ EXCEPTION IN TRANSFER PROCESS');
-              console.error('❌ ========================================');
-              console.error('❌ Exception:', error);
-              console.error('❌ Error message:', error.message);
-              console.error('❌ Error stack:', error.stack);
-              Alert.alert('Error', error.message || 'Failed to transfer');
-            } finally {
-              console.log('🔵 Setting isTransferring to false');
-              setIsTransferring(false);
             }
-          }
-        }
-      ]
-    );
+          ]
+        );
+      } else {
+        const errorMsg = responseData?.error || 'Transfer failed - no success flag in response';
+        console.error('❌ Transfer failed:', errorMsg);
+        console.error('❌ Full response:', responseData);
+        Alert.alert('Error', errorMsg);
+      }
+    } catch (error: any) {
+      console.error('❌ ========================================');
+      console.error('❌ EXCEPTION IN TRANSFER PROCESS');
+      console.error('❌ ========================================');
+      console.error('❌ Exception:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      Alert.alert('Error', error.message || 'Failed to transfer');
+    } finally {
+      console.log('🔵 Setting isTransferring to false');
+      setIsTransferring(false);
+    }
   };
 
   const levels = [
@@ -470,8 +459,10 @@ export default function ReferralsScreen() {
               <TouchableOpacity 
                 style={[styles.transferButton, (isTransferring || !transferAmount) && styles.transferButtonDisabled]}
                 onPress={() => {
-                  console.log('🟢 Transfer button pressed in modal');
-                  handleTransferToBalance();
+                  console.log('🟢 ========================================');
+                  console.log('🟢 TRANSFER BUTTON PRESSED IN MODAL');
+                  console.log('🟢 ========================================');
+                  handleInitiateTransfer();
                 }}
                 disabled={isTransferring || !transferAmount}
               >
@@ -491,6 +482,65 @@ export default function ReferralsScreen() {
                     <Text style={styles.transferButtonText}>Transfer to Balance</Text>
                   </React.Fragment>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Confirmation Modal */}
+      <Modal
+        visible={showConfirmModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          console.log('🔴 Confirmation modal close requested');
+          setShowConfirmModal(false);
+        }}
+      >
+        <View style={styles.confirmOverlay}>
+          <View style={styles.confirmContent}>
+            <View style={styles.confirmHeader}>
+              <IconSymbol 
+                ios_icon_name="exclamationmark.triangle.fill" 
+                android_material_icon_name="warning" 
+                size={48} 
+                color={colors.accent} 
+              />
+              <Text style={styles.confirmTitle}>Confirm Transfer</Text>
+            </View>
+
+            <View style={styles.confirmBody}>
+              <Text style={styles.confirmText}>
+                Transfer {parseFloat(transferAmount).toFixed(2)} MXI from referral earnings to your main balance?
+              </Text>
+              
+              <View style={styles.confirmWarning}>
+                <Text style={styles.confirmWarningTitle}>⚠️ Important:</Text>
+                <Text style={styles.confirmWarningText}>
+                  • This will NOT generate commissions{'\n'}
+                  • The amount will be added to your main balance{'\n'}
+                  • This action cannot be undone
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity 
+                style={[styles.confirmButton, styles.cancelButton]}
+                onPress={() => {
+                  console.log('🔴 Transfer cancelled by user');
+                  setShowConfirmModal(false);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.confirmButton, styles.confirmButtonPrimary]}
+                onPress={handleConfirmTransfer}
+              >
+                <Text style={styles.confirmButtonText}>Transfer</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -780,6 +830,87 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   transferButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
+  },
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  confirmContent: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  confirmHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  confirmTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 12,
+  },
+  confirmBody: {
+    marginBottom: 24,
+  },
+  confirmText: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 24,
+  },
+  confirmWarning: {
+    backgroundColor: `${colors.accent}15`,
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.accent,
+  },
+  confirmWarningTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  confirmWarningText: {
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  confirmButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  confirmButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
