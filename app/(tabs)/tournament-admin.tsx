@@ -20,7 +20,7 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, Challenge, GAME_NAMES, VIRAL_ZONE_GAME_NAMES, CHALLENGE_GAME_NAMES } from '@/types/tournaments';
+import { Tournament, MiniBattle, GAME_NAMES, VIRAL_ZONE_GAME_NAMES, MINI_BATTLE_GAME_NAMES } from '@/types/tournaments';
 
 const styles = StyleSheet.create({
   container: {
@@ -249,6 +249,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.secondary,
     padding: 16,
     borderRadius: 12,
+    marginBottom: 8,
+  },
+  cleanupButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.accent,
+    padding: 16,
+    borderRadius: 12,
   },
   gameSettingsButtonText: {
     flex: 1,
@@ -263,13 +272,14 @@ export default function TournamentAdminScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [miniBattles, setMiniBattles] = useState<MiniBattle[]>([]);
   const [stats, setStats] = useState({
     totalTournaments: 0,
     activeTournaments: 0,
-    totalChallenges: 0,
-    activeChallenges: 0,
+    totalMiniBattles: 0,
+    activeMiniBattles: 0,
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -286,13 +296,13 @@ export default function TournamentAdminScreen() {
     try {
       console.log('📊 Loading tournament admin data...');
 
-      const [tournamentsResult, challengesResult] = await Promise.all([
+      const [tournamentsResult, miniBattlesResult] = await Promise.all([
         supabase
           .from('tournaments')
           .select('*')
           .order('created_at', { ascending: false }),
         supabase
-          .from('challenges')
+          .from('mini_battles')
           .select('*')
           .order('created_at', { ascending: false }),
       ]);
@@ -308,14 +318,14 @@ export default function TournamentAdminScreen() {
         }));
       }
 
-      if (challengesResult.error) {
-        console.error('❌ Error loading challenges:', challengesResult.error);
+      if (miniBattlesResult.error) {
+        console.error('❌ Error loading mini battles:', miniBattlesResult.error);
       } else {
-        setChallenges(challengesResult.data || []);
+        setMiniBattles(miniBattlesResult.data || []);
         setStats((prev) => ({
           ...prev,
-          totalChallenges: challengesResult.data?.length || 0,
-          activeChallenges: challengesResult.data?.filter((c) => c.status === 'waiting').length || 0,
+          totalMiniBattles: miniBattlesResult.data?.length || 0,
+          activeMiniBattles: miniBattlesResult.data?.filter((mb) => mb.status === 'waiting').length || 0,
         }));
       }
 
@@ -332,6 +342,42 @@ export default function TournamentAdminScreen() {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
+  };
+
+  const handleCleanupInactive = async () => {
+    Alert.alert(
+      'Cleanup Inactive Battles',
+      'This will delete all challenges and mini battles that have been inactive for more than 1 hour. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Cleanup',
+          style: 'destructive',
+          onPress: async () => {
+            setIsCleaningUp(true);
+            try {
+              console.log('🧹 Starting cleanup...');
+
+              const { data, error } = await supabase.functions.invoke('cleanup-inactive-battles');
+
+              if (error) {
+                console.error('❌ Error during cleanup:', error);
+                throw error;
+              }
+
+              console.log('✅ Cleanup completed:', data);
+              Alert.alert('Success', data.data?.message || 'Cleanup completed successfully');
+              await loadData();
+            } catch (error) {
+              console.error('❌ Failed to cleanup:', error);
+              Alert.alert('Error', 'Failed to cleanup inactive battles. Please try again.');
+            } finally {
+              setIsCleaningUp(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleDeleteTournament = async (tournamentId: string) => {
@@ -424,10 +470,10 @@ export default function TournamentAdminScreen() {
     }
   };
 
-  const handleDeleteChallenge = async (challengeId: string) => {
+  const handleDeleteMiniBattle = async (miniBattleId: string) => {
     Alert.alert(
-      'Delete Challenge',
-      'Are you sure you want to delete this challenge? This action cannot be undone.',
+      'Delete Mini Battle',
+      'Are you sure you want to delete this mini battle? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -435,24 +481,24 @@ export default function TournamentAdminScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('🗑️ Deleting challenge:', challengeId);
+              console.log('🗑️ Deleting mini battle:', miniBattleId);
 
               const { error } = await supabase
-                .from('challenges')
+                .from('mini_battles')
                 .delete()
-                .eq('id', challengeId);
+                .eq('id', miniBattleId);
 
               if (error) {
-                console.error('❌ Error deleting challenge:', error);
+                console.error('❌ Error deleting mini battle:', error);
                 throw error;
               }
 
-              console.log('✅ Challenge deleted');
-              Alert.alert('Success', 'Challenge deleted successfully');
+              console.log('✅ Mini battle deleted');
+              Alert.alert('Success', 'Mini battle deleted successfully');
               await loadData();
             } catch (error) {
-              console.error('❌ Failed to delete challenge:', error);
-              Alert.alert('Error', 'Failed to delete challenge. Please try again.');
+              console.error('❌ Failed to delete mini battle:', error);
+              Alert.alert('Error', 'Failed to delete mini battle. Please try again.');
             }
           },
         },
@@ -483,8 +529,8 @@ export default function TournamentAdminScreen() {
     if (gameType in VIRAL_ZONE_GAME_NAMES) {
       return VIRAL_ZONE_GAME_NAMES[gameType as keyof typeof VIRAL_ZONE_GAME_NAMES];
     }
-    if (gameType in CHALLENGE_GAME_NAMES) {
-      return CHALLENGE_GAME_NAMES[gameType as keyof typeof CHALLENGE_GAME_NAMES];
+    if (gameType in MINI_BATTLE_GAME_NAMES) {
+      return MINI_BATTLE_GAME_NAMES[gameType as keyof typeof MINI_BATTLE_GAME_NAMES];
     }
     return gameType;
   };
@@ -503,7 +549,7 @@ export default function TournamentAdminScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick Access to Game Settings */}
+      {/* Quick Access */}
       <View style={styles.quickAccessContainer}>
         <TouchableOpacity 
           style={styles.gameSettingsButton}
@@ -516,6 +562,30 @@ export default function TournamentAdminScreen() {
             color={colors.card} 
           />
           <Text style={styles.gameSettingsButtonText}>Game Settings (Limits & Config)</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.card} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.cleanupButton}
+          onPress={handleCleanupInactive}
+          disabled={isCleaningUp}
+        >
+          {isCleaningUp ? (
+            <ActivityIndicator size="small" color={colors.card} />
+          ) : (
+            <IconSymbol 
+              ios_icon_name="trash.fill" 
+              android_material_icon_name="delete" 
+              size={24} 
+              color={colors.card} 
+            />
+          )}
+          <Text style={styles.gameSettingsButtonText}>Cleanup Inactive Battles (1hr+)</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -541,12 +611,12 @@ export default function TournamentAdminScreen() {
               <Text style={styles.statLabel}>Active Tournaments</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.totalChallenges}</Text>
-              <Text style={styles.statLabel}>Total Challenges</Text>
+              <Text style={styles.statValue}>{stats.totalMiniBattles}</Text>
+              <Text style={styles.statLabel}>Total Mini Battles</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{stats.activeChallenges}</Text>
-              <Text style={styles.statLabel}>Active Challenges</Text>
+              <Text style={styles.statValue}>{stats.activeMiniBattles}</Text>
+              <Text style={styles.statLabel}>Active Mini Battles</Text>
             </View>
           </View>
         </View>
@@ -621,59 +691,57 @@ export default function TournamentAdminScreen() {
           ))
         )}
 
-        <Text style={styles.sectionTitle}>⚔️ Challenges</Text>
-        {challenges.length === 0 ? (
+        <Text style={styles.sectionTitle}>⚔️ Mini Battles</Text>
+        {miniBattles.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol ios_icon_name="bolt.fill" android_material_icon_name="flash_on" size={64} color={colors.textSecondary} />
-            <Text style={styles.emptyText}>No challenges found</Text>
+            <Text style={styles.emptyText}>No mini battles found</Text>
           </View>
         ) : (
-          challenges.map((challenge) => (
-            <View key={challenge.id} style={styles.tournamentCard}>
+          miniBattles.map((miniBattle) => (
+            <View key={miniBattle.id} style={styles.tournamentCard}>
               <View style={styles.tournamentHeader}>
-                <Text style={styles.tournamentTitle}>{getGameName(challenge.game_type)}</Text>
+                <Text style={styles.tournamentTitle}>{getGameName(miniBattle.game_type)}</Text>
                 <View
                   style={[
                     styles.statusBadge,
-                    challenge.status === 'waiting' && styles.statusBadgeWaiting,
-                    challenge.status === 'in_progress' && styles.statusBadgeInProgress,
-                    challenge.status === 'completed' && styles.statusBadgeCompleted,
-                    challenge.status === 'cancelled' && styles.statusBadgeCancelled,
+                    miniBattle.status === 'waiting' && styles.statusBadgeWaiting,
+                    miniBattle.status === 'in_progress' && styles.statusBadgeInProgress,
+                    miniBattle.status === 'completed' && styles.statusBadgeCompleted,
+                    miniBattle.status === 'cancelled' && styles.statusBadgeCancelled,
                   ]}
                 >
-                  <Text style={styles.statusBadgeText}>{challenge.status.toUpperCase()}</Text>
+                  <Text style={styles.statusBadgeText}>{miniBattle.status.toUpperCase()}</Text>
                 </View>
               </View>
 
               <View style={styles.tournamentInfo}>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Invite Code:</Text>
-                  <Text style={styles.infoValue}>{challenge.invite_code}</Text>
-                </View>
-                <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Players:</Text>
                   <Text style={styles.infoValue}>
-                    {challenge.current_players}/{challenge.max_players}
+                    {miniBattle.current_players}/{miniBattle.max_players}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Entry Fee:</Text>
-                  <Text style={styles.infoValue}>{challenge.entry_fee} MXI</Text>
+                  <Text style={styles.infoValue}>{miniBattle.entry_fee} MXI</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Prize Pool:</Text>
-                  <Text style={styles.infoValue}>{challenge.prize_pool} MXI</Text>
+                  <Text style={styles.infoValue}>{miniBattle.prize_pool} MXI</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Random Join:</Text>
-                  <Text style={styles.infoValue}>{challenge.allow_random_join ? 'Yes' : 'No'}</Text>
+                  <Text style={styles.infoLabel}>Last Join:</Text>
+                  <Text style={styles.infoValue}>
+                    {new Date(miniBattle.last_player_join).toLocaleString()}
+                  </Text>
                 </View>
               </View>
 
               <View style={styles.tournamentActions}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.deleteButton]}
-                  onPress={() => handleDeleteChallenge(challenge.id)}
+                  onPress={() => handleDeleteMiniBattle(miniBattle.id)}
                 >
                   <Text style={styles.actionButtonText}>Delete</Text>
                 </TouchableOpacity>

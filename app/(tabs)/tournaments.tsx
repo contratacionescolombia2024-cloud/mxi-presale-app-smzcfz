@@ -17,7 +17,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, VIRAL_ZONE_GAME_NAMES, VIRAL_ZONE_GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS } from '@/types/tournaments';
+import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, VIRAL_ZONE_GAME_NAMES, VIRAL_ZONE_GAME_DESCRIPTIONS, MINI_BATTLE_GAME_NAMES, MINI_BATTLE_GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS } from '@/types/tournaments';
 
 const styles = StyleSheet.create({
   container: {
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   categoryViralZone: {
     backgroundColor: colors.secondary,
   },
-  categoryChallenges: {
+  categoryMiniBattles: {
     backgroundColor: colors.accent,
   },
   categoryTitle: {
@@ -170,11 +170,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  playButtonText: {
-    color: colors.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
   activeTournamentsBadge: {
     backgroundColor: colors.success,
     paddingHorizontal: 12,
@@ -190,31 +185,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  infoCard: {
-    backgroundColor: colors.sectionBlue,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(59, 130, 246, 0.4)',
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    flex: 1,
   },
   limitCard: {
     backgroundColor: colors.sectionPurple,
@@ -256,7 +226,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  challengesCard: {
+  miniBattlesCard: {
     backgroundColor: colors.sectionPink,
     borderRadius: 20,
     padding: 24,
@@ -264,35 +234,35 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(236, 72, 153, 0.4)',
   },
-  challengesHeader: {
+  miniBattlesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  challengesTitle: {
+  miniBattlesTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 4,
   },
-  challengesSubtitle: {
+  miniBattlesSubtitle: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  challengesInfo: {
+  miniBattlesInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  challengesInfoItem: {
+  miniBattlesInfoItem: {
     alignItems: 'center',
   },
-  challengesInfoLabel: {
+  miniBattlesInfoLabel: {
     fontSize: 12,
     color: colors.textSecondary,
     marginBottom: 4,
   },
-  challengesInfoValue: {
+  miniBattlesInfoValue: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
@@ -383,8 +353,8 @@ export default function TournamentsScreen() {
     router.push(`/games/${gameType}` as any);
   };
 
-  const handleNavigateToChallenges = () => {
-    router.push('/challenges' as any);
+  const handleNavigateToMiniBattles = () => {
+    router.push('/mini-battles' as any);
   };
 
   if (isLoading) {
@@ -425,7 +395,7 @@ export default function TournamentsScreen() {
         }
       >
         <View style={styles.header}>
-          <Text style={styles.title}>🏆 Tournaments & Challenges</Text>
+          <Text style={styles.title}>🏆 Tournaments & Battles</Text>
           <Text style={styles.subtitle}>Compete and win MXI prizes!</Text>
         </View>
 
@@ -568,27 +538,27 @@ export default function TournamentsScreen() {
           </View>
         </View>
 
-        {/* Challenges Section */}
-        <TouchableOpacity style={styles.challengesCard} onPress={handleNavigateToChallenges}>
-          <View style={styles.challengesHeader}>
+        {/* Mini Battles Section */}
+        <TouchableOpacity style={styles.miniBattlesCard} onPress={handleNavigateToMiniBattles}>
+          <View style={styles.miniBattlesHeader}>
             <View>
-              <Text style={styles.challengesTitle}>⚔️ 1 vs 3 Challenges</Text>
-              <Text style={styles.challengesSubtitle}>Create custom challenges with friends!</Text>
+              <Text style={styles.miniBattlesTitle}>⚔️ MXI Mini Battles</Text>
+              <Text style={styles.miniBattlesSubtitle}>Quick battles with 2-4 players!</Text>
             </View>
             <IconSymbol name={ICONS.ARROW_FORWARD} size={24} color={colors.light} />
           </View>
-          <View style={styles.challengesInfo}>
-            <View style={styles.challengesInfoItem}>
-              <Text style={styles.challengesInfoLabel}>Entry Fee</Text>
-              <Text style={styles.challengesInfoValue}>5-1000 MXI</Text>
+          <View style={styles.miniBattlesInfo}>
+            <View style={styles.miniBattlesInfoItem}>
+              <Text style={styles.miniBattlesInfoLabel}>Entry Fee</Text>
+              <Text style={styles.miniBattlesInfoValue}>5-1000 MXI</Text>
             </View>
-            <View style={styles.challengesInfoItem}>
-              <Text style={styles.challengesInfoLabel}>Players</Text>
-              <Text style={styles.challengesInfoValue}>2-5</Text>
+            <View style={styles.miniBattlesInfoItem}>
+              <Text style={styles.miniBattlesInfoLabel}>Players</Text>
+              <Text style={styles.miniBattlesInfoValue}>2-4</Text>
             </View>
-            <View style={styles.challengesInfoItem}>
-              <Text style={styles.challengesInfoLabel}>Winner Takes</Text>
-              <Text style={styles.challengesInfoValue}>All</Text>
+            <View style={styles.miniBattlesInfoItem}>
+              <Text style={styles.miniBattlesInfoLabel}>Winner Takes</Text>
+              <Text style={styles.miniBattlesInfoValue}>All</Text>
             </View>
           </View>
         </TouchableOpacity>

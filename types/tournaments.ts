@@ -42,6 +42,45 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+export interface MiniBattle {
+  id: string;
+  game_type: 'beat_bounce' | 'perfect_distance' | 'swipe_master' | 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
+  creator_id: string;
+  entry_fee: number;
+  prize_pool: number;
+  max_players: number;
+  current_players: number;
+  status: 'waiting' | 'in_progress' | 'completed' | 'cancelled';
+  start_time?: string;
+  end_time?: string;
+  created_at: string;
+  updated_at: string;
+  last_player_join: string;
+}
+
+export interface MiniBattleParticipant {
+  id: string;
+  mini_battle_id: string;
+  user_id: string;
+  score: number;
+  rank?: number;
+  prize_won?: number;
+  joined_at: string;
+  completed_at?: string;
+}
+
+export interface MiniBattleScore {
+  id: string;
+  mini_battle_id: string;
+  user_id: string;
+  user_name: string;
+  score: number;
+  game_data?: any;
+  created_at: string;
+  updated_at: string;
+}
+
+// Deprecated - will be removed
 export interface Challenge {
   id: string;
   game_type: 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
@@ -97,6 +136,19 @@ export const VIRAL_ZONE_GAME_TYPES = {
   REFLEX_BOMB: 'reflex_bomb',
 } as const;
 
+export const MINI_BATTLE_GAME_TYPES = {
+  BEAT_BOUNCE: 'beat_bounce',
+  PERFECT_DISTANCE: 'perfect_distance',
+  SWIPE_MASTER: 'swipe_master',
+  QUICK_DRAW_DUEL: 'quick_draw_duel',
+  TAP_RUSH: 'tap_rush',
+  RHYTHM_TAP: 'rhythm_tap',
+  MENTAL_MATH_SPEED: 'mental_math_speed',
+  DANGER_PATH: 'danger_path',
+  MXI_CLIMBER: 'mxi_climber',
+} as const;
+
+// Deprecated
 export const CHALLENGE_GAME_TYPES = {
   QUICK_DRAW_DUEL: 'quick_draw_duel',
   TAP_RUSH: 'tap_rush',
@@ -122,6 +174,19 @@ export const VIRAL_ZONE_GAME_NAMES = {
   reflex_bomb: 'Reflex Bomb',
 } as const;
 
+export const MINI_BATTLE_GAME_NAMES = {
+  beat_bounce: 'MXI Beat Bounce',
+  perfect_distance: 'MXI Perfect Distance',
+  swipe_master: 'MXI Swipe Master',
+  quick_draw_duel: 'Quick Draw Duel',
+  tap_rush: 'Tap Rush',
+  rhythm_tap: 'Rhythm Tap',
+  mental_math_speed: 'Mental Math Speed',
+  danger_path: 'Danger Path',
+  mxi_climber: 'MXI Climber',
+} as const;
+
+// Deprecated
 export const CHALLENGE_GAME_NAMES = {
   quick_draw_duel: 'Quick Draw Duel',
   tap_rush: 'Tap Rush',
@@ -147,6 +212,19 @@ export const VIRAL_ZONE_GAME_DESCRIPTIONS = {
   reflex_bomb: 'Tap the bomb just before it explodes. Reaction and precision!',
 } as const;
 
+export const MINI_BATTLE_GAME_DESCRIPTIONS = {
+  beat_bounce: 'Tap when the ball hits the zone. Rhythm and precision!',
+  perfect_distance: 'Place a point at exactly the right distance. Precision wins!',
+  swipe_master: 'Swipe in the correct direction as fast as possible!',
+  quick_draw_duel: 'When "FIRE" appears, tap as fast as you can! Fastest wins.',
+  tap_rush: 'Tap the button as many times as possible in 10 seconds.',
+  rhythm_tap: 'Hit the notes at the right time. Perfect rhythm wins!',
+  mental_math_speed: 'Solve math problems quickly. First correct answer wins!',
+  danger_path: 'Navigate through the maze without touching walls.',
+  mxi_climber: 'Tap to climb higher while dodging obstacles!',
+} as const;
+
+// Deprecated
 export const CHALLENGE_GAME_DESCRIPTIONS = {
   quick_draw_duel: 'When "FIRE" appears, tap as fast as you can! Fastest wins.',
   tap_rush: 'Tap the button as many times as possible in 10 seconds.',
@@ -160,6 +238,11 @@ export const MAX_ACTIVE_TOURNAMENTS = 30;
 export const PARTICIPANT_OPTIONS = [25, 50] as const;
 export const VIRAL_ZONE_ENTRY_FEE = 1;
 export const VIRAL_ZONE_MAX_PLAYERS = 100;
+export const MINI_BATTLE_MIN_ENTRY = 5;
+export const MINI_BATTLE_MAX_ENTRY = 1000;
+export const MINI_BATTLE_MIN_PLAYERS = 2;
+export const MINI_BATTLE_MAX_PLAYERS = 4;
+// Deprecated
 export const CHALLENGE_MIN_ENTRY = 5;
 export const CHALLENGE_MAX_ENTRY = 1000;
 export const CHALLENGE_MIN_PLAYERS = 2;
