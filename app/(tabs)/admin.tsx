@@ -463,7 +463,8 @@ export default function AdminScreen() {
     }
   };
 
-  const handleAddBalance = async () => {
+  // COMPLETELY REWRITTEN: Add balance WITHOUT commissions
+  const handleAddBalanceNoCommission = async () => {
     if (!selectedUser || !balanceAmount) {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
@@ -477,124 +478,155 @@ export default function AdminScreen() {
 
     Alert.alert(
       'Confirm Action',
-      `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\nThis will add the balance directly without generating referral commissions.`,
+      `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\n⚠️ This will NOT generate referral commissions.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Confirm',
+          text: 'Add Balance',
           onPress: async () => {
             setLoading(true);
+            console.log('💰 ========================================');
+            console.log('💰 ADD BALANCE (NO COMMISSION)');
+            console.log('💰 User:', selectedUser.name, '(', selectedUser.id, ')');
+            console.log('💰 Amount:', amount, 'MXI');
+            console.log('💰 ========================================');
+            
             try {
-              console.log('💰 ========================================');
-              console.log('💰 AGGRESSIVE APPROACH: Direct database update');
-              console.log('💰 User ID:', selectedUser.id);
-              console.log('💰 Amount:', amount);
-              console.log('💰 ========================================');
-              
-              // First, check if vesting record exists
+              // Step 1: Verify admin status
+              console.log('🔐 Step 1: Verifying admin status...');
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+              if (!currentUser) {
+                throw new Error('Not authenticated');
+              }
+              console.log('✅ Authenticated as:', currentUser.id);
+
+              // Step 2: Check if vesting record exists
+              console.log('📊 Step 2: Checking existing vesting record...');
               const { data: existingVesting, error: fetchError } = await supabase
                 .from('vesting')
-                .select('*')
+                .select('user_id, total_mxi, purchased_mxi, current_rewards')
                 .eq('user_id', selectedUser.id)
                 .maybeSingle();
 
               if (fetchError) {
-                console.error('❌ Error fetching vesting:', fetchError);
-                Alert.alert('Error', `Failed to fetch vesting data: ${fetchError.message}`);
-                return;
+                console.error('❌ Fetch error:', fetchError);
+                throw new Error(`Database fetch error: ${fetchError.message}`);
               }
 
               console.log('📊 Existing vesting:', existingVesting);
 
-              let updateError;
+              // Step 3: Calculate new values
+              const oldTotal = existingVesting ? parseFloat(String(existingVesting.total_mxi || 0)) : 0;
+              const oldPurchased = existingVesting ? parseFloat(String(existingVesting.purchased_mxi || 0)) : 0;
+              const newTotal = oldTotal + amount;
+              const newPurchased = oldPurchased + amount;
+
+              console.log('🧮 Step 3: Calculations:');
+              console.log('   Old total_mxi:', oldTotal);
+              console.log('   Old purchased_mxi:', oldPurchased);
+              console.log('   Amount to add:', amount);
+              console.log('   New total_mxi:', newTotal);
+              console.log('   New purchased_mxi:', newPurchased);
+
+              // Step 4: Update or insert vesting record
+              console.log('💾 Step 4: Updating database...');
               
               if (existingVesting) {
                 // Update existing record
-                const oldTotal = parseFloat(existingVesting.total_mxi || '0');
-                const oldPurchased = parseFloat(existingVesting.purchased_mxi || '0');
-                const newTotal = oldTotal + amount;
-                const newPurchased = oldPurchased + amount;
-
-                console.log('📝 Updating existing vesting:');
-                console.log('   Old total:', oldTotal);
-                console.log('   Old purchased:', oldPurchased);
-                console.log('   New total:', newTotal);
-                console.log('   New purchased:', newPurchased);
-
-                const { error } = await supabase
+                const { data: updateData, error: updateError } = await supabase
                   .from('vesting')
                   .update({
                     total_mxi: newTotal,
                     purchased_mxi: newPurchased,
                     last_update: new Date().toISOString(),
                   })
-                  .eq('user_id', selectedUser.id);
+                  .eq('user_id', selectedUser.id)
+                  .select();
 
-                updateError = error;
+                if (updateError) {
+                  console.error('❌ Update error:', updateError);
+                  throw new Error(`Database update error: ${updateError.message}\nDetails: ${updateError.details || 'None'}\nHint: ${updateError.hint || 'None'}`);
+                }
+                console.log('✅ Update successful:', updateData);
               } else {
-                // Create new record
-                console.log('📝 Creating new vesting record');
-
-                const { error } = await supabase
+                // Insert new record
+                const { data: insertData, error: insertError } = await supabase
                   .from('vesting')
                   .insert({
                     user_id: selectedUser.id,
-                    total_mxi: amount,
-                    purchased_mxi: amount,
+                    total_mxi: newTotal,
+                    purchased_mxi: newPurchased,
                     current_rewards: 0,
                     monthly_rate: 0.03,
                     last_update: new Date().toISOString(),
-                  });
+                  })
+                  .select();
 
-                updateError = error;
+                if (insertError) {
+                  console.error('❌ Insert error:', insertError);
+                  throw new Error(`Database insert error: ${insertError.message}\nDetails: ${insertError.details || 'None'}\nHint: ${insertError.hint || 'None'}`);
+                }
+                console.log('✅ Insert successful:', insertData);
               }
 
-              if (updateError) {
-                console.error('❌ Database error:', updateError);
-                Alert.alert(
-                  'Error',
-                  `Failed to update balance: ${updateError.message}\n\nDetails: ${updateError.details || 'No details'}\n\nHint: ${updateError.hint || 'No hint'}`
-                );
-                return;
-              }
-
-              console.log('✅ Balance updated successfully in database');
-
-              // Verify the update
-              const { data: verifyData, error: verifyError } = await supabase
+              // Step 5: Verify the update
+              console.log('✔️ Step 5: Verifying update...');
+              const { data: verifiedData, error: verifyError } = await supabase
                 .from('vesting')
-                .select('*')
+                .select('user_id, total_mxi, purchased_mxi, current_rewards')
                 .eq('user_id', selectedUser.id)
                 .single();
 
               if (verifyError) {
-                console.error('⚠️ Could not verify update:', verifyError);
-              } else {
-                console.log('✅ Verified new balance:', verifyData);
+                console.error('⚠️ Verification error:', verifyError);
+                throw new Error(`Could not verify update: ${verifyError.message}`);
               }
 
-              Alert.alert(
-                'Success',
-                `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance\n\n📊 New Balance:\n• Total MXI: ${verifyData?.total_mxi || 'N/A'}\n• Purchased MXI: ${verifyData?.purchased_mxi || 'N/A'}`,
-                [
-                  {
-                    text: 'OK',
-                    onPress: async () => {
-                      setBalanceAmount('');
-                      console.log('🔄 Refreshing data after balance addition...');
-                      await loadUsers();
-                      await loadMetrics();
-                      await loadUserDetails(selectedUser.id);
-                      console.log('✅ Data refresh complete');
+              const verifiedTotal = parseFloat(String(verifiedData.total_mxi || 0));
+              const verifiedPurchased = parseFloat(String(verifiedData.purchased_mxi || 0));
+
+              console.log('✅ Verified data:', verifiedData);
+              console.log('✅ Verified total_mxi:', verifiedTotal);
+              console.log('✅ Verified purchased_mxi:', verifiedPurchased);
+
+              // Step 6: Confirm success
+              if (Math.abs(verifiedTotal - newTotal) < 0.01 && Math.abs(verifiedPurchased - newPurchased) < 0.01) {
+                console.log('🎉 SUCCESS! Balance updated correctly.');
+                Alert.alert(
+                  'Success! ✅',
+                  `Added ${amount} MXI to ${selectedUser.name}'s balance\n\n` +
+                  `📊 Updated Balance:\n` +
+                  `• Total MXI: ${verifiedTotal.toFixed(2)}\n` +
+                  `• Purchased MXI: ${verifiedPurchased.toFixed(2)}\n` +
+                  `• Current Rewards: ${parseFloat(String(verifiedData.current_rewards || 0)).toFixed(2)}`,
+                  [
+                    {
+                      text: 'OK',
+                      onPress: async () => {
+                        setBalanceAmount('');
+                        await loadUsers();
+                        await loadMetrics();
+                        await loadUserDetails(selectedUser.id);
+                      }
                     }
-                  }
-                ]
-              );
+                  ]
+                );
+              } else {
+                console.error('⚠️ Verification mismatch!');
+                console.error('Expected total:', newTotal, 'Got:', verifiedTotal);
+                console.error('Expected purchased:', newPurchased, 'Got:', verifiedPurchased);
+                throw new Error('Balance verification failed. Values do not match expected amounts.');
+              }
+
             } catch (error: any) {
-              console.error('❌ Exception in handleAddBalance:', error);
-              Alert.alert('Error', `Exception: ${error.message || 'Unknown error'}\n\nPlease check the console logs.`);
+              console.error('❌ EXCEPTION:', error);
+              Alert.alert(
+                'Error',
+                `Failed to add balance:\n\n${error.message}\n\nPlease check console logs for details.`
+              );
             } finally {
               setLoading(false);
+              console.log('💰 ========================================');
             }
           }
         }
@@ -602,6 +634,92 @@ export default function AdminScreen() {
     );
   };
 
+  // NEW: Add balance WITH commissions
+  const handleAddBalanceWithCommission = async () => {
+    if (!selectedUser || !balanceAmount) {
+      Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+
+    const amount = parseFloat(balanceAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Error', 'Please enter a valid positive number');
+      return;
+    }
+
+    Alert.alert(
+      'Confirm Action',
+      `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\n✅ This WILL generate referral commissions for their upline.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Add with Commission',
+          onPress: async () => {
+            setLoading(true);
+            console.log('💰 ========================================');
+            console.log('💰 ADD BALANCE (WITH COMMISSION)');
+            console.log('💰 User:', selectedUser.name, '(', selectedUser.id, ')');
+            console.log('💰 Amount:', amount, 'MXI');
+            console.log('💰 ========================================');
+            
+            try {
+              // Use RPC function to add balance with commissions
+              console.log('📞 Calling admin_add_balance_with_commissions RPC...');
+              const { data, error } = await supabase.rpc('admin_add_balance_with_commissions', {
+                p_user_id: selectedUser.id,
+                p_amount: amount,
+              });
+
+              if (error) {
+                console.error('❌ RPC Error:', error);
+                throw new Error(`RPC error: ${error.message}`);
+              }
+
+              console.log('📦 RPC Response:', data);
+
+              if (data && data.success) {
+                const commissionsMsg = data.total_commissions 
+                  ? `\n\n💰 Commissions Distributed:\n${data.total_commissions.toFixed(2)} MXI to ${data.referrers_paid || 0} referrer(s)`
+                  : '\n\n(No referrers to pay commissions to)';
+
+                Alert.alert(
+                  'Success! ✅',
+                  `Added ${amount} MXI to ${selectedUser.name}'s balance${commissionsMsg}`,
+                  [
+                    {
+                      text: 'OK',
+                      onPress: async () => {
+                        setBalanceAmount('');
+                        await loadUsers();
+                        await loadMetrics();
+                        await loadUserDetails(selectedUser.id);
+                      }
+                    }
+                  ]
+                );
+              } else {
+                const errorMsg = data?.error || 'Failed to add balance with commissions';
+                console.error('❌ RPC failed:', errorMsg);
+                throw new Error(errorMsg);
+              }
+
+            } catch (error: any) {
+              console.error('❌ EXCEPTION:', error);
+              Alert.alert(
+                'Error',
+                `Failed to add balance with commissions:\n\n${error.message}`
+              );
+            } finally {
+              setLoading(false);
+              console.log('💰 ========================================');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // COMPLETELY REWRITTEN: Remove balance
   const handleRemoveBalance = async () => {
     if (!selectedUser || !balanceAmount) {
       Alert.alert('Error', 'Please enter a valid amount');
@@ -616,7 +734,7 @@ export default function AdminScreen() {
 
     Alert.alert(
       'Confirm Removal',
-      `Remove ${amount} MXI from ${selectedUser.name}'s balance?\n\nThis action cannot be undone.`,
+      `Remove ${amount} MXI from ${selectedUser.name}'s balance?\n\n⚠️ This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -624,62 +742,126 @@ export default function AdminScreen() {
           style: 'destructive',
           onPress: async () => {
             setLoading(true);
+            console.log('💸 ========================================');
+            console.log('💸 REMOVE BALANCE');
+            console.log('💸 User:', selectedUser.name, '(', selectedUser.id, ')');
+            console.log('💸 Amount:', amount, 'MXI');
+            console.log('💸 ========================================');
+            
             try {
-              console.log(`💸 Removing ${amount} MXI from user ${selectedUser.id}`);
-              
-              const { data: vestingData, error: vestingError } = await supabase
+              // Step 1: Verify admin status
+              console.log('🔐 Step 1: Verifying admin status...');
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+              if (!currentUser) {
+                throw new Error('Not authenticated');
+              }
+              console.log('✅ Authenticated as:', currentUser.id);
+
+              // Step 2: Get current balance
+              console.log('📊 Step 2: Fetching current balance...');
+              const { data: vestingData, error: fetchError } = await supabase
                 .from('vesting')
-                .select('*')
+                .select('user_id, total_mxi, purchased_mxi')
                 .eq('user_id', selectedUser.id)
                 .single();
 
-              if (vestingError) {
-                console.error('❌ Error fetching vesting data:', vestingError);
-                Alert.alert('Error', 'User has no balance to remove');
-                return;
+              if (fetchError) {
+                console.error('❌ Fetch error:', fetchError);
+                throw new Error('User has no balance to remove');
               }
 
-              const currentBalance = parseFloat(vestingData.total_mxi);
-              console.log(`📊 Current balance: ${currentBalance} MXI`);
+              const currentTotal = parseFloat(String(vestingData.total_mxi || 0));
+              const currentPurchased = parseFloat(String(vestingData.purchased_mxi || 0));
 
-              if (currentBalance < amount) {
-                Alert.alert('Error', `User only has ${currentBalance.toFixed(2)} MXI. Cannot remove ${amount} MXI.`);
-                return;
+              console.log('📊 Current balance:', currentTotal, 'MXI');
+              console.log('📊 Current purchased:', currentPurchased, 'MXI');
+
+              // Step 3: Validate removal amount
+              if (currentTotal < amount) {
+                throw new Error(`User only has ${currentTotal.toFixed(2)} MXI. Cannot remove ${amount} MXI.`);
               }
 
-              const newTotal = Math.max(0, currentBalance - amount);
-              const currentPurchased = parseFloat(vestingData.purchased_mxi || '0');
+              // Step 4: Calculate new values
+              const newTotal = Math.max(0, currentTotal - amount);
               const newPurchased = Math.max(0, currentPurchased - amount);
-              
-              console.log(`📊 New balance will be: ${newTotal} MXI`);
-              console.log(`📊 New purchased will be: ${newPurchased} MXI`);
 
-              const { error: updateError } = await supabase
+              console.log('🧮 Step 3: Calculations:');
+              console.log('   Amount to remove:', amount);
+              console.log('   New total_mxi:', newTotal);
+              console.log('   New purchased_mxi:', newPurchased);
+
+              // Step 5: Update database
+              console.log('💾 Step 4: Updating database...');
+              const { data: updateData, error: updateError } = await supabase
                 .from('vesting')
                 .update({
                   total_mxi: newTotal,
                   purchased_mxi: newPurchased,
                   last_update: new Date().toISOString(),
                 })
-                .eq('user_id', selectedUser.id);
+                .eq('user_id', selectedUser.id)
+                .select();
 
               if (updateError) {
-                console.error('❌ Error updating vesting:', updateError);
-                Alert.alert('Error', `Failed to remove balance: ${updateError.message}`);
-                throw updateError;
+                console.error('❌ Update error:', updateError);
+                throw new Error(`Database update error: ${updateError.message}`);
+              }
+              console.log('✅ Update successful:', updateData);
+
+              // Step 6: Verify the update
+              console.log('✔️ Step 5: Verifying update...');
+              const { data: verifiedData, error: verifyError } = await supabase
+                .from('vesting')
+                .select('user_id, total_mxi, purchased_mxi')
+                .eq('user_id', selectedUser.id)
+                .single();
+
+              if (verifyError) {
+                console.error('⚠️ Verification error:', verifyError);
+                throw new Error(`Could not verify update: ${verifyError.message}`);
               }
 
-              console.log(`✅ Removed ${amount} MXI, new balance: ${newTotal} MXI`);
-              Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\nNew balance: ${newTotal.toFixed(2)} MXI`);
-              setBalanceAmount('');
-              await loadUsers();
-              await loadMetrics();
-              await loadUserDetails(selectedUser.id);
+              const verifiedTotal = parseFloat(String(verifiedData.total_mxi || 0));
+              const verifiedPurchased = parseFloat(String(verifiedData.purchased_mxi || 0));
+
+              console.log('✅ Verified total_mxi:', verifiedTotal);
+              console.log('✅ Verified purchased_mxi:', verifiedPurchased);
+
+              // Step 7: Confirm success
+              if (Math.abs(verifiedTotal - newTotal) < 0.01 && Math.abs(verifiedPurchased - newPurchased) < 0.01) {
+                console.log('🎉 SUCCESS! Balance removed correctly.');
+                Alert.alert(
+                  'Success! ✅',
+                  `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\n` +
+                  `📊 Updated Balance:\n` +
+                  `• Total MXI: ${verifiedTotal.toFixed(2)}\n` +
+                  `• Purchased MXI: ${verifiedPurchased.toFixed(2)}`,
+                  [
+                    {
+                      text: 'OK',
+                      onPress: async () => {
+                        setBalanceAmount('');
+                        await loadUsers();
+                        await loadMetrics();
+                        await loadUserDetails(selectedUser.id);
+                      }
+                    }
+                  ]
+                );
+              } else {
+                console.error('⚠️ Verification mismatch!');
+                throw new Error('Balance verification failed. Values do not match expected amounts.');
+              }
+
             } catch (error: any) {
-              console.error('❌ Exception in handleRemoveBalance:', error);
-              Alert.alert('Error', error.message || 'Failed to remove balance');
+              console.error('❌ EXCEPTION:', error);
+              Alert.alert(
+                'Error',
+                `Failed to remove balance:\n\n${error.message}`
+              );
             } finally {
               setLoading(false);
+              console.log('💸 ========================================');
             }
           }
         }
@@ -1642,7 +1824,7 @@ export default function AdminScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Balance Management Section - SIMPLIFIED */}
+                {/* Balance Management Section - COMPLETELY REWRITTEN */}
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>
                     <IconSymbol 
@@ -1654,7 +1836,7 @@ export default function AdminScreen() {
                     {' '}Balance Management
                   </Text>
                   <Text style={styles.modalSectionDescription}>
-                    Add or remove MXI tokens from user&apos;s balance. Balance changes do not trigger referral commissions.
+                    Add or remove MXI tokens from user&apos;s balance. Choose whether to generate referral commissions.
                   </Text>
 
                   <Text style={styles.inputLabel}>Amount (MXI)</Text>
@@ -1667,10 +1849,30 @@ export default function AdminScreen() {
                     keyboardType="decimal-pad"
                   />
 
-                  <View style={styles.buttonRow}>
+                  <View style={styles.balanceButtonsContainer}>
                     <TouchableOpacity 
-                      style={[styles.modalButton, styles.modalButtonSuccess]}
-                      onPress={handleAddBalance}
+                      style={[styles.balanceButton, styles.balanceButtonNoCommission]}
+                      onPress={handleAddBalanceNoCommission}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color={colors.card} size="small" />
+                      ) : (
+                        <>
+                          <IconSymbol 
+                            ios_icon_name="plus.circle" 
+                            android_material_icon_name="add_circle_outline" 
+                            size={20} 
+                            color={colors.card} 
+                          />
+                          <Text style={styles.balanceButtonText}>Add (No Commission)</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.balanceButton, styles.balanceButtonWithCommission]}
+                      onPress={handleAddBalanceWithCommission}
                       disabled={loading}
                     >
                       {loading ? (
@@ -1683,12 +1885,13 @@ export default function AdminScreen() {
                             size={20} 
                             color={colors.card} 
                           />
-                          <Text style={styles.modalButtonText}>Add Amount</Text>
+                          <Text style={styles.balanceButtonText}>Add (With Commission)</Text>
                         </>
                       )}
                     </TouchableOpacity>
+
                     <TouchableOpacity 
-                      style={[styles.modalButton, styles.modalButtonDanger]}
+                      style={[styles.balanceButton, styles.balanceButtonRemove]}
                       onPress={handleRemoveBalance}
                       disabled={loading}
                     >
@@ -1702,10 +1905,17 @@ export default function AdminScreen() {
                             size={20} 
                             color={colors.card} 
                           />
-                          <Text style={styles.modalButtonText}>Remove Amount</Text>
+                          <Text style={styles.balanceButtonText}>Remove Balance</Text>
                         </>
                       )}
                     </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoBoxLabel}>ℹ️ Commission Info:</Text>
+                    <Text style={styles.infoBoxValue}>
+                      Level 1: 5% • Level 2: 2% • Level 3: 1%
+                    </Text>
                   </View>
                 </View>
 
@@ -2561,5 +2771,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text,
     marginTop: 4,
+  },
+  balanceButtonsContainer: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  balanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 10,
+  },
+  balanceButtonNoCommission: {
+    backgroundColor: colors.primary,
+  },
+  balanceButtonWithCommission: {
+    backgroundColor: colors.secondary,
+  },
+  balanceButtonRemove: {
+    backgroundColor: colors.error,
+  },
+  balanceButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.card,
   },
 });
