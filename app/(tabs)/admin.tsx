@@ -498,12 +498,9 @@ export default function AdminScreen() {
               console.log('💰 ========================================');
               console.log(`💰 CALLING ${functionName}`);
               console.log('💰 User ID:', selectedUser.id);
-              console.log('💰 User ID type:', typeof selectedUser.id);
               console.log('💰 Amount:', amount);
-              console.log('💰 Amount type:', typeof amount);
               console.log('💰 ========================================');
               
-              // CRITICAL FIX: Ensure proper parameter types and wait for response
               const { data, error } = await supabase.rpc(functionName, {
                 p_user_id: selectedUser.id,
                 p_mxi_amount: amount,
@@ -517,7 +514,6 @@ export default function AdminScreen() {
 
               if (error) {
                 console.error(`❌ RPC Error in ${functionName}:`, error);
-                console.error('❌ Error details:', JSON.stringify(error, null, 2));
                 Alert.alert(
                   'Error', 
                   `Failed to add balance: ${error.message}\n\nDetails: ${error.details || 'No details'}\n\nHint: ${error.hint || 'No hint'}`
@@ -525,18 +521,24 @@ export default function AdminScreen() {
                 return;
               }
 
-              console.log(`📦 ${functionName} response:`, data);
-
               if (data && data.success) {
-                let successMessage = `✅ Added ${amount} MXI to ${selectedUser.name}'s balance`;
+                let successMessage = `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance`;
                 
                 if (balanceType === 'with_commission' && data.total_commissions_distributed > 0) {
-                  successMessage += `\n\n💰 Referral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`;
+                  successMessage += `\n\n💰 Referral commissions distributed:\n`;
+                  successMessage += `• Total: ${data.total_commissions_distributed.toFixed(2)} MXI\n`;
+                  if (data.level1_commission > 0) successMessage += `• Level 1: ${data.level1_commission.toFixed(2)} MXI\n`;
+                  if (data.level2_commission > 0) successMessage += `• Level 2: ${data.level2_commission.toFixed(2)} MXI\n`;
+                  if (data.level3_commission > 0) successMessage += `• Level 3: ${data.level3_commission.toFixed(2)} MXI`;
                 } else if (balanceType === 'without_commission') {
                   successMessage += '\n\n✅ No commissions generated';
                 }
                 
-                console.log('✅ Balance added successfully:', successMessage);
+                successMessage += `\n\n📊 New Balance:\n`;
+                successMessage += `• Total MXI: ${data.new_total_mxi.toFixed(2)}\n`;
+                successMessage += `• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}`;
+                
+                console.log('✅ Balance added successfully');
                 
                 Alert.alert('Success', successMessage, [
                   {
@@ -555,12 +557,10 @@ export default function AdminScreen() {
               } else {
                 const errorMsg = data?.error || 'Failed to add balance - no success flag in response';
                 console.error('❌ Balance addition failed:', errorMsg);
-                console.error('❌ Full response:', JSON.stringify(data, null, 2));
                 Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
               console.error('❌ Exception in handleAddBalance:', error);
-              console.error('❌ Exception stack:', error.stack);
               Alert.alert('Error', `Exception: ${error.message || 'Unknown error'}\n\nPlease check the console logs.`);
             } finally {
               setLoading(false);
