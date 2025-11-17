@@ -373,17 +373,24 @@ export default function HomeScreen() {
 
   // Debug logging for referral stats
   useEffect(() => {
-    console.log('🏠 Home Screen - Referral Stats Update:', {
-      totalReferrals: referralStats?.totalReferrals,
-      level1Count: referralStats?.level1Count,
-      level2Count: referralStats?.level2Count,
-      level3Count: referralStats?.level3Count,
-      level1MXI: referralStats?.level1MXI,
-      level2MXI: referralStats?.level2MXI,
-      level3MXI: referralStats?.level3MXI,
-      totalMXIEarned: referralStats?.totalMXIEarned,
+    console.log('🏠 Home Screen - Data Update:', {
+      vestingData: {
+        totalMXI: vestingData?.totalMXI,
+        purchasedMXI: vestingData?.purchasedMXI,
+        currentRewards: vestingData?.currentRewards,
+      },
+      referralStats: {
+        totalReferrals: referralStats?.totalReferrals,
+        level1Count: referralStats?.level1Count,
+        level2Count: referralStats?.level2Count,
+        level3Count: referralStats?.level3Count,
+        level1MXI: referralStats?.level1MXI,
+        level2MXI: referralStats?.level2MXI,
+        level3MXI: referralStats?.level3MXI,
+        totalMXIEarned: referralStats?.totalMXIEarned,
+      },
     });
-  }, [referralStats]);
+  }, [referralStats, vestingData]);
 
   // Countdown to February 20, 2026
   useEffect(() => {
@@ -429,18 +436,18 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown - ensure we use the actual values from referralStats
+  // Calculate MXI breakdown using the new purchased_mxi field
   const totalMXI = vestingData?.totalMXI || 0;
+  const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
-  const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
   const vestingRewards = vestingData?.currentRewards || 0;
   
   console.log('🏠 Home Screen - Display Values:', {
     totalMXI,
-    referralMXI,
     purchasedMXI,
+    referralMXI,
     vestingRewards,
-    'referralStats object': referralStats,
+    'Calculation check': `${purchasedMXI} + ${referralMXI} = ${purchasedMXI + referralMXI} (should equal ${totalMXI})`,
   });
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;

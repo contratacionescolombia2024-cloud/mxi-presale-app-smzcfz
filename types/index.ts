@@ -40,6 +40,7 @@ export interface VestingData {
   id?: string;
   userId: string;
   totalMXI: number;
+  purchasedMXI: number;
   currentRewards: number;
   monthlyRate: number;
   lastUpdate: string;
@@ -64,9 +65,9 @@ export interface ReferralStats {
   level1Count: number;
   level2Count: number;
   level3Count: number;
-  level1MXI?: number;
-  level2MXI?: number;
-  level3MXI?: number;
+  level1MXI: number;
+  level2MXI: number;
+  level3MXI: number;
   totalMXIEarned: number;
   referrals: any[];
 }

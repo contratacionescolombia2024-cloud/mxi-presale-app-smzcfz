@@ -27,20 +27,15 @@ export function usePreSale() {
 // Helper function to safely convert database numeric values to JavaScript numbers
 function safeNumeric(value: any): number {
   if (value === null || value === undefined) {
-    console.log('⚠️ safeNumeric: null/undefined value, returning 0');
     return 0;
   }
   if (typeof value === 'number') {
-    console.log('✅ safeNumeric: number value:', value);
     return value;
   }
   if (typeof value === 'string') {
     const parsed = parseFloat(value);
-    const result = isNaN(parsed) ? 0 : parsed;
-    console.log('✅ safeNumeric: string value:', value, '-> parsed:', result);
-    return result;
+    return isNaN(parsed) ? 0 : parsed;
   }
-  console.log('⚠️ safeNumeric: unknown type:', typeof value, 'value:', value, 'returning 0');
   return 0;
 }
 
@@ -73,7 +68,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    console.log('🔔 Setting up real-time subscription for referrals');
+    console.log('🔔 Setting up real-time subscription for referrals and vesting');
 
     // Subscribe to changes in the referrals table
     const referralsSubscription = supabase
@@ -89,6 +84,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         (payload) => {
           console.log('🔔 Referral change detected:', payload);
           loadReferralStats();
+          loadVestingData(); // Reload vesting data when referrals change
         }
       )
       .subscribe();
@@ -111,10 +107,29 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
+    // Subscribe to changes in users_profiles (for referral linking)
+    const profilesSubscription = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users_profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Profile change detected:', payload);
+          loadReferralStats();
+        }
+      )
+      .subscribe();
+
     return () => {
       console.log('🛑 Cleaning up real-time subscriptions');
       referralsSubscription.unsubscribe();
       vestingSubscription.unsubscribe();
+      profilesSubscription.unsubscribe();
     };
   }, [user?.id, isAuthenticated]);
 
@@ -241,12 +256,14 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         console.log('✅ Vesting data loaded:', data);
         const monthlyRate = safeNumeric(data.monthly_rate) || 0.03;
         const totalMXI = safeNumeric(data.total_mxi);
+        const purchasedMXI = safeNumeric(data.purchased_mxi);
         const currentRewards = safeNumeric(data.current_rewards);
         
         setVestingData({
           id: data.id,
           userId: data.user_id,
           totalMXI: totalMXI,
+          purchasedMXI: purchasedMXI,
           currentRewards: currentRewards,
           monthlyRate: monthlyRate,
           lastUpdate: data.last_update || new Date().toISOString(),
@@ -262,6 +279,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           id: '',
           userId: user.id,
           totalMXI: 0,
+          purchasedMXI: 0,
           currentRewards: 0,
           monthlyRate: 0.03,
           lastUpdate: new Date().toISOString(),
@@ -320,19 +338,19 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       // Calculate total MXI earned from commissions using commission_mxi field
       const level1MXI = level1Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 1 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
+        console.log('💰 Level 1 - Referral ID:', r.id, 'Commission:', commission);
         return sum + commission;
       }, 0);
       
       const level2MXI = level2Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 2 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
+        console.log('💰 Level 2 - Referral ID:', r.id, 'Commission:', commission);
         return sum + commission;
       }, 0);
       
       const level3MXI = level3Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 3 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
+        console.log('💰 Level 3 - Referral ID:', r.id, 'Commission:', commission);
         return sum + commission;
       }, 0);
       
@@ -435,7 +453,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Purchase created:', purchase);
 
-      // Update or create vesting record
+      // Update or create vesting record - now tracking purchased_mxi separately
       const { data: existingVesting } = await supabase
         .from('vesting')
         .select('*')
@@ -444,10 +462,12 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       if (existingVesting) {
         const newTotal = safeNumeric(existingVesting.total_mxi) + mxiAmount;
+        const newPurchased = safeNumeric(existingVesting.purchased_mxi) + mxiAmount;
         const { error: vestingError } = await supabase
           .from('vesting')
           .update({
             total_mxi: newTotal,
+            purchased_mxi: newPurchased,
             last_update: new Date().toISOString(),
           })
           .eq('user_id', user.id);
@@ -462,6 +482,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           .insert({
             user_id: user.id,
             total_mxi: mxiAmount,
+            purchased_mxi: mxiAmount,
             current_rewards: 0,
             monthly_rate: 0.03,
             last_update: new Date().toISOString(),
@@ -484,38 +505,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       if (stageError) {
         console.error('❌ Stage update error:', stageError);
         throw stageError;
-      }
-
-      // Process referral commissions if user was referred
-      if (user.referredBy) {
-        console.log('🔗 Processing referral commissions for purchase...');
-        
-        // Get the referrer's user ID
-        const { data: referrerData } = await supabase
-          .from('users_profiles')
-          .select('id')
-          .eq('referral_code', user.referredBy)
-          .maybeSingle();
-
-        if (referrerData) {
-          // Calculate and update level 1 commission (5%)
-          const level1Commission = mxiAmount * 0.05;
-          
-          const { error: commissionError } = await supabase
-            .from('referrals')
-            .update({
-              commission_mxi: level1Commission,
-            })
-            .eq('referrer_id', referrerData.id)
-            .eq('referred_id', user.id)
-            .eq('level', 1);
-
-          if (commissionError) {
-            console.error('❌ Error updating commission:', commissionError);
-          } else {
-            console.log('✅ Level 1 commission updated:', level1Commission);
-          }
-        }
       }
 
       console.log('✅ Purchase completed successfully');

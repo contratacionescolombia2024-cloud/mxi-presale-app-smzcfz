@@ -370,17 +370,18 @@ export default function HomeScreen() {
 
   // Debug logging for referral stats
   useEffect(() => {
-    console.log('🏠 Home Screen (iOS) - Referral Stats Update:', {
-      totalReferrals: referralStats?.totalReferrals,
-      level1Count: referralStats?.level1Count,
-      level2Count: referralStats?.level2Count,
-      level3Count: referralStats?.level3Count,
-      level1MXI: referralStats?.level1MXI,
-      level2MXI: referralStats?.level2MXI,
-      level3MXI: referralStats?.level3MXI,
-      totalMXIEarned: referralStats?.totalMXIEarned,
+    console.log('🏠 Home Screen (iOS) - Data Update:', {
+      vestingData: {
+        totalMXI: vestingData?.totalMXI,
+        purchasedMXI: vestingData?.purchasedMXI,
+        currentRewards: vestingData?.currentRewards,
+      },
+      referralStats: {
+        totalReferrals: referralStats?.totalReferrals,
+        totalMXIEarned: referralStats?.totalMXIEarned,
+      },
     });
-  }, [referralStats]);
+  }, [referralStats, vestingData]);
 
   // Countdown to February 20, 2026
   useEffect(() => {
@@ -426,19 +427,11 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown - ensure we use the actual values from referralStats
+  // Calculate MXI breakdown using the new purchased_mxi field
   const totalMXI = vestingData?.totalMXI || 0;
+  const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
-  const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
   const vestingRewards = vestingData?.currentRewards || 0;
-  
-  console.log('🏠 Home Screen (iOS) - Display Values:', {
-    totalMXI,
-    referralMXI,
-    purchasedMXI,
-    vestingRewards,
-    'referralStats object': referralStats,
-  });
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
 
@@ -463,7 +456,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Translucent Orange */}
+        {/* Countdown Timer */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
@@ -490,7 +483,7 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - Detailed breakdown */}
+        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -537,7 +530,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates */}
+        {/* Vesting Display */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -547,7 +540,6 @@ export default function HomeScreen() {
           </View>
           
           <View style={styles.vestingMetrics}>
-            {/* Real-time rewards display */}
             <View style={styles.vestingRewardsContainer}>
               <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
               <Text style={styles.vestingRewardsAmount}>
@@ -568,7 +560,6 @@ export default function HomeScreen() {
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
-            {/* Projections */}
             <View style={styles.projectionsContainer}>
               <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings</Text>
               
@@ -596,7 +587,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Phase Counter - Single counter for current phase */}
+        {/* Phase Status */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
