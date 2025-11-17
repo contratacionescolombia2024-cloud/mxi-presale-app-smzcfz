@@ -70,11 +70,11 @@ export default function TabLayout() {
       label: 'Tournaments',
     },
     {
-      name: 'referrals',
-      route: '/(tabs)/referrals',
-      iosIcon: APP_ICONS.referrals.ios,
-      androidIcon: APP_ICONS.referrals.android,
-      label: APP_ICONS.referrals.label,
+      name: 'ecosystem',
+      route: '/(tabs)/ecosystem',
+      iosIcon: 'globe',
+      androidIcon: 'public',
+      label: 'Ecosystem',
     },
     {
       name: 'profile',
@@ -98,6 +98,7 @@ export default function TabLayout() {
         <Stack.Screen name="(home)" />
         <Stack.Screen name="purchase" />
         <Stack.Screen name="tournaments" />
+        <Stack.Screen name="ecosystem" />
         <Stack.Screen name="vesting" />
         <Stack.Screen name="referrals" />
         <Stack.Screen name="profile" />

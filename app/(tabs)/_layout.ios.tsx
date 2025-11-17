@@ -57,13 +57,13 @@ export default function TabLayout() {
         <Icon sf="cart.fill" />
         <Label>Buy</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="vesting" name="vesting">
-        <Icon sf="chart.line.uptrend.xyaxis" />
-        <Label>Vesting</Label>
+      <NativeTabs.Trigger key="tournaments" name="tournaments">
+        <Icon sf="trophy.fill" />
+        <Label>Tournaments</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="referrals" name="referrals">
-        <Icon sf="person.2.fill" />
-        <Label>Referrals</Label>
+      <NativeTabs.Trigger key="ecosystem" name="ecosystem">
+        <Icon sf="globe" />
+        <Label>Ecosystem</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger key="profile" name="profile">
         <Icon sf="person.fill" />
