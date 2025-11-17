@@ -60,14 +60,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.accent,
-    marginBottom: 24,
-    textAlign: 'center',
-    lineHeight: 26,
-  },
   reasonCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -85,60 +77,25 @@ const styles = StyleSheet.create({
   reasonIcon: {
     fontSize: 32,
   },
-  reasonTitle: {
+  reasonTitleContainer: {
     flex: 1,
+  },
+  reasonTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 4,
   },
   reasonSubtitle: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.accent,
-    marginBottom: 8,
   },
   reasonDescription: {
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 8,
-  },
-  bulletPoint: {
-    flexDirection: 'row',
-    marginBottom: 6,
-    paddingLeft: 8,
-  },
-  bullet: {
-    fontSize: 16,
-    color: colors.accent,
-    marginRight: 8,
-    fontWeight: 'bold',
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
-  highlightBox: {
-    backgroundColor: colors.sectionOrange,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-  },
-  highlightTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  highlightText: {
-    fontSize: 16,
-    color: colors.text,
-    lineHeight: 24,
-    fontWeight: '600',
   },
   finalMessage: {
     backgroundColor: colors.accent,
@@ -159,21 +116,6 @@ const styles = StyleSheet.create({
     color: colors.light,
     lineHeight: 24,
     textAlign: 'center',
-    marginBottom: 16,
-  },
-  finalMessageHighlight: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.light,
-    textAlign: 'center',
-    lineHeight: 26,
-  },
-  quoteText: {
-    fontSize: 15,
-    fontStyle: 'italic',
-    color: colors.textSecondary,
-    lineHeight: 22,
-    marginTop: 8,
   },
 });
 
@@ -191,235 +133,99 @@ export default function WhyBuyMaxcoinScreen() {
         </View>
 
         <Image
-          source={require('@/assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png')}
+          source={require('@/assets/images/e9a564bd-2dc1-4b93-a02c-984fe8befd7b.png')}
           style={styles.heroImage}
         />
 
-        <Text style={styles.title}>¿Por qué deberías comprar MXI? 💎</Text>
-
-        <Text style={styles.subtitle}>
-          Porque las mejores oportunidades no se esperan, se toman. ⚡
-        </Text>
+        <Text style={styles.title}>¿POR QUÉ DEBERÍAS COMPRAR MXI? 💎</Text>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>🚀</Text>
-            <Text style={styles.reasonTitle}>Entras antes que la mayoría</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>1. Entras antes que la mayoría</Text>
+              <Text style={styles.reasonSubtitle}>(Ventaja del pionero)</Text>
+            </View>
           </View>
-          <Text style={styles.reasonSubtitle}>(Ventaja del pionero)</Text>
           <Text style={styles.reasonDescription}>
-            Cuando compras MXI en preventa, accedes a un precio que NUNCA volverá a repetirse.
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Eso te coloca en la misma posición en la que estuvieron los primeros compradores de los grandes proyectos que luego multiplicaron su valor.
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Es el lugar donde comienzan las grandes historias de crecimiento. 📈
+            Al comprar MXI en preventa, accedes a un precio único que no volverá a repetirse. Es la posición donde comienzan las grandes oportunidades de crecimiento. Entrar temprano siempre ha sido la clave en los proyectos que luego multiplican su valor. 📈
           </Text>
         </View>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>💰</Text>
-            <Text style={styles.reasonTitle}>Tu dinero trabaja por ti todos los días</Text>
-          </View>
-          <Text style={styles.reasonSubtitle}>(Recompensa continua)</Text>
-          <Text style={styles.reasonDescription}>
-            MXI te da vesting diario.
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>No necesitas mover nada.</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>No necesitas bloquear nada.</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>No necesitas hacer nada.</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>2. Tu dinero trabaja por ti todos los días</Text>
+              <Text style={styles.reasonSubtitle}>(Recompensa continua)</Text>
+            </View>
           </View>
           <Text style={styles.reasonDescription}>
-            Tu saldo crece automáticamente, incluso mientras duermes. 😴
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Esto activa en tu cerebro el sesgo de recompensa inmediata, aumentando tu sensación de seguridad y progreso. 🧠✨
+            MXI ofrece vesting diario. Tu saldo aumenta automáticamente sin necesidad de mover fondos o bloquearlos. Es un sistema diseñado para generar una sensación constante de progreso y beneficio real desde el primer día. ⏰✨
           </Text>
         </View>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>🤝</Text>
-            <Text style={styles.reasonTitle}>Ganas más cuando compartes</Text>
-          </View>
-          <Text style={styles.reasonSubtitle}>(Efecto comunidad)</Text>
-          <Text style={styles.reasonDescription}>
-            MXI tiene uno de los sistemas de referidos más fáciles y poderosos.
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>→</Text>
-            <Text style={styles.bulletText}>Invitas a alguien → ganas.</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>→</Text>
-            <Text style={styles.bulletText}>Tu invitado invita a otro → también ganas.</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>3. Ganas más cuando compartes</Text>
+              <Text style={styles.reasonSubtitle}>(Efecto comunidad)</Text>
+            </View>
           </View>
           <Text style={styles.reasonDescription}>
-            Es un crecimiento orgánico que se expande solo.
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Tu red se multiplica sin esfuerzo gracias al sesgo de reciprocidad: 🌐
-          </Text>
-          <Text style={styles.quoteText}>
-            "Si yo gano, tú también ganas." 🎁
+            El sistema de referidos de MXI permite obtener comisiones cuando recomiendas el proyecto y también cuando tus invitados recomiendan a otros. El crecimiento se multiplica gracias al efecto de red y la reciprocidad: si tú ganas, tus contactos también ganan. 🌐🎁
           </Text>
         </View>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>🏗️</Text>
-            <Text style={styles.reasonTitle}>Tiene un ecosistema real detrás</Text>
-          </View>
-          <Text style={styles.reasonSubtitle}>(Utilidad = Valor)</Text>
-          <Text style={styles.reasonDescription}>
-            MXI no es una moneda vacía.
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>✗</Text>
-            <Text style={styles.bulletText}>No depende de emociones del mercado.</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>✗</Text>
-            <Text style={styles.bulletText}>No depende de entradas nuevas para sostenerse.</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>4. Ecosistema con utilidad real</Text>
+              <Text style={styles.reasonSubtitle}>(Valor sostenido)</Text>
+            </View>
           </View>
           <Text style={styles.reasonDescription}>
-            Tiene:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🎮</Text>
-            <Text style={styles.bulletText}>Torneos</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>📱</Text>
-            <Text style={styles.bulletText}>Apps interconectadas</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🎁</Text>
-            <Text style={styles.bulletText}>Recompensas</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>📊</Text>
-            <Text style={styles.bulletText}>Vesting</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🔒</Text>
-            <Text style={styles.bulletText}>Staking</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>💼</Text>
-            <Text style={styles.bulletText}>Comercio</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🌎</Text>
-            <Text style={styles.bulletText}>Expansión en LATAM</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>⛓️</Text>
-            <Text style={styles.bulletText}>Migración futura a su propia cadena</Text>
-          </View>
-          <Text style={styles.reasonDescription}>
-            Cuanta más gente lo usa, más vale.
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Esto activa el sesgo de prueba social: 👥
-          </Text>
-          <Text style={styles.quoteText}>
-            "Si todos lo usan, es por algo."
+            MXI no depende únicamente de la especulación. Tiene un ecosistema completo que incluye torneos 🎮, aplicaciones integradas 📱, recompensas 🎁, vesting diario 📊, futuros mecanismos de staking 🔒, comercio interno 💼 y una expansión proyectada en toda América Latina 🌎. A más adopción, mayor valor del token.
           </Text>
         </View>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>💵</Text>
-            <Text style={styles.reasonTitle}>Te permite empezar con muy poco</Text>
-          </View>
-          <Text style={styles.reasonSubtitle}>(Accesible)</Text>
-          <Text style={styles.reasonDescription}>
-            No necesitas miles de dólares.
-          </Text>
-          <Text style={styles.reasonDescription}>
-            Con una inversión mínima, ya participas de:
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>📈</Text>
-            <Text style={styles.bulletText}>Valorización</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>💰</Text>
-            <Text style={styles.bulletText}>Vesting diario</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🤝</Text>
-            <Text style={styles.bulletText}>Referidos</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🏆</Text>
-            <Text style={styles.bulletText}>Torneos</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>🌱</Text>
-            <Text style={styles.bulletText}>Crecimiento de la red</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>5. Accesible para todos</Text>
+              <Text style={styles.reasonSubtitle}>(Barrera de entrada baja)</Text>
+            </View>
           </View>
           <Text style={styles.reasonDescription}>
-            El cerebro interpreta esto como riesgo bajo y alta recompensa potencial, el escenario perfecto para decidir. ✅
+            Puedes iniciar con un monto mínimo y aun así participar de la valorización, las comisiones, los torneos y el crecimiento del ecosistema. Esto reduce la percepción de riesgo y aumenta el potencial de beneficio. ✅
           </Text>
         </View>
 
         <View style={styles.reasonCard}>
           <View style={styles.reasonHeader}>
             <Text style={styles.reasonIcon}>⏰</Text>
-            <Text style={styles.reasonTitle}>Estás en el momento correcto</Text>
-          </View>
-          <Text style={styles.reasonSubtitle}>(Sin saturación)</Text>
-          <Text style={styles.reasonDescription}>
-            MXI está entrando en su fase de expansión.
-          </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>El valor aún no explotó. 💥</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>La competencia aún no reaccionó. 🏃</Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>Los mercados aún no lo descubrieron. 🔍</Text>
+            <View style={styles.reasonTitleContainer}>
+              <Text style={styles.reasonTitle}>6. Estás en el momento correcto</Text>
+              <Text style={styles.reasonSubtitle}>(Ventana de oportunidad)</Text>
+            </View>
           </View>
           <Text style={styles.reasonDescription}>
-            Los grandes movimientos se toman antes de que aparezcan en los titulares. 📰
-          </Text>
-        </View>
-
-        <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>💡 Mensaje final (PNL + Neuromarketing)</Text>
-          <Text style={styles.highlightText}>
-            MXI te ofrece algo que pocas oportunidades en el mundo cripto te dan:
-          </Text>
-          <Text style={styles.highlightText}>
-            valor real, crecimiento diario y la posibilidad de multiplicar tus resultados desde el inicio. 🚀
+            MXI se encuentra en su fase temprana de expansión. El valor aún no ha explotado 💥, los mercados aún no lo han descubierto 🔍 y la competencia no ha reaccionado 🏃. Este tipo de ventanas no se repite.
           </Text>
         </View>
 
         <View style={styles.finalMessage}>
           <Text style={styles.finalMessageTitle}>
-            Si buscas una oportunidad clara, accesible y con visión de futuro… 🎯
+            💡 Mensaje final
           </Text>
-          <Text style={styles.finalMessageHighlight}>
-            Hoy es el momento. MXI es el vehículo.
+          <Text style={styles.finalMessageText}>
+            MXI ofrece valor real, crecimiento diario y la posibilidad de multiplicar resultados desde el inicio. Es una oportunidad accesible, clara y con visión de largo plazo para quienes actúan a tiempo.
           </Text>
-          <Text style={styles.finalMessageHighlight}>
-            Tú eres el protagonista. ⭐
+          <Text style={[styles.finalMessageText, { marginTop: 16, fontWeight: 'bold' }]}>
+            Aquí no solo compras un token: tomas posición en un ecosistema completo preparado para crecer de manera sostenida. 🚀⭐
           </Text>
         </View>
       </ScrollView>
