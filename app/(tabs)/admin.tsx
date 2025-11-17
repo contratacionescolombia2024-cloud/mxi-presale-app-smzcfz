@@ -319,52 +319,44 @@ export default function AdminScreen() {
 
     setLoading(true);
     try {
-      console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id}`);
+      console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id} with referral commissions`);
       
-      // Get current vesting data
-      const { data: vestingData, error: vestingError } = await supabase
-        .from('vesting')
-        .select('*')
-        .eq('user_id', selectedUser.id)
-        .maybeSingle();
+      // Use the new function that processes referral commissions
+      const { data, error } = await supabase.rpc('admin_add_balance_with_commissions', {
+        p_user_id: selectedUser.id,
+        p_mxi_amount: amount,
+      });
 
-      if (vestingError && vestingError.code !== 'PGRST116') {
-        throw vestingError;
+      if (error) {
+        console.error('❌ Error adding balance:', error);
+        throw error;
       }
 
-      if (vestingData) {
-        // Update existing vesting
-        const newTotal = parseFloat(vestingData.total_mxi) + amount;
-        const { error: updateError } = await supabase
-          .from('vesting')
-          .update({
-            total_mxi: newTotal,
-            last_update: new Date().toISOString(),
-          })
-          .eq('user_id', selectedUser.id);
+      console.log('✅ Balance added result:', data);
 
-        if (updateError) throw updateError;
-        console.log(`✅ Updated balance to ${newTotal} MXI`);
+      if (data.success) {
+        const commissionsMsg = data.total_commissions_distributed > 0 
+          ? `\n\nReferral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`
+          : '';
+        
+        Alert.alert(
+          'Success', 
+          `Added ${amount} MXI to ${selectedUser.name}'s balance${commissionsMsg}`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setBalanceAmount('');
+                setShowUserModal(false);
+                loadUsers();
+                loadMetrics();
+              }
+            }
+          ]
+        );
       } else {
-        // Create new vesting record
-        const { error: insertError } = await supabase
-          .from('vesting')
-          .insert({
-            user_id: selectedUser.id,
-            total_mxi: amount,
-            current_rewards: 0,
-            monthly_rate: 0.03,
-            last_update: new Date().toISOString(),
-          });
-
-        if (insertError) throw insertError;
-        console.log(`✅ Created vesting record with ${amount} MXI`);
+        Alert.alert('Error', data.error || 'Failed to add balance');
       }
-
-      Alert.alert('Success', `Added ${amount} MXI to ${selectedUser.name}'s balance`);
-      setBalanceAmount('');
-      setShowUserModal(false);
-      await loadUsers();
     } catch (error: any) {
       console.error('❌ Error adding balance:', error);
       Alert.alert('Error', error.message || 'Failed to add balance');
@@ -1152,8 +1144,19 @@ export default function AdminScreen() {
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>Balance Management</Text>
                   <Text style={styles.modalSectionDescription}>
-                    Add or remove MXI tokens from user&apos;s balance
+                    Add or remove MXI tokens from user&apos;s balance. Adding balance will automatically distribute referral commissions.
                   </Text>
+                  <View style={styles.infoBox}>
+                    <IconSymbol 
+                      ios_icon_name="info.circle.fill" 
+                      android_material_icon_name="info" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    <Text style={styles.infoText}>
+                      When you add balance, referral commissions will be automatically calculated and distributed to all referrers (5%, 2%, 1%).
+                    </Text>
+                  </View>
                   <TextInput
                     style={styles.input}
                     placeholder="Amount (MXI)"
@@ -1615,6 +1618,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text,
     lineHeight: 18,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: `${colors.primary}15`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.text,
+    lineHeight: 16,
   },
   linkButton: {
     flexDirection: 'row',
