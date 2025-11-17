@@ -67,7 +67,7 @@ interface AdminMetrics {
 
 export default function AdminScreen() {
   const { isAdmin, user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'metrics' | 'users' | 'kyc' | 'messages' | 'settings'>('metrics');
+  const [activeTab, setActiveTab] = useState<'metrics' | 'users' | 'kyc' | 'messages' | 'settings' | 'link-referral'>('metrics');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -92,6 +92,10 @@ export default function AdminScreen() {
   const [referralAmount, setReferralAmount] = useState('');
   const [messageResponse, setMessageResponse] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Link Referral states
+  const [linkReferralEmail, setLinkReferralEmail] = useState('');
+  const [linkReferralCode, setLinkReferralCode] = useState('');
 
   useEffect(() => {
     console.log('🔐 Admin Panel - isAdmin:', isAdmin);
@@ -249,6 +253,55 @@ export default function AdminScreen() {
       setPlatformSettings(data);
     } catch (error) {
       console.error('❌ Error in loadPlatformSettings:', error);
+    }
+  };
+
+  const handleLinkReferral = async () => {
+    if (!linkReferralEmail.trim() || !linkReferralCode.trim()) {
+      Alert.alert('Error', 'Please enter both user email and referral code');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log(`🔗 Linking user ${linkReferralEmail} to referral code ${linkReferralCode}`);
+      
+      const { data, error } = await supabase.rpc('admin_link_referral', {
+        p_referred_email: linkReferralEmail.trim(),
+        p_referrer_code: linkReferralCode.trim().toUpperCase(),
+      });
+
+      if (error) {
+        console.error('❌ Error linking referral:', error);
+        throw error;
+      }
+
+      console.log('✅ Referral link result:', data);
+
+      if (data.success) {
+        Alert.alert(
+          'Success',
+          `${data.message}\n\nTotal commissions distributed: ${data.total_commissions_distributed?.toFixed(2) || 0} MXI`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setLinkReferralEmail('');
+                setLinkReferralCode('');
+                loadUsers();
+                loadMetrics();
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', data.error || 'Failed to link referral');
+      }
+    } catch (error: any) {
+      console.error('❌ Error in handleLinkReferral:', error);
+      Alert.alert('Error', error.message || 'Failed to link referral');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -564,6 +617,7 @@ export default function AdminScreen() {
   const tabs = [
     { id: 'metrics', label: 'Metrics', iosIcon: 'chart.bar.fill', androidIcon: 'bar_chart' },
     { id: 'users', label: 'Users', iosIcon: 'person.3.fill', androidIcon: 'group' },
+    { id: 'link-referral', label: 'Link Referral', iosIcon: 'link.circle.fill', androidIcon: 'link' },
     { id: 'kyc', label: 'KYC', iosIcon: 'checkmark.shield.fill', androidIcon: 'verified_user' },
     { id: 'messages', label: 'Messages', iosIcon: 'message.fill', androidIcon: 'message' },
     { id: 'settings', label: 'Settings', iosIcon: 'gearshape.fill', androidIcon: 'settings' },
@@ -747,6 +801,9 @@ export default function AdminScreen() {
                     <Text style={styles.userEmail}>{u.email}</Text>
                     <Text style={styles.userDetail}>KYC: {u.kyc_status}</Text>
                     <Text style={styles.userDetail}>Referral Code: {u.referral_code}</Text>
+                    {u.referred_by && (
+                      <Text style={styles.userDetail}>Referred By: {u.referred_by}</Text>
+                    )}
                   </View>
                   <IconSymbol 
                     ios_icon_name="chevron.right" 
@@ -764,6 +821,86 @@ export default function AdminScreen() {
               </View>
             )}
           </>
+        )}
+
+        {/* LINK REFERRAL TAB */}
+        {activeTab === 'link-referral' && (
+          <View style={commonStyles.card}>
+            <View style={styles.linkReferralHeader}>
+              <IconSymbol 
+                ios_icon_name="link.circle.fill" 
+                android_material_icon_name="link" 
+                size={48} 
+                color={colors.primary} 
+              />
+              <Text style={styles.cardTitle}>Link User to Referral Code</Text>
+            </View>
+            
+            <Text style={styles.linkReferralDescription}>
+              Manually link a user to a referral code. The system will automatically:
+            </Text>
+            <View style={styles.featureList}>
+              <Text style={styles.featureItem}>• Establish the referral relationship</Text>
+              <Text style={styles.featureItem}>• Calculate commissions for all existing purchases</Text>
+              <Text style={styles.featureItem}>• Distribute multi-level commissions (5%, 2%, 1%)</Text>
+              <Text style={styles.featureItem}>• Update all referrers&apos; vesting balances</Text>
+            </View>
+
+            <Text style={styles.inputLabel}>User Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter user's email address"
+              placeholderTextColor={colors.textSecondary}
+              value={linkReferralEmail}
+              onChangeText={setLinkReferralEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <Text style={styles.inputLabel}>Referral Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter referrer's code (e.g., MXI123456)"
+              placeholderTextColor={colors.textSecondary}
+              value={linkReferralCode}
+              onChangeText={(text) => setLinkReferralCode(text.toUpperCase())}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+
+            <View style={styles.warningBox}>
+              <IconSymbol 
+                ios_icon_name="exclamationmark.triangle.fill" 
+                android_material_icon_name="warning" 
+                size={24} 
+                color={colors.warning} 
+              />
+              <Text style={styles.warningText}>
+                This action cannot be undone. Make sure the email and referral code are correct before proceeding.
+              </Text>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.linkButton, loading && styles.linkButtonDisabled]}
+              onPress={handleLinkReferral}
+              disabled={loading || !linkReferralEmail.trim() || !linkReferralCode.trim()}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.card} />
+              ) : (
+                <>
+                  <IconSymbol 
+                    ios_icon_name="link.circle.fill" 
+                    android_material_icon_name="link" 
+                    size={24} 
+                    color={colors.card} 
+                  />
+                  <Text style={styles.linkButtonText}>Link Referral</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* KYC TAB */}
@@ -1007,6 +1144,10 @@ export default function AdminScreen() {
                 <Text style={styles.modalUserDetail}>ID: {selectedUser.identification}</Text>
                 <Text style={styles.modalUserDetail}>Address: {selectedUser.address}</Text>
                 <Text style={styles.modalUserDetail}>KYC Status: {selectedUser.kyc_status}</Text>
+                <Text style={styles.modalUserDetail}>Referral Code: {selectedUser.referral_code}</Text>
+                {selectedUser.referred_by && (
+                  <Text style={styles.modalUserDetail}>Referred By: {selectedUser.referred_by}</Text>
+                )}
 
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>Balance Management</Text>
@@ -1435,6 +1576,63 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  linkReferralHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  linkReferralDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  featureList: {
+    backgroundColor: `${colors.primary}10`,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  featureItem: {
+    fontSize: 13,
+    color: colors.text,
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: `${colors.warning}15`,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 18,
+  },
+  linkButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: colors.primary,
+    padding: 18,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  linkButtonDisabled: {
+    opacity: 0.5,
+  },
+  linkButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
   },
   kycStats: {
     flexDirection: 'row',
