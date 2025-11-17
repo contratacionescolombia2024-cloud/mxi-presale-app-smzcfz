@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   balanceRowHighlight: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.accent,
   },
@@ -373,23 +373,25 @@ export default function HomeScreen() {
 
   // Debug logging for referral stats
   useEffect(() => {
-    console.log('🏠 Home Screen - Data Update:', {
-      vestingData: {
-        totalMXI: vestingData?.totalMXI,
-        purchasedMXI: vestingData?.purchasedMXI,
-        currentRewards: vestingData?.currentRewards,
-      },
-      referralStats: {
-        totalReferrals: referralStats?.totalReferrals,
-        level1Count: referralStats?.level1Count,
-        level2Count: referralStats?.level2Count,
-        level3Count: referralStats?.level3Count,
-        level1MXI: referralStats?.level1MXI,
-        level2MXI: referralStats?.level2MXI,
-        level3MXI: referralStats?.level3MXI,
-        totalMXIEarned: referralStats?.totalMXIEarned,
-      },
+    console.log('🏠 ========================================');
+    console.log('🏠 HOME SCREEN - DATA UPDATE');
+    console.log('🏠 ========================================');
+    console.log('🏠 Vesting Data:', {
+      totalMXI: vestingData?.totalMXI,
+      purchasedMXI: vestingData?.purchasedMXI,
+      currentRewards: vestingData?.currentRewards,
     });
+    console.log('🏠 Referral Stats:', {
+      totalReferrals: referralStats?.totalReferrals,
+      level1Count: referralStats?.level1Count,
+      level2Count: referralStats?.level2Count,
+      level3Count: referralStats?.level3Count,
+      level1MXI: referralStats?.level1MXI,
+      level2MXI: referralStats?.level2MXI,
+      level3MXI: referralStats?.level3MXI,
+      totalMXIEarned: referralStats?.totalMXIEarned,
+    });
+    console.log('🏠 ========================================');
   }, [referralStats, vestingData]);
 
   // Countdown to February 20, 2026
@@ -442,7 +444,7 @@ export default function HomeScreen() {
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
   
-  console.log('🏠 Home Screen - Display Values:', {
+  console.log('🏠 Display Values:', {
     totalMXI,
     purchasedMXI,
     referralMXI,
@@ -500,7 +502,7 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - Detailed breakdown */}
+        {/* Balance Card - Detailed breakdown with PROMINENT commission display */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -512,8 +514,10 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Referral Commissions</Text>
-              <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)}</Text>
+              <Text style={[styles.balanceRowLabel, { fontWeight: '700', fontSize: 16 }]}>
+                🎁 Referral Commissions
+              </Text>
+              <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.divider} />
@@ -524,18 +528,24 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0})</Text>
-              <Text style={styles.balanceRowValue}>{(referralStats?.level1MXI || 0).toFixed(2)} MXI</Text>
+              <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0} refs)</Text>
+              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+                {(referralStats?.level1MXI || 0).toFixed(2)} MXI
+              </Text>
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0})</Text>
-              <Text style={styles.balanceRowValue}>{(referralStats?.level2MXI || 0).toFixed(2)} MXI</Text>
+              <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0} refs)</Text>
+              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+                {(referralStats?.level2MXI || 0).toFixed(2)} MXI
+              </Text>
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0})</Text>
-              <Text style={styles.balanceRowValue}>{(referralStats?.level3MXI || 0).toFixed(2)} MXI</Text>
+              <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0} refs)</Text>
+              <Text style={[styles.balanceRowValue, { fontWeight: '700', fontSize: 17 }]}>
+                {(referralStats?.level3MXI || 0).toFixed(2)} MXI
+              </Text>
             </View>
 
             <View style={styles.divider} />
