@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-} from 'react';
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
@@ -132,6 +132,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
   },
+  boldText: {
+    fontWeight: 'bold',
+    color: colors.text,
+  },
 });
 
 export default function SustainabilityScreen() {
@@ -203,19 +207,19 @@ export default function SustainabilityScreen() {
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Vesting controlado:</Text> El 3% mensual es sostenible y está respaldado por los ingresos del ecosistema
+              <Text style={styles.boldText}>Vesting controlado:</Text> El 3% mensual es sostenible y está respaldado por los ingresos del ecosistema
             </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Comisiones equilibradas:</Text> Las comisiones de referidos (5%, 2%, 1%) incentivan el crecimiento sin comprometer la estabilidad
+              <Text style={styles.boldText}>Comisiones equilibradas:</Text> Las comisiones de referidos (5%, 2%, 1%) incentivan el crecimiento sin comprometer la estabilidad
             </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Fondo de reserva:</Text> Parte de los ingresos se destina a un fondo de reserva para garantizar pagos incluso en períodos de baja actividad
+              <Text style={styles.boldText}>Fondo de reserva:</Text> Parte de los ingresos se destina a un fondo de reserva para garantizar pagos incluso en períodos de baja actividad
             </Text>
           </View>
         </View>
@@ -262,25 +266,25 @@ export default function SustainabilityScreen() {
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Límites de compra:</Text> Mínimo 10 USDT, máximo 50,000 USDT por transacción
+              <Text style={styles.boldText}>Límites de compra:</Text> Mínimo 10 USDT, máximo 50,000 USDT por transacción
             </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>KYC obligatorio:</Text> Verificación de identidad para prevenir fraudes
+              <Text style={styles.boldText}>KYC obligatorio:</Text> Verificación de identidad para prevenir fraudes
             </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Auditorías regulares:</Text> Revisión constante de la salud financiera del ecosistema
+              <Text style={styles.boldText}>Auditorías regulares:</Text> Revisión constante de la salud financiera del ecosistema
             </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Transparencia total:</Text> Todos los movimientos registrados en blockchain
+              <Text style={styles.boldText}>Transparencia total:</Text> Todos los movimientos registrados en blockchain
             </Text>
           </View>
         </View>
