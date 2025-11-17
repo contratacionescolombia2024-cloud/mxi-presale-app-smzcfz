@@ -1,7 +1,7 @@
 
 export const colors = {
-  // Dark theme colors - Premium palette
-  background: '#0B0D1E',
+  // Dark theme colors - Premium palette with BLACK background
+  background: '#000000', // Changed to pure black
   card: '#151829',
   border: '#252840',
   
@@ -31,7 +31,7 @@ export const colors = {
   sectionTeal: 'rgba(20, 184, 166, 0.08)',
   
   // Additional colors
-  dark: '#0B0D1E',
+  dark: '#000000', // Changed to pure black
   light: '#FFFFFF',
 };
 

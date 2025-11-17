@@ -34,6 +34,24 @@ interface UserProfile {
   created_at: string;
 }
 
+interface UserDetails {
+  profile: UserProfile;
+  vesting: {
+    total_mxi: number;
+    current_rewards: number;
+    monthly_rate: number;
+  };
+  purchases: {
+    total_purchases: number;
+    total_mxi_purchased: number;
+    total_spent_usd: number;
+  };
+  referrals: {
+    total_referrals: number;
+    total_referral_earnings: number;
+  };
+}
+
 interface MessageData {
   id: string;
   user_id: string;
@@ -80,6 +98,7 @@ export default function AdminScreen() {
 
   // Modal states
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<MessageData | null>(null);
   const [selectedKYC, setSelectedKYC] = useState<UserProfile | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -97,6 +116,13 @@ export default function AdminScreen() {
   // Link Referral states
   const [linkReferralEmail, setLinkReferralEmail] = useState('');
   const [linkReferralCode, setLinkReferralCode] = useState('');
+
+  // User edit states
+  const [editName, setEditName] = useState('');
+  const [editIdentification, setEditIdentification] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editReferredBy, setEditReferredBy] = useState('');
 
   useEffect(() => {
     console.log('🔐 Admin Panel - isAdmin:', isAdmin);
@@ -129,13 +155,11 @@ export default function AdminScreen() {
     try {
       console.log('📈 Loading metrics...');
       
-      // Try using the RPC function first
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_admin_metrics');
       
       if (rpcError) {
         console.error('⚠️ RPC error, falling back to manual queries:', rpcError);
         
-        // Fallback to manual queries
         const [usersResult, purchasesResult, kycResult, messagesResult, stagesResult] = await Promise.all([
           supabase.from('users_profiles').select('id', { count: 'exact', head: true }),
           supabase.from('purchases').select('amount_usd').eq('status', 'completed'),
@@ -257,6 +281,118 @@ export default function AdminScreen() {
     }
   };
 
+  const loadUserDetails = async (userId: string) => {
+    setLoading(true);
+    try {
+      console.log(`📋 Loading details for user ${userId}`);
+      
+      const { data, error } = await supabase.rpc('admin_get_user_details', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('❌ Error loading user details:', error);
+        throw error;
+      }
+
+      if (data.success) {
+        console.log('✅ User details loaded:', data);
+        setSelectedUserDetails(data as any);
+        
+        // Set edit form values
+        setEditName(data.profile.name || '');
+        setEditIdentification(data.profile.identification || '');
+        setEditEmail(data.profile.email || '');
+        setEditAddress(data.profile.address || '');
+        setEditReferredBy(data.profile.referred_by || '');
+      } else {
+        Alert.alert('Error', data.error || 'Failed to load user details');
+      }
+    } catch (error: any) {
+      console.error('❌ Error in loadUserDetails:', error);
+      Alert.alert('Error', error.message || 'Failed to load user details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateUserProfile = async () => {
+    if (!selectedUser) return;
+
+    setLoading(true);
+    try {
+      console.log(`✏️ Updating profile for user ${selectedUser.id}`);
+      
+      const { data, error } = await supabase.rpc('admin_update_user_profile', {
+        p_user_id: selectedUser.id,
+        p_name: editName || null,
+        p_identification: editIdentification || null,
+        p_email: editEmail || null,
+        p_address: editAddress || null,
+      });
+
+      if (error) {
+        console.error('❌ Error updating user profile:', error);
+        throw error;
+      }
+
+      if (data.success) {
+        console.log('✅ User profile updated successfully');
+        Alert.alert('Success', 'User profile updated successfully');
+        await loadUsers();
+        await loadUserDetails(selectedUser.id);
+      } else {
+        Alert.alert('Error', data.error || 'Failed to update user profile');
+      }
+    } catch (error: any) {
+      console.error('❌ Error in handleUpdateUserProfile:', error);
+      Alert.alert('Error', error.message || 'Failed to update user profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateReferredBy = async () => {
+    if (!selectedUser) return;
+
+    Alert.alert(
+      'Update Referral',
+      `Change referral code for ${selectedUser.name} to: ${editReferredBy || 'None'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Update',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              console.log(`🔗 Updating referred_by for user ${selectedUser.id}`);
+              
+              const { error } = await supabase
+                .from('users_profiles')
+                .update({
+                  referred_by: editReferredBy || null,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', selectedUser.id);
+
+              if (error) throw error;
+
+              console.log('✅ Referred_by updated successfully');
+              Alert.alert('Success', 'Referral code updated successfully');
+              await loadUsers();
+              await loadUserDetails(selectedUser.id);
+            } catch (error: any) {
+              console.error('❌ Error updating referred_by:', error);
+              Alert.alert('Error', error.message || 'Failed to update referral code');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleLinkReferral = async () => {
     if (!linkReferralEmail.trim() || !linkReferralCode.trim()) {
       Alert.alert('Error', 'Please enter both user email and referral code');
@@ -318,7 +454,6 @@ export default function AdminScreen() {
       return;
     }
 
-    // Confirm the action with the user
     const actionType = balanceType === 'with_commission' ? 'with referral commissions' : 'without referral commissions';
     const confirmMessage = balanceType === 'with_commission'
       ? `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\nThis will trigger referral commissions:\n• Level 1: 5% (${(amount * 0.05).toFixed(2)} MXI)\n• Level 2: 2% (${(amount * 0.02).toFixed(2)} MXI)\n• Level 3: 1% (${(amount * 0.01).toFixed(2)} MXI)\n\nTotal commissions: ${(amount * 0.08).toFixed(2)} MXI`
@@ -367,9 +502,9 @@ export default function AdminScreen() {
                     onPress: () => {
                       setBalanceAmount('');
                       setBalanceType('without_commission');
-                      setShowUserModal(false);
                       loadUsers();
                       loadMetrics();
+                      loadUserDetails(selectedUser.id);
                     }
                   }
                 ]);
@@ -445,8 +580,8 @@ export default function AdminScreen() {
               console.log(`✅ Removed ${amount} MXI, new balance: ${newTotal} MXI`);
               Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\nNew balance: ${newTotal.toFixed(2)} MXI`);
               setBalanceAmount('');
-              setShowUserModal(false);
               await loadUsers();
+              await loadUserDetails(selectedUser.id);
             } catch (error: any) {
               console.error('❌ Error removing balance:', error);
               Alert.alert('Error', error.message || 'Failed to remove balance');
@@ -482,12 +617,11 @@ export default function AdminScreen() {
     try {
       console.log(`🔗 Adding referral: ${amount} MXI at level ${level} for user ${selectedUser.id}`);
 
-      // Create a referral record
       const { error: referralError } = await supabase
         .from('referrals')
         .insert({
           referrer_id: selectedUser.id,
-          referred_id: user?.id, // Using admin as placeholder
+          referred_id: user?.id,
           level: level,
           mxi_earned: amount,
           commission_mxi: amount,
@@ -495,7 +629,6 @@ export default function AdminScreen() {
 
       if (referralError) throw referralError;
 
-      // Update vesting with referral earnings
       const { data: vestingData, error: vestingError } = await supabase
         .from('vesting')
         .select('*')
@@ -538,8 +671,8 @@ export default function AdminScreen() {
       );
       setReferralAmount('');
       setReferralLevel('1');
-      setShowUserModal(false);
       await loadUsers();
+      await loadUserDetails(selectedUser.id);
     } catch (error: any) {
       console.error('❌ Error adding referral:', error);
       Alert.alert('Error', error.message || 'Failed to add referral');
@@ -827,6 +960,7 @@ export default function AdminScreen() {
                   style={styles.userCard}
                   onPress={() => {
                     setSelectedUser(u);
+                    loadUserDetails(u.id);
                     setShowUserModal(true);
                   }}
                 >
@@ -874,10 +1008,10 @@ export default function AdminScreen() {
               Manually link a user to a referral code. The system will automatically:
             </Text>
             <View style={styles.featureList}>
-              <Text style={styles.featureItem}>• Establish the referral relationship</Text>
-              <Text style={styles.featureItem}>• Calculate commissions for all existing purchases</Text>
-              <Text style={styles.featureItem}>• Distribute multi-level commissions (5%, 2%, 1%)</Text>
-              <Text style={styles.featureItem}>• Update all referrers&apos; vesting balances</Text>
+              <Text style={styles.featureItem}>- Establish the referral relationship</Text>
+              <Text style={styles.featureItem}>- Calculate commissions for all existing purchases</Text>
+              <Text style={styles.featureItem}>- Distribute multi-level commissions (5%, 2%, 1%)</Text>
+              <Text style={styles.featureItem}>- Update all referrers&apos; vesting balances</Text>
             </View>
 
             <Text style={styles.inputLabel}>User Email</Text>
@@ -1150,7 +1284,7 @@ export default function AdminScreen() {
         )}
       </ScrollView>
 
-      {/* User Management Modal */}
+      {/* Enhanced User Management Modal */}
       <Modal
         visible={showUserModal}
         animationType="slide"
@@ -1160,7 +1294,7 @@ export default function AdminScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Manage User</Text>
+              <Text style={styles.modalTitle}>User Management</Text>
               <TouchableOpacity onPress={() => setShowUserModal(false)}>
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
@@ -1171,25 +1305,237 @@ export default function AdminScreen() {
               </TouchableOpacity>
             </View>
 
-            {selectedUser && (
-              <ScrollView>
-                <Text style={styles.modalUserName}>{selectedUser.name}</Text>
-                <Text style={styles.modalUserEmail}>{selectedUser.email}</Text>
-                <Text style={styles.modalUserDetail}>ID: {selectedUser.identification}</Text>
-                <Text style={styles.modalUserDetail}>Address: {selectedUser.address}</Text>
-                <Text style={styles.modalUserDetail}>KYC Status: {selectedUser.kyc_status}</Text>
-                <Text style={styles.modalUserDetail}>Referral Code: {selectedUser.referral_code}</Text>
-                {selectedUser.referred_by && (
-                  <Text style={styles.modalUserDetail}>Referred By: {selectedUser.referred_by}</Text>
-                )}
+            {selectedUser && selectedUserDetails ? (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {/* User Overview */}
+                <View style={styles.userOverview}>
+                  <View style={styles.userAvatarContainer}>
+                    <IconSymbol 
+                      ios_icon_name="person.circle.fill" 
+                      android_material_icon_name="account_circle" 
+                      size={64} 
+                      color={colors.primary} 
+                    />
+                  </View>
+                  <Text style={styles.modalUserName}>{selectedUser.name}</Text>
+                  <Text style={styles.modalUserEmail}>{selectedUser.email}</Text>
+                  <View style={styles.userBadges}>
+                    <View style={[styles.badge, selectedUser.is_admin && styles.badgeAdmin]}>
+                      <Text style={styles.badgeText}>
+                        {selectedUser.is_admin ? 'Admin' : 'User'}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.badge,
+                      selectedUser.kyc_status === 'approved' && styles.badgeSuccess,
+                      selectedUser.kyc_status === 'rejected' && styles.badgeError,
+                      selectedUser.kyc_status === 'pending' && styles.badgeWarning,
+                    ]}>
+                      <Text style={styles.badgeText}>
+                        KYC: {selectedUser.kyc_status}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
 
+                {/* Balance Summary */}
+                <View style={styles.balanceSummary}>
+                  <Text style={styles.sectionTitle}>Balance Summary</Text>
+                  <View style={styles.balanceGrid}>
+                    <View style={styles.balanceItem}>
+                      <IconSymbol 
+                        ios_icon_name="bitcoinsign.circle.fill" 
+                        android_material_icon_name="currency_bitcoin" 
+                        size={24} 
+                        color={colors.primary} 
+                      />
+                      <Text style={styles.balanceValue}>
+                        {selectedUserDetails.vesting.total_mxi.toFixed(2)}
+                      </Text>
+                      <Text style={styles.balanceLabel}>Total MXI</Text>
+                    </View>
+                    <View style={styles.balanceItem}>
+                      <IconSymbol 
+                        ios_icon_name="chart.line.uptrend.xyaxis" 
+                        android_material_icon_name="trending_up" 
+                        size={24} 
+                        color={colors.secondary} 
+                      />
+                      <Text style={styles.balanceValue}>
+                        {selectedUserDetails.vesting.current_rewards.toFixed(2)}
+                      </Text>
+                      <Text style={styles.balanceLabel}>Vesting Rewards</Text>
+                    </View>
+                    <View style={styles.balanceItem}>
+                      <IconSymbol 
+                        ios_icon_name="cart.fill" 
+                        android_material_icon_name="shopping_cart" 
+                        size={24} 
+                        color={colors.accent} 
+                      />
+                      <Text style={styles.balanceValue}>
+                        {selectedUserDetails.purchases.total_mxi_purchased.toFixed(2)}
+                      </Text>
+                      <Text style={styles.balanceLabel}>Purchased</Text>
+                    </View>
+                    <View style={styles.balanceItem}>
+                      <IconSymbol 
+                        ios_icon_name="person.3.fill" 
+                        android_material_icon_name="group" 
+                        size={24} 
+                        color={colors.highlight} 
+                      />
+                      <Text style={styles.balanceValue}>
+                        {selectedUserDetails.referrals.total_referral_earnings.toFixed(2)}
+                      </Text>
+                      <Text style={styles.balanceLabel}>Referral Earnings</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Profile Information Section */}
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>Balance Management</Text>
+                  <Text style={styles.modalSectionTitle}>
+                    <IconSymbol 
+                      ios_icon_name="person.text.rectangle.fill" 
+                      android_material_icon_name="badge" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    {' '}Profile Information
+                  </Text>
+                  
+                  <Text style={styles.inputLabel}>Full Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter full name"
+                    placeholderTextColor={colors.textSecondary}
+                    value={editName}
+                    onChangeText={setEditName}
+                  />
+
+                  <Text style={styles.inputLabel}>Identification Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter identification number"
+                    placeholderTextColor={colors.textSecondary}
+                    value={editIdentification}
+                    onChangeText={setEditIdentification}
+                  />
+
+                  <Text style={styles.inputLabel}>Email Address</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter email address"
+                    placeholderTextColor={colors.textSecondary}
+                    value={editEmail}
+                    onChangeText={setEditEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+
+                  <Text style={styles.inputLabel}>Residential Address</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Enter residential address"
+                    placeholderTextColor={colors.textSecondary}
+                    value={editAddress}
+                    onChangeText={setEditAddress}
+                    multiline
+                    numberOfLines={3}
+                  />
+
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.modalButtonPrimary]}
+                    onPress={handleUpdateUserProfile}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <>
+                        <IconSymbol 
+                          ios_icon_name="checkmark.circle.fill" 
+                          android_material_icon_name="check_circle" 
+                          size={20} 
+                          color={colors.card} 
+                        />
+                        <Text style={styles.modalButtonText}>Update Profile</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* Referral Management Section */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>
+                    <IconSymbol 
+                      ios_icon_name="link.circle.fill" 
+                      android_material_icon_name="link" 
+                      size={20} 
+                      color={colors.secondary} 
+                    />
+                    {' '}Referral Management
+                  </Text>
+                  
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoBoxLabel}>User&apos;s Referral Code:</Text>
+                    <Text style={styles.infoBoxValue}>{selectedUser.referral_code}</Text>
+                  </View>
+
+                  <View style={styles.infoBox}>
+                    <Text style={styles.infoBoxLabel}>Total Referrals:</Text>
+                    <Text style={styles.infoBoxValue}>
+                      {selectedUserDetails.referrals.total_referrals}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.inputLabel}>Referred By (Referral Code)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter referrer's code or leave empty"
+                    placeholderTextColor={colors.textSecondary}
+                    value={editReferredBy}
+                    onChangeText={(text) => setEditReferredBy(text.toUpperCase())}
+                    autoCapitalize="characters"
+                  />
+
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.modalButtonSecondary]}
+                    onPress={handleUpdateReferredBy}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <>
+                        <IconSymbol 
+                          ios_icon_name="arrow.triangle.branch" 
+                          android_material_icon_name="call_split" 
+                          size={20} 
+                          color={colors.card} 
+                        />
+                        <Text style={styles.modalButtonText}>Update Referrer</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* Balance Management Section */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>
+                    <IconSymbol 
+                      ios_icon_name="dollarsign.circle.fill" 
+                      android_material_icon_name="attach_money" 
+                      size={20} 
+                      color={colors.success} 
+                    />
+                    {' '}Balance Management
+                  </Text>
                   <Text style={styles.modalSectionDescription}>
                     Add or remove MXI tokens from user&apos;s balance.
                   </Text>
 
-                  {/* Balance Type Selector */}
                   <View style={styles.balanceTypeContainer}>
                     <TouchableOpacity
                       style={[
@@ -1244,7 +1590,7 @@ export default function AdminScreen() {
                           styles.balanceTypeDescription,
                           balanceType === 'with_commission' && styles.balanceTypeDescActive
                         ]}>
-                          With commissions (5%, 2%, 1%)
+                          With commissions
                         </Text>
                       </View>
                     </TouchableOpacity>
@@ -1260,20 +1606,6 @@ export default function AdminScreen() {
                       />
                       <Text style={styles.commissionInfoText}>
                         This will distribute referral commissions to all referrers as if this were a real purchase.
-                      </Text>
-                    </View>
-                  )}
-
-                  {balanceType === 'without_commission' && (
-                    <View style={styles.noCommissionInfoBox}>
-                      <IconSymbol 
-                        ios_icon_name="checkmark.circle.fill" 
-                        android_material_icon_name="check_circle" 
-                        size={20} 
-                        color={colors.success} 
-                      />
-                      <Text style={styles.noCommissionInfoText}>
-                        Balance will be added directly without generating any referral commissions.
                       </Text>
                     </View>
                   )}
@@ -1304,7 +1636,7 @@ export default function AdminScreen() {
                             size={20} 
                             color={colors.card} 
                           />
-                          <Text style={styles.modalButtonText}>Add Balance</Text>
+                          <Text style={styles.modalButtonText}>Add</Text>
                         </>
                       )}
                     </TouchableOpacity>
@@ -1323,18 +1655,28 @@ export default function AdminScreen() {
                             size={20} 
                             color={colors.card} 
                           />
-                          <Text style={styles.modalButtonText}>Remove Balance</Text>
+                          <Text style={styles.modalButtonText}>Remove</Text>
                         </>
                       )}
                     </TouchableOpacity>
                   </View>
                 </View>
 
+                {/* Referral Earnings Section */}
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>Referral Earnings Management</Text>
-                  <Text style={styles.modalSectionDescription}>
-                    Add MXI earned from referrals to user&apos;s account
+                  <Text style={styles.modalSectionTitle}>
+                    <IconSymbol 
+                      ios_icon_name="gift.fill" 
+                      android_material_icon_name="card_giftcard" 
+                      size={20} 
+                      color={colors.accent} 
+                    />
+                    {' '}Add Referral Earnings
                   </Text>
+                  <Text style={styles.modalSectionDescription}>
+                    Manually add MXI earned from referrals
+                  </Text>
+                  
                   <Text style={styles.inputLabel}>Referral Level (1-3)</Text>
                   <TextInput
                     style={styles.input}
@@ -1345,10 +1687,11 @@ export default function AdminScreen() {
                     keyboardType="number-pad"
                   />
                   <View style={styles.levelInfo}>
-                    <Text style={styles.levelInfoText}>• Level 1: 5% commission</Text>
-                    <Text style={styles.levelInfoText}>• Level 2: 2% commission</Text>
-                    <Text style={styles.levelInfoText}>• Level 3: 1% commission</Text>
+                    <Text style={styles.levelInfoText}>- Level 1: 5% commission</Text>
+                    <Text style={styles.levelInfoText}>- Level 2: 2% commission</Text>
+                    <Text style={styles.levelInfoText}>- Level 3: 1% commission</Text>
                   </View>
+                  
                   <Text style={styles.inputLabel}>Referral Earnings (MXI)</Text>
                   <TextInput
                     style={styles.input}
@@ -1358,8 +1701,9 @@ export default function AdminScreen() {
                     onChangeText={setReferralAmount}
                     keyboardType="decimal-pad"
                   />
+                  
                   <TouchableOpacity 
-                    style={[styles.modalButton, styles.modalButtonPrimary]}
+                    style={[styles.modalButton, styles.modalButtonAccent]}
                     onPress={handleAddReferral}
                     disabled={loading}
                   >
@@ -1368,8 +1712,8 @@ export default function AdminScreen() {
                     ) : (
                       <>
                         <IconSymbol 
-                          ios_icon_name="link.circle.fill" 
-                          android_material_icon_name="link" 
+                          ios_icon_name="gift.fill" 
+                          android_material_icon_name="card_giftcard" 
                           size={20} 
                           color={colors.card} 
                         />
@@ -1379,6 +1723,11 @@ export default function AdminScreen() {
                   </TouchableOpacity>
                 </View>
               </ScrollView>
+            ) : (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>Loading user details...</Text>
+              </View>
             )}
           </View>
         </View>
@@ -1493,7 +1842,7 @@ export default function AdminScreen() {
                     <View style={styles.documentsList}>
                       {selectedKYC.kyc_documents.map((doc, index) => (
                         <Text key={index} style={styles.documentItem}>
-                          • Document {index + 1}
+                          - Document {index + 1}
                         </Text>
                       ))}
                     </View>
@@ -1940,7 +2289,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -1948,7 +2297,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '85%',
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1961,25 +2310,93 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  userOverview: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: 20,
+  },
+  userAvatarContainer: {
+    marginBottom: 12,
+  },
   modalUserName: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
+    textAlign: 'center',
   },
   modalUserEmail: {
     fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  modalUserDetail: {
+  userBadges: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: colors.border,
+  },
+  badgeAdmin: {
+    backgroundColor: colors.error,
+  },
+  badgeSuccess: {
+    backgroundColor: colors.success,
+  },
+  badgeError: {
+    backgroundColor: colors.error,
+  },
+  badgeWarning: {
+    backgroundColor: colors.warning,
+  },
+  badgeText: {
     fontSize: 12,
+    fontWeight: '600',
+    color: colors.card,
+  },
+  balanceSummary: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  balanceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  balanceItem: {
+    width: '48%',
+    backgroundColor: colors.background,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  balanceValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 8,
+  },
+  balanceLabel: {
+    fontSize: 11,
     color: colors.textSecondary,
-    marginBottom: 4,
+    marginTop: 4,
+    textAlign: 'center',
   },
   modalSection: {
     marginTop: 24,
-    paddingTop: 16,
+    paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -1994,6 +2411,24 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 16,
     lineHeight: 18,
+  },
+  infoBox: {
+    backgroundColor: colors.background,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  infoBoxLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  infoBoxValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   balanceTypeContainer: {
     flexDirection: 'row',
@@ -2053,23 +2488,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 16,
   },
-  noCommissionInfoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: `${colors.success}15`,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.success,
-  },
-  noCommissionInfoText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.text,
-    lineHeight: 16,
-  },
   levelInfo: {
     backgroundColor: `${colors.primary}10`,
     padding: 12,
@@ -2097,11 +2515,17 @@ const styles = StyleSheet.create({
   modalButtonPrimary: {
     backgroundColor: colors.primary,
   },
+  modalButtonSecondary: {
+    backgroundColor: colors.secondary,
+  },
   modalButtonSuccess: {
     backgroundColor: colors.success,
   },
   modalButtonDanger: {
     backgroundColor: colors.error,
+  },
+  modalButtonAccent: {
+    backgroundColor: colors.accent,
   },
   modalButtonText: {
     fontSize: 14,
