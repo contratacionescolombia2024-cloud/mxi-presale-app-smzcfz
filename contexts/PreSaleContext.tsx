@@ -238,9 +238,25 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       const level3Data = allReferrals?.filter(r => r.level === 3) || [];
 
       // Calculate total MXI earned from commissions
-      const level1MXI = level1Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
-      const level2MXI = level2Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
-      const level3MXI = level3Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
+      // Use Number() instead of parseFloat() for better handling of numeric types
+      const level1MXI = level1Data.reduce((sum, r) => {
+        const commission = Number(r.commission_mxi) || 0;
+        console.log('Level 1 commission:', commission, 'from referral:', r.id);
+        return sum + commission;
+      }, 0);
+      
+      const level2MXI = level2Data.reduce((sum, r) => {
+        const commission = Number(r.commission_mxi) || 0;
+        console.log('Level 2 commission:', commission, 'from referral:', r.id);
+        return sum + commission;
+      }, 0);
+      
+      const level3MXI = level3Data.reduce((sum, r) => {
+        const commission = Number(r.commission_mxi) || 0;
+        console.log('Level 3 commission:', commission, 'from referral:', r.id);
+        return sum + commission;
+      }, 0);
+      
       const totalEarned = level1MXI + level2MXI + level3MXI;
 
       console.log('📊 Referral stats summary:', {
