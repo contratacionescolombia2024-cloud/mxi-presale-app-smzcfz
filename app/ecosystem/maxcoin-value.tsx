@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,14 +50,14 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 16,
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
   },
   bullet: {
     fontSize: 16,
-    color: '#F59E0B',
+    color: '#10B981',
     marginRight: 8,
     fontWeight: 'bold',
   },
@@ -95,12 +96,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   highlightBox: {
-    backgroundColor: colors.sectionOrange,
+    backgroundColor: colors.sectionGreen,
     borderRadius: 16,
     padding: 20,
     marginBottom: 24,
     borderWidth: 2,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
   },
   highlightTitle: {
     fontSize: 18,
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
   },
-  scenarioCard: {
+  timelineCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
@@ -121,49 +122,49 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
   },
-  scenarioTitle: {
+  timelineTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 12,
   },
-  scenarioRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  scenarioLabel: {
-    fontSize: 15,
-    color: colors.textSecondary,
-  },
-  scenarioValue: {
-    fontSize: 15,
+  timelineValue: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.text,
+    color: '#10B981',
+    marginBottom: 12,
   },
-  scenarioHighlight: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#F59E0B',
-  },
-  warningBox: {
-    backgroundColor: colors.sectionOrangeStrong,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(217, 119, 6, 0.4)',
-  },
-  warningTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  warningText: {
+  timelineDescription: {
     fontSize: 15,
     color: colors.textSecondary,
     lineHeight: 22,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+    backgroundColor: colors.card,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  footer: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingBottom: 20,
+  },
+  footerText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 4,
   },
 });
 
@@ -177,252 +178,119 @@ export default function MaxcoinValueScreen() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <IconSymbol name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Valor de MAXCOIN</Text>
+          <Text style={styles.headerTitle}>Valor de MXI</Text>
         </View>
 
         <View style={styles.iconContainer}>
-          <IconSymbol name="show-chart" size={40} color={colors.light} />
+          <IconSymbol name="trending-up" size={40} color={colors.light} />
         </View>
 
-        <Text style={styles.title}>¿Qué valor puede alcanzar MAXCOIN?</Text>
+        <Text style={styles.title}>💎 ¿A qué valor podría llegar MXI?</Text>
 
         <View style={styles.highlightBox}>
-          <Text style={styles.highlightTitle}>📈 Potencial de Crecimiento</Text>
+          <Text style={styles.highlightTitle}>🚀 Ventaja Única de MXI</Text>
           <Text style={styles.highlightText}>
-            El valor de MAXCOIN dependerá de múltiples factores, incluyendo adopción, utilidad, demanda del mercado y desarrollo del ecosistema.
+            MXI nace con una ventaja única: un ecosistema completo, utilidad real desde el día uno y una comunidad hispanohablante en expansión.
+          </Text>
+          <Text style={[styles.highlightText, { marginTop: 12 }]}>
+            Por eso, el escenario optimista no es un sueño; es una proyección basada en datos, demanda potencial y el crecimiento natural de proyectos similares.
           </Text>
         </View>
 
-        <View style={styles.warningBox}>
-          <Text style={styles.warningTitle}>⚠️ Aviso Importante</Text>
-          <Text style={styles.warningText}>
-            Las proyecciones de valor son estimaciones basadas en análisis de mercado y no constituyen garantías. El valor de cualquier criptomoneda puede fluctuar significativamente. Invierte solo lo que puedas permitirte perder.
+        <View style={styles.imageContainer}>
+          <Image
+            source={require('@/assets/images/1969d5bb-be8c-4b63-a53b-ba7fbcc9a30d.png')}
+            style={styles.image}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📊 ¿A qué valor podría llegar MXI?</Text>
+        </View>
+
+        <View style={styles.timelineCard}>
+          <Text style={styles.timelineTitle}>📅 6 a 12 meses después del lanzamiento:</Text>
+          <Text style={styles.timelineValue}>3 – 7 USDT por MXI</Text>
+          <Text style={styles.timelineDescription}>
+            Un crecimiento impulsado por la adopción temprana, el uso de la app MXI Strategic, torneos, pagos y el sistema de vesting diario.
+          </Text>
+        </View>
+
+        <View style={styles.timelineCard}>
+          <Text style={styles.timelineTitle}>📅 24 meses después del lanzamiento:</Text>
+          <Text style={styles.timelineValue}>7 – 12 USDT por MXI</Text>
+          <Text style={styles.timelineDescription}>
+            A medida que los módulos del ecosistema se integren (MXI Pay, MXI Games, MXI Loan, MXI ONE), la utilidad del token aumenta, y con ella, su precio natural.
+          </Text>
+        </View>
+
+        <View style={styles.timelineCard}>
+          <Text style={styles.timelineTitle}>📅 36 meses después del lanzamiento:</Text>
+          <Text style={styles.timelineValue}>12 – 18 USDT por MXI</Text>
+          <Text style={styles.timelineDescription}>
+            Con la comunidad consolidada, alianzas estratégicas y la futura transición hacia MXI Chain, el token entra en su etapa de madurez y expansión global.
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Precio de Preventa</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Fase 1:</Text> 0.4 USDT por MXI
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Fase 2:</Text> 0.7 USDT por MXI (75% de aumento)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              <Text style={{ fontWeight: 'bold', color: colors.text }}>Fase 3:</Text> 1.0 USDT por MXI (150% desde Fase 1)
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📊 Factores que Influyen en el Valor</Text>
+          <Text style={styles.sectionTitle}>✨ ¿Por qué este crecimiento es posible?</Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>1.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Oferta Limitada:</Text> Solo 25 millones de MXI en circulación durante la preventa
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Ecosistema con utilidad real y uso constante</Text>
           </Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>2.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Utilidad Real:</Text> MXI se usa activamente en torneos, juegos y competencias
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Suministro limitado a 50 millones</Text>
           </Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>3.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Demanda Creciente:</Text> Más usuarios = más demanda = mayor valor
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Expansión en países hispanohablantes</Text>
           </Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>4.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Listado en Exchanges:</Text> Mayor liquidez y accesibilidad aumentan el valor
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Integración progresiva de apps y servicios</Text>
           </Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>5.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Ecosistema Activo:</Text> Torneos constantes crean demanda continua
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Vesting diario que impulsa la retención</Text>
           </Text>
         </View>
 
         <View style={styles.bulletPoint}>
-          <Text style={styles.bullet}>6.</Text>
+          <Text style={styles.bullet}>•</Text>
           <Text style={styles.bulletText}>
-            <Text style={{ fontWeight: 'bold', color: colors.text }}>Vesting Atractivo:</Text> 3% mensual incentiva a mantener (hold) el token
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Actividad en torneos y sistema de referidos</Text>
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔮 Escenarios de Proyección</Text>
-        </View>
-
-        <View style={styles.scenarioCard}>
-          <Text style={styles.scenarioTitle}>📉 Escenario Conservador</Text>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>Al lanzamiento (Feb 2026):</Text>
-            <Text style={styles.scenarioValue}>1.5 - 2.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>6 meses después:</Text>
-            <Text style={styles.scenarioValue}>2.5 - 3.5 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>1 año después:</Text>
-            <Text style={styles.scenarioValue}>4.0 - 6.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>ROI desde Fase 1:</Text>
-            <Text style={styles.scenarioHighlight}>10x - 15x</Text>
-          </View>
-        </View>
-
-        <View style={styles.scenarioCard}>
-          <Text style={styles.scenarioTitle}>📊 Escenario Moderado</Text>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>Al lanzamiento (Feb 2026):</Text>
-            <Text style={styles.scenarioValue}>2.5 - 4.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>6 meses después:</Text>
-            <Text style={styles.scenarioValue}>5.0 - 8.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>1 año después:</Text>
-            <Text style={styles.scenarioValue}>10.0 - 15.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>ROI desde Fase 1:</Text>
-            <Text style={styles.scenarioHighlight}>25x - 37x</Text>
-          </View>
-        </View>
-
-        <View style={styles.scenarioCard}>
-          <Text style={styles.scenarioTitle}>📈 Escenario Optimista</Text>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>Al lanzamiento (Feb 2026):</Text>
-            <Text style={styles.scenarioValue}>5.0 - 8.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>6 meses después:</Text>
-            <Text style={styles.scenarioValue}>12.0 - 20.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>1 año después:</Text>
-            <Text style={styles.scenarioValue}>25.0 - 50.0 USDT</Text>
-          </View>
-          <View style={styles.scenarioRow}>
-            <Text style={styles.scenarioLabel}>ROI desde Fase 1:</Text>
-            <Text style={styles.scenarioHighlight}>62x - 125x</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Ejemplo de Inversión</Text>
-          <Text style={styles.paragraph}>
-            Si inviertes 1,000 USDT en la Fase 1 (0.4 USDT):
+        <View style={styles.bulletPoint}>
+          <Text style={styles.bullet}>•</Text>
+          <Text style={styles.bulletText}>
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Potencial de viralidad gracias al enfoque simple: ganar, usar, compartir</Text>
           </Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Obtienes: 2,500 MXI
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Escenario conservador (6 USDT): 15,000 USDT
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Escenario moderado (15 USDT): 37,500 USDT
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Escenario optimista (50 USDT): 125,000 USDT
-            </Text>
-          </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Catalizadores de Valor</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Listado en exchanges principales (Binance, Coinbase, etc.)
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Asociaciones estratégicas con marcas reconocidas
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Expansión del ecosistema de juegos y torneos
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Adopción masiva de usuarios
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Desarrollo de nuevas funcionalidades (NFTs, marketplace, etc.)
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⚖️ Gestión de Riesgos</Text>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Diversifica tu portafolio, no inviertas todo en un solo activo
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Invierte solo lo que puedas permitirte perder
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Considera el vesting como ingreso pasivo adicional
-            </Text>
-          </View>
-          <View style={styles.bulletPoint}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bulletText}>
-              Mantén una perspectiva a largo plazo
-            </Text>
-          </View>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2025 MXI Strategic Holdings Ltd.</Text>
+          <Text style={styles.footerText}>
+            MAXCOIN (MXI) is a registered trademark of MXI Strategic Holdings Ltd., Cayman Islands.
+          </Text>
+          <Text style={styles.footerText}>App operated by MXI Technologies Inc. (Panamá).</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

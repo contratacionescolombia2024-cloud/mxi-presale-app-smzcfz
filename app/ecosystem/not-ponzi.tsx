@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -246,6 +247,8 @@ export default function NotPonziScreen() {
             Un proyecto construido sobre tecnología blockchain, con utilidad real, transparencia total y un modelo de negocio sostenible a largo plazo.
           </Text>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );

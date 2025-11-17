@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -439,6 +440,8 @@ export default function EcosystemDetailsScreen() {
             Este es el momento. El crecimiento comienza Hoy. 🚀
           </Text>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );

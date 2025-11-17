@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -403,6 +404,8 @@ export default function DailyVestingScreen() {
             El vesting diario de MXI no solo genera rendimientos pasivos, sino que crea un ecosistema donde mantener tus tokens es más rentable que venderlos. Esto reduce la volatilidad, aumenta la estabilidad del precio y beneficia a toda la comunidad a largo plazo.
           </Text>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );
