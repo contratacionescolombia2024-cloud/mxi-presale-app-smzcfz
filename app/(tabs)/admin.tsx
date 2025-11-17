@@ -291,12 +291,15 @@ export default function AdminScreen() {
       });
 
       if (error) {
-        console.error('❌ Error loading user details:', error);
+        console.error('❌ RPC Error loading user details:', error);
+        Alert.alert('Error', `Failed to load user details: ${error.message}`);
         throw error;
       }
 
-      if (data.success) {
-        console.log('✅ User details loaded:', data);
+      console.log('📦 RPC Response:', data);
+
+      if (data && data.success) {
+        console.log('✅ User details loaded successfully');
         setSelectedUserDetails(data as any);
         
         // Set edit form values
@@ -306,10 +309,12 @@ export default function AdminScreen() {
         setEditAddress(data.profile.address || '');
         setEditReferredBy(data.profile.referred_by || '');
       } else {
-        Alert.alert('Error', data.error || 'Failed to load user details');
+        const errorMsg = data?.error || 'Failed to load user details';
+        console.error('❌ User details load failed:', errorMsg);
+        Alert.alert('Error', errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ Error in loadUserDetails:', error);
+      console.error('❌ Exception in loadUserDetails:', error);
       Alert.alert('Error', error.message || 'Failed to load user details');
     } finally {
       setLoading(false);
@@ -322,6 +327,7 @@ export default function AdminScreen() {
     setLoading(true);
     try {
       console.log(`✏️ Updating profile for user ${selectedUser.id}`);
+      console.log('📤 Update data:', { editName, editIdentification, editEmail, editAddress });
       
       const { data, error } = await supabase.rpc('admin_update_user_profile', {
         p_user_id: selectedUser.id,
@@ -332,20 +338,25 @@ export default function AdminScreen() {
       });
 
       if (error) {
-        console.error('❌ Error updating user profile:', error);
+        console.error('❌ RPC Error updating user profile:', error);
+        Alert.alert('Error', `Failed to update profile: ${error.message}`);
         throw error;
       }
 
-      if (data.success) {
+      console.log('📦 Update response:', data);
+
+      if (data && data.success) {
         console.log('✅ User profile updated successfully');
         Alert.alert('Success', 'User profile updated successfully');
         await loadUsers();
         await loadUserDetails(selectedUser.id);
       } else {
-        Alert.alert('Error', data.error || 'Failed to update user profile');
+        const errorMsg = data?.error || 'Failed to update user profile';
+        console.error('❌ Profile update failed:', errorMsg);
+        Alert.alert('Error', errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ Error in handleUpdateUserProfile:', error);
+      console.error('❌ Exception in handleUpdateUserProfile:', error);
       Alert.alert('Error', error.message || 'Failed to update user profile');
     } finally {
       setLoading(false);
@@ -365,7 +376,7 @@ export default function AdminScreen() {
           onPress: async () => {
             setLoading(true);
             try {
-              console.log(`🔗 Updating referred_by for user ${selectedUser.id}`);
+              console.log(`🔗 Updating referred_by for user ${selectedUser.id} to: ${editReferredBy}`);
               
               const { error } = await supabase
                 .from('users_profiles')
@@ -375,14 +386,18 @@ export default function AdminScreen() {
                 })
                 .eq('id', selectedUser.id);
 
-              if (error) throw error;
+              if (error) {
+                console.error('❌ Error updating referred_by:', error);
+                Alert.alert('Error', `Failed to update: ${error.message}`);
+                throw error;
+              }
 
               console.log('✅ Referred_by updated successfully');
               Alert.alert('Success', 'Referral code updated successfully');
               await loadUsers();
               await loadUserDetails(selectedUser.id);
             } catch (error: any) {
-              console.error('❌ Error updating referred_by:', error);
+              console.error('❌ Exception in handleUpdateReferredBy:', error);
               Alert.alert('Error', error.message || 'Failed to update referral code');
             } finally {
               setLoading(false);
@@ -409,16 +424,21 @@ export default function AdminScreen() {
       });
 
       if (error) {
-        console.error('❌ Error linking referral:', error);
+        console.error('❌ RPC Error linking referral:', error);
+        Alert.alert('Error', `Failed to link referral: ${error.message}`);
         throw error;
       }
 
-      console.log('✅ Referral link result:', data);
+      console.log('📦 Referral link response:', data);
 
-      if (data.success) {
+      if (data && data.success) {
+        const commissionsMsg = data.total_commissions_distributed 
+          ? `\n\nTotal commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`
+          : '';
+        
         Alert.alert(
           'Success',
-          `${data.message}\n\nTotal commissions distributed: ${data.total_commissions_distributed?.toFixed(2) || 0} MXI`,
+          `${data.message}${commissionsMsg}`,
           [
             {
               text: 'OK',
@@ -432,10 +452,12 @@ export default function AdminScreen() {
           ]
         );
       } else {
-        Alert.alert('Error', data.error || 'Failed to link referral');
+        const errorMsg = data?.error || 'Failed to link referral';
+        console.error('❌ Referral link failed:', errorMsg);
+        Alert.alert('Error', errorMsg);
       }
     } catch (error: any) {
-      console.error('❌ Error in handleLinkReferral:', error);
+      console.error('❌ Exception in handleLinkReferral:', error);
       Alert.alert('Error', error.message || 'Failed to link referral');
     } finally {
       setLoading(false);
@@ -473,7 +495,8 @@ export default function AdminScreen() {
                 ? 'admin_add_balance_with_commissions'
                 : 'admin_add_balance_without_commissions';
 
-              console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id} ${actionType}`);
+              console.log(`💰 Calling ${functionName} for user ${selectedUser.id} with amount ${amount}`);
+              console.log(`📤 Request params:`, { p_user_id: selectedUser.id, p_mxi_amount: amount });
               
               const { data, error } = await supabase.rpc(functionName, {
                 p_user_id: selectedUser.id,
@@ -481,39 +504,46 @@ export default function AdminScreen() {
               });
 
               if (error) {
-                console.error('❌ Error adding balance:', error);
+                console.error(`❌ RPC Error in ${functionName}:`, error);
+                Alert.alert('Error', `Failed to add balance: ${error.message}\n\nPlease check the logs and try again.`);
                 throw error;
               }
 
-              console.log('✅ Balance added result:', data);
+              console.log(`📦 ${functionName} response:`, data);
 
-              if (data.success) {
-                let successMessage = `Added ${amount} MXI to ${selectedUser.name}'s balance`;
+              if (data && data.success) {
+                let successMessage = `✅ Added ${amount} MXI to ${selectedUser.name}'s balance`;
                 
                 if (balanceType === 'with_commission' && data.total_commissions_distributed > 0) {
-                  successMessage += `\n\n✅ Referral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`;
+                  successMessage += `\n\n💰 Referral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`;
                 } else if (balanceType === 'without_commission') {
                   successMessage += '\n\n✅ No commissions generated';
                 }
                 
+                console.log('✅ Balance added successfully:', successMessage);
+                
                 Alert.alert('Success', successMessage, [
                   {
                     text: 'OK',
-                    onPress: () => {
+                    onPress: async () => {
                       setBalanceAmount('');
                       setBalanceType('without_commission');
-                      loadUsers();
-                      loadMetrics();
-                      loadUserDetails(selectedUser.id);
+                      console.log('🔄 Refreshing data after balance addition...');
+                      await loadUsers();
+                      await loadMetrics();
+                      await loadUserDetails(selectedUser.id);
+                      console.log('✅ Data refresh complete');
                     }
                   }
                 ]);
               } else {
-                Alert.alert('Error', data.error || 'Failed to add balance');
+                const errorMsg = data?.error || 'Failed to add balance';
+                console.error('❌ Balance addition failed:', errorMsg);
+                Alert.alert('Error', errorMsg);
               }
             } catch (error: any) {
-              console.error('❌ Error adding balance:', error);
-              Alert.alert('Error', error.message || 'Failed to add balance');
+              console.error('❌ Exception in handleAddBalance:', error);
+              Alert.alert('Error', error.message || 'Failed to add balance. Please check the console logs.');
             } finally {
               setLoading(false);
             }
@@ -555,17 +585,21 @@ export default function AdminScreen() {
                 .single();
 
               if (vestingError) {
+                console.error('❌ Error fetching vesting data:', vestingError);
                 Alert.alert('Error', 'User has no balance to remove');
                 return;
               }
 
               const currentBalance = parseFloat(vestingData.total_mxi);
+              console.log(`📊 Current balance: ${currentBalance} MXI`);
+
               if (currentBalance < amount) {
                 Alert.alert('Error', `User only has ${currentBalance.toFixed(2)} MXI. Cannot remove ${amount} MXI.`);
                 return;
               }
 
               const newTotal = Math.max(0, currentBalance - amount);
+              console.log(`📊 New balance will be: ${newTotal} MXI`);
 
               const { error: updateError } = await supabase
                 .from('vesting')
@@ -575,7 +609,11 @@ export default function AdminScreen() {
                 })
                 .eq('user_id', selectedUser.id);
 
-              if (updateError) throw updateError;
+              if (updateError) {
+                console.error('❌ Error updating vesting:', updateError);
+                Alert.alert('Error', `Failed to remove balance: ${updateError.message}`);
+                throw updateError;
+              }
 
               console.log(`✅ Removed ${amount} MXI, new balance: ${newTotal} MXI`);
               Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\nNew balance: ${newTotal.toFixed(2)} MXI`);
@@ -583,7 +621,7 @@ export default function AdminScreen() {
               await loadUsers();
               await loadUserDetails(selectedUser.id);
             } catch (error: any) {
-              console.error('❌ Error removing balance:', error);
+              console.error('❌ Exception in handleRemoveBalance:', error);
               Alert.alert('Error', error.message || 'Failed to remove balance');
             } finally {
               setLoading(false);
@@ -627,7 +665,11 @@ export default function AdminScreen() {
           commission_mxi: amount,
         });
 
-      if (referralError) throw referralError;
+      if (referralError) {
+        console.error('❌ Error inserting referral:', referralError);
+        Alert.alert('Error', `Failed to add referral: ${referralError.message}`);
+        throw referralError;
+      }
 
       const { data: vestingData, error: vestingError } = await supabase
         .from('vesting')
@@ -636,11 +678,14 @@ export default function AdminScreen() {
         .maybeSingle();
 
       if (vestingError && vestingError.code !== 'PGRST116') {
+        console.error('❌ Error fetching vesting:', vestingError);
         throw vestingError;
       }
 
       if (vestingData) {
         const newTotal = parseFloat(vestingData.total_mxi) + amount;
+        console.log(`📊 Updating vesting: ${vestingData.total_mxi} + ${amount} = ${newTotal}`);
+        
         const { error: updateError } = await supabase
           .from('vesting')
           .update({
@@ -649,8 +694,13 @@ export default function AdminScreen() {
           })
           .eq('user_id', selectedUser.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('❌ Error updating vesting:', updateError);
+          throw updateError;
+        }
       } else {
+        console.log(`📊 Creating new vesting record with ${amount} MXI`);
+        
         const { error: insertError } = await supabase
           .from('vesting')
           .insert({
@@ -661,7 +711,10 @@ export default function AdminScreen() {
             last_update: new Date().toISOString(),
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('❌ Error inserting vesting:', insertError);
+          throw insertError;
+        }
       }
 
       console.log(`✅ Added referral earning of ${amount} MXI at level ${level}`);
@@ -674,7 +727,7 @@ export default function AdminScreen() {
       await loadUsers();
       await loadUserDetails(selectedUser.id);
     } catch (error: any) {
-      console.error('❌ Error adding referral:', error);
+      console.error('❌ Exception in handleAddReferral:', error);
       Alert.alert('Error', error.message || 'Failed to add referral');
     } finally {
       setLoading(false);
@@ -700,7 +753,11 @@ export default function AdminScreen() {
         })
         .eq('id', selectedMessage.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error responding to message:', error);
+        Alert.alert('Error', `Failed to send response: ${error.message}`);
+        throw error;
+      }
 
       console.log('✅ Response sent successfully');
       Alert.alert('Success', 'Response sent successfully');
@@ -709,7 +766,7 @@ export default function AdminScreen() {
       await loadMessages();
       await loadMetrics();
     } catch (error: any) {
-      console.error('❌ Error responding to message:', error);
+      console.error('❌ Exception in handleRespondToMessage:', error);
       Alert.alert('Error', error.message || 'Failed to send response');
     } finally {
       setLoading(false);
@@ -731,7 +788,11 @@ export default function AdminScreen() {
         })
         .eq('id', selectedKYC.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error updating KYC:', error);
+        Alert.alert('Error', `Failed to update KYC: ${error.message}`);
+        throw error;
+      }
 
       console.log(`✅ KYC ${decision} successfully`);
       Alert.alert('Success', `KYC ${decision} for ${selectedKYC.name}`);
@@ -739,7 +800,7 @@ export default function AdminScreen() {
       await loadKYCSubmissions();
       await loadMetrics();
     } catch (error: any) {
-      console.error('❌ Error updating KYC:', error);
+      console.error('❌ Exception in handleKYCDecision:', error);
       Alert.alert('Error', error.message || 'Failed to update KYC status');
     } finally {
       setLoading(false);
@@ -763,13 +824,17 @@ export default function AdminScreen() {
         })
         .eq('id', platformSettings.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error updating settings:', error);
+        Alert.alert('Error', `Failed to update settings: ${error.message}`);
+        throw error;
+      }
 
       console.log('✅ Platform settings updated successfully');
       Alert.alert('Success', 'Platform settings updated successfully');
       await loadPlatformSettings();
     } catch (error: any) {
-      console.error('❌ Error updating settings:', error);
+      console.error('❌ Exception in handleUpdatePlatformSettings:', error);
       Alert.alert('Error', error.message || 'Failed to update settings');
     } finally {
       setLoading(false);
