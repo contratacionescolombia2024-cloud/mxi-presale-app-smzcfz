@@ -236,13 +236,12 @@ export default function ReflexBombGame({ tournamentId, onComplete, onExit }: Ref
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.exitButton} onPress={onExit}>
-            <IconSymbol name={ICONS.CLOSE} size={24} color={colors.text} />
-          </TouchableOpacity>
+          <Text style={styles.scoreText}>Final Score: {score}</Text>
         </View>
         <View style={styles.gameArea}>
           <Text style={styles.instructions}>
-            Game Complete!{'\n\n'}
+            🎉 Game Complete!{'\n\n'}
+            You completed all {maxRounds} rounds!{'\n'}
             Final Score: {score}
           </Text>
           <TouchableOpacity style={styles.startButton} onPress={handleComplete}>

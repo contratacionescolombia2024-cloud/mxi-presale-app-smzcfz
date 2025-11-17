@@ -116,13 +116,20 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
   };
 
   const startGameLoop = () => {
+    let tickCount = 0;
     gameLoopRef.current = setInterval(() => {
+      tickCount++;
       setScore((prev) => prev + 1);
-      checkGameOver();
+      
+      // Only check game over after 1 second to give player time to start
+      if (tickCount > 10) {
+        checkGameOver();
+      }
     }, 100);
   };
 
   const checkGameOver = () => {
+    // Check if player is on any platform
     const onPlatform = platforms.some(
       (platform) =>
         playerPos.x + 20 > platform.x &&
@@ -131,6 +138,7 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
         playerPos.y + 40 <= platform.y + platform.height
     );
 
+    // Only trigger game over if not on platform and player has moved from initial position
     if (!onPlatform && playerPos.y > 50) {
       handleGameOver();
     }

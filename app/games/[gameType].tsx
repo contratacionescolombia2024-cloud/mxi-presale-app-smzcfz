@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import {
   View,
   Text,
@@ -26,10 +26,11 @@ import MemorySpeedGame from '@/components/games/MemorySpeedGame';
 import SnakeRetroGame from '@/components/games/SnakeRetroGame';
 import CatchItGame from '@/components/games/CatchItGame';
 import ShurikenAimGame from '@/components/games/ShurikenAimGame';
-import WhisperChallengeGame from '@/components/games/WhisperChallengeGame';
+
 import FloorIsLavaGame from '@/components/games/FloorIsLavaGame';
 import NumberTrackerGame from '@/components/games/NumberTrackerGame';
 import ReflexBombGame from '@/components/games/ReflexBombGame';
+import TournamentLeaderboard from '@/components/TournamentLeaderboard';
 
 const styles = StyleSheet.create({
   container: {
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const VIRAL_ZONE_GAMES = ['catch_it', 'shuriken_aim', 'whisper_challenge', 'floor_is_lava', 'number_tracker', 'reflex_bomb'];
+const VIRAL_ZONE_GAMES = ['catch_it', 'shuriken_aim', 'floor_is_lava', 'number_tracker', 'reflex_bomb'];
 
 export default function GameScreen() {
   const { gameType } = useLocalSearchParams<{ gameType: string }>();
@@ -488,8 +489,26 @@ export default function GameScreen() {
         throw scoreError;
       }
 
+      // Broadcast score update for real-time leaderboard
+      const channel = supabase.channel(`tournament:${activeTournament.id}:leaderboard`);
+      await channel.send({
+        type: 'broadcast',
+        event: 'score_update',
+        payload: {
+          user_id: user.id,
+          user_name: user.name,
+          score: score,
+          tournament_id: activeTournament.id,
+        },
+      });
+
       console.log('✅ Score submitted successfully');
-      Alert.alert('Score Submitted', `Your score of ${score} has been recorded!`);
+      
+      if (score === 0) {
+        Alert.alert('Withdrawn', 'You have withdrawn from the tournament with 0 points.');
+      } else {
+        Alert.alert('Score Submitted', `Your score of ${score} has been recorded!`);
+      }
 
       setIsInGame(false);
       setActiveTournament(null);
@@ -500,19 +519,19 @@ export default function GameScreen() {
     }
   };
 
-  const handleBackPress = () => {
+  const handleBackPress = async () => {
     if (isInGame) {
       Alert.alert(
         'Exit Game?',
-        'Are you sure you want to exit? Your progress will be lost.',
+        'Are you sure you want to exit? You will receive 0 points for withdrawing.',
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Exit',
             style: 'destructive',
-            onPress: () => {
-              setIsInGame(false);
-              setActiveTournament(null);
+            onPress: async () => {
+              // Submit score of 0 for withdrawal
+              await handleGameComplete(0);
             },
           },
         ]
@@ -550,7 +569,6 @@ export default function GameScreen() {
           {gameType === 'snake_retro' && <SnakeRetroGame {...gameProps} />}
           {gameType === 'catch_it' && <CatchItGame {...gameProps} />}
           {gameType === 'shuriken_aim' && <ShurikenAimGame {...gameProps} />}
-          {gameType === 'whisper_challenge' && <WhisperChallengeGame {...gameProps} />}
           {gameType === 'floor_is_lava' && <FloorIsLavaGame {...gameProps} />}
           {gameType === 'number_tracker' && <NumberTrackerGame {...gameProps} />}
           {gameType === 'reflex_bomb' && <ReflexBombGame {...gameProps} />}
@@ -608,62 +626,73 @@ export default function GameScreen() {
           </View>
         ) : (
           tournaments.map((tournament) => (
-            <View key={tournament.id} style={styles.tournamentCard}>
-              <View style={styles.tournamentHeader}>
-                <Text style={styles.tournamentTitle}>Tournament #{tournament.id.slice(0, 8)}</Text>
-                <View
+            <Fragment key={tournament.id}>
+              <View style={styles.tournamentCard}>
+                <View style={styles.tournamentHeader}>
+                  <Text style={styles.tournamentTitle}>Tournament #{tournament.id.slice(0, 8)}</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      tournament.status === 'waiting'
+                        ? styles.statusBadgeWaiting
+                        : styles.statusBadgeInProgress,
+                    ]}
+                  >
+                    <Text style={styles.statusBadgeText}>
+                      {tournament.status === 'waiting' ? 'Open' : 'In Progress'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.tournamentStats}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Players</Text>
+                    <Text style={styles.statValue}>
+                      {tournament.current_players}/{tournament.max_players}
+                    </Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Entry Fee</Text>
+                    <Text style={styles.statValue}>{tournament.entry_fee} MXI</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>Prize Pool</Text>
+                    <Text style={styles.statValue}>{tournament.prize_pool} MXI</Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
                   style={[
-                    styles.statusBadge,
-                    tournament.status === 'waiting'
-                      ? styles.statusBadgeWaiting
-                      : styles.statusBadgeInProgress,
+                    styles.joinButton,
+                    (tournament.current_players >= tournament.max_players ||
+                      tournament.status !== 'waiting') &&
+                      styles.joinButtonDisabled,
                   ]}
+                  onPress={() => handleJoinTournament(tournament.id)}
+                  disabled={
+                    tournament.current_players >= tournament.max_players ||
+                    tournament.status !== 'waiting'
+                  }
                 >
-                  <Text style={styles.statusBadgeText}>
-                    {tournament.status === 'waiting' ? 'Open' : 'In Progress'}
+                  <Text style={styles.joinButtonText}>
+                    {tournament.current_players >= tournament.max_players
+                      ? 'Tournament Full'
+                      : tournament.status !== 'waiting'
+                      ? 'In Progress'
+                      : 'Join Tournament'}
                   </Text>
-                </View>
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.tournamentStats}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Players</Text>
-                  <Text style={styles.statValue}>
-                    {tournament.current_players}/{tournament.max_players}
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Entry Fee</Text>
-                  <Text style={styles.statValue}>{tournament.entry_fee} MXI</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Prize Pool</Text>
-                  <Text style={styles.statValue}>{tournament.prize_pool} MXI</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.joinButton,
-                  (tournament.current_players >= tournament.max_players ||
-                    tournament.status !== 'waiting') &&
-                    styles.joinButtonDisabled,
-                ]}
-                onPress={() => handleJoinTournament(tournament.id)}
-                disabled={
-                  tournament.current_players >= tournament.max_players ||
-                  tournament.status !== 'waiting'
-                }
-              >
-                <Text style={styles.joinButtonText}>
-                  {tournament.current_players >= tournament.max_players
-                    ? 'Tournament Full'
-                    : tournament.status !== 'waiting'
-                    ? 'In Progress'
-                    : 'Join Tournament'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+              {/* Show leaderboard for tournaments with participants */}
+              {tournament.current_players > 0 && (
+                <TournamentLeaderboard
+                  tournamentId={tournament.id}
+                  prizePool={tournament.prize_pool}
+                  maxPlayers={tournament.max_players}
+                />
+              )}
+            </Fragment>
           ))
         )}
       </ScrollView>

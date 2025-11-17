@@ -1,7 +1,7 @@
 
 export interface Tournament {
   id: string;
-  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro' | 'catch_it' | 'shuriken_aim' | 'whisper_challenge' | 'floor_is_lava' | 'number_tracker' | 'reflex_bomb';
+  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro' | 'catch_it' | 'shuriken_aim' | 'floor_is_lava' | 'number_tracker' | 'reflex_bomb';
   entry_fee: number;
   prize_pool: number;
   max_players: number;
@@ -92,7 +92,6 @@ export const GAME_TYPES = {
 export const VIRAL_ZONE_GAME_TYPES = {
   CATCH_IT: 'catch_it',
   SHURIKEN_AIM: 'shuriken_aim',
-  WHISPER_CHALLENGE: 'whisper_challenge',
   FLOOR_IS_LAVA: 'floor_is_lava',
   NUMBER_TRACKER: 'number_tracker',
   REFLEX_BOMB: 'reflex_bomb',
@@ -118,7 +117,6 @@ export const GAME_NAMES = {
 export const VIRAL_ZONE_GAME_NAMES = {
   catch_it: 'Catch It!',
   shuriken_aim: 'Shuriken Aim',
-  whisper_challenge: 'Whisper Challenge Retro',
   floor_is_lava: 'Floor is Lava',
   number_tracker: 'Number Tracker',
   reflex_bomb: 'Reflex Bomb',
@@ -144,7 +142,6 @@ export const GAME_DESCRIPTIONS = {
 export const VIRAL_ZONE_GAME_DESCRIPTIONS = {
   catch_it: 'Catch correct objects falling from above. Highest score in 30 seconds wins!',
   shuriken_aim: 'Throw ninja stars at the target. Precision determines your score!',
-  whisper_challenge: 'Speak as quietly as possible without going silent. Very viral!',
   floor_is_lava: 'Jump between platforms without falling. Last the longest to win!',
   number_tracker: 'Tap numbers in order from a full screen. Fast and addictive!',
   reflex_bomb: 'Tap the bomb just before it explodes. Reaction and precision!',

@@ -409,7 +409,6 @@ export default function TournamentsScreen() {
   const viralZoneGames = [
     { type: 'catch_it', icon: 'sports-baseball' },
     { type: 'shuriken_aim', icon: 'gps-fixed' },
-    { type: 'whisper_challenge', icon: 'mic' },
     { type: 'floor_is_lava', icon: 'whatshot' },
     { type: 'number_tracker', icon: 'filter-9-plus' },
     { type: 'reflex_bomb', icon: 'alarm' },
@@ -462,7 +461,7 @@ export default function TournamentsScreen() {
             <Text style={styles.categoryTitle}>Standard Tournaments</Text>
           </View>
           <Text style={styles.categoryDescription}>
-            Entry: 3 MXI • Players: 25-50 • Prize: 135 MXI • Distribution: 50% / 25% / 15%
+            Entry: 3 MXI • Players: 25-50 • Prize: 135 MXI • Distribution: 50% / 25% / 15% (10% to prize fund)
           </Text>
           <View style={styles.gamesGrid}>
             {standardGames.map((game, index) => {
@@ -520,7 +519,7 @@ export default function TournamentsScreen() {
             <Text style={styles.categoryTitle}>MXI Viral Zone</Text>
           </View>
           <Text style={styles.categoryDescription}>
-            Entry: 1 MXI • Players: 100 • Prize: 100 MXI • Distribution: 50% / 25% / 15%
+            Entry: 1 MXI • Players: 100 • Prize: 100 MXI • Distribution: 50% / 25% / 15% (10% to prize fund)
           </Text>
           <View style={styles.gamesGrid}>
             {viralZoneGames.map((game, index) => {
