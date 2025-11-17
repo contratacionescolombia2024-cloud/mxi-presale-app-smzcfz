@@ -63,11 +63,11 @@ export default function TabLayout() {
       label: 'Buy',
     },
     {
-      name: 'vesting',
-      route: '/(tabs)/vesting',
-      iosIcon: APP_ICONS.vesting.ios,
-      androidIcon: APP_ICONS.vesting.android,
-      label: APP_ICONS.vesting.label,
+      name: 'tournaments',
+      route: '/(tabs)/tournaments',
+      iosIcon: 'trophy.fill',
+      androidIcon: 'emoji-events',
+      label: 'Tournaments',
     },
     {
       name: 'referrals',
@@ -97,12 +97,15 @@ export default function TabLayout() {
       >
         <Stack.Screen name="(home)" />
         <Stack.Screen name="purchase" />
+        <Stack.Screen name="tournaments" />
         <Stack.Screen name="vesting" />
         <Stack.Screen name="referrals" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="kyc" />
         <Stack.Screen name="messages" />
         <Stack.Screen name="admin" />
+        <Stack.Screen name="balance-management" />
+        <Stack.Screen name="edit-profile" />
       </Stack>
       <FloatingTabBar tabs={tabs} />
     </>
