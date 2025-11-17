@@ -87,8 +87,11 @@ export default function ReferralsScreen() {
   };
 
   const handleOpenTransferModal = () => {
-    if (!referralStats?.totalMXIEarned || referralStats.totalMXIEarned <= 0) {
-      Alert.alert('No Referral Earnings', 'You don\'t have any referral earnings to transfer.');
+    if (!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50) {
+      Alert.alert(
+        'Insufficient Earnings', 
+        `You need at least 50 MXI in referral earnings to transfer.\n\nCurrent earnings: ${(referralStats?.totalMXIEarned || 0).toFixed(2)} MXI`
+      );
       return;
     }
     setTransferAmount('');
@@ -108,6 +111,14 @@ export default function ReferralsScreen() {
       return;
     }
 
+    if (amount < 50) {
+      Alert.alert(
+        'Minimum Amount Required',
+        'The minimum transfer amount is 50 MXI.\n\nPlease enter at least 50 MXI.'
+      );
+      return;
+    }
+
     const availableEarnings = referralStats?.totalMXIEarned || 0;
     if (amount > availableEarnings) {
       Alert.alert(
@@ -119,7 +130,7 @@ export default function ReferralsScreen() {
 
     Alert.alert(
       'Confirm Transfer',
-      `Transfer ${amount} MXI from referral earnings to your main balance?\n\n✅ This will be counted as a purchase and generate commissions for your upline referrers.`,
+      `Transfer ${amount} MXI from referral earnings to your main balance?\n\n⚠️ Important:\n• This will NOT generate commissions\n• The amount will be added to your main balance\n• This action cannot be undone`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -127,7 +138,7 @@ export default function ReferralsScreen() {
           onPress: async () => {
             setIsTransferring(true);
             try {
-              console.log(`💰 Transferring ${amount} MXI from referral earnings to balance`);
+              console.log(`💰 Transferring ${amount} MXI from referral earnings to balance (NO COMMISSIONS)`);
               
               const { data, error } = await supabase.rpc('user_transfer_referral_to_balance', {
                 p_user_id: user.id,
@@ -143,13 +154,9 @@ export default function ReferralsScreen() {
               console.log('📦 Transfer response:', data);
 
               if (data && data.success) {
-                const commissionsMsg = data.commissions_distributed && data.commissions_distributed > 0
-                  ? `\n\n💰 Commissions Distributed:\n${data.commissions_distributed.toFixed(2)} MXI to ${data.referrers_paid} referrer(s)`
-                  : '';
-                
                 Alert.alert(
                   'Success! ✅',
-                  `${data.message}${commissionsMsg}\n\n📊 Updated Balance:\n• Total MXI: ${data.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${data.available_referral_earnings.toFixed(2)} MXI`,
+                  `${data.message}\n\n📊 Updated Balance:\n• Total MXI: ${data.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${data.new_purchased_mxi.toFixed(2)}\n• Remaining Referral Earnings: ${data.available_referral_earnings.toFixed(2)} MXI\n\n✅ No commissions were generated for this transfer`,
                   [
                     {
                       text: 'OK',
@@ -250,9 +257,12 @@ export default function ReferralsScreen() {
           
           {/* UNIFY TO BALANCE BUTTON */}
           <TouchableOpacity 
-            style={styles.unifyButton}
+            style={[
+              styles.unifyButton,
+              (!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50) && styles.unifyButtonDisabled
+            ]}
             onPress={handleOpenTransferModal}
-            disabled={!referralStats?.totalMXIEarned || referralStats.totalMXIEarned <= 0}
+            disabled={!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50}
           >
             <IconSymbol 
               ios_icon_name="arrow.up.circle.fill" 
@@ -262,6 +272,12 @@ export default function ReferralsScreen() {
             />
             <Text style={styles.unifyButtonText}>Unify to Balance</Text>
           </TouchableOpacity>
+          
+          {(!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50) && (
+            <Text style={styles.minimumNote}>
+              Minimum 50 MXI required to transfer
+            </Text>
+          )}
         </View>
 
         <View style={commonStyles.card}>
@@ -345,7 +361,8 @@ export default function ReferralsScreen() {
               - Level 3: 1% commission on third level{'\n'}
               - Commissions paid in MXI instantly{'\n'}
               - No limit on referrals{'\n'}
-              - Transfer earnings to main balance anytime
+              - Transfer earnings to main balance (min 50 MXI){'\n'}
+              - Transfers do NOT generate new commissions
             </Text>
           </View>
         </View>
@@ -394,7 +411,7 @@ export default function ReferralsScreen() {
               <Text style={styles.inputLabel}>Amount to Transfer (MXI)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter amount"
+                placeholder="Minimum 50 MXI"
                 placeholderTextColor={colors.textSecondary}
                 value={transferAmount}
                 onChangeText={setTransferAmount}
@@ -411,8 +428,8 @@ export default function ReferralsScreen() {
                 />
                 <View style={styles.infoBoxContent}>
                   <Text style={styles.infoBoxText}>
-                    • This transfer will be counted as a purchase{'\n'}
-                    • Your upline referrers will receive commissions{'\n'}
+                    • Minimum transfer: 50 MXI{'\n'}
+                    • This will NOT generate commissions{'\n'}
                     • The amount will be added to your main balance{'\n'}
                     • This action cannot be undone
                   </Text>
@@ -420,7 +437,7 @@ export default function ReferralsScreen() {
               </View>
 
               <TouchableOpacity 
-                style={[styles.transferButton, isTransferring && styles.transferButtonDisabled]}
+                style={[styles.transferButton, (isTransferring || !transferAmount) && styles.transferButtonDisabled]}
                 onPress={handleTransferToBalance}
                 disabled={isTransferring || !transferAmount}
               >
@@ -511,10 +528,20 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginTop: 8,
   },
+  unifyButtonDisabled: {
+    opacity: 0.5,
+  },
   unifyButtonText: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
+  },
+  minimumNote: {
+    fontSize: 12,
+    color: colors.card,
+    opacity: 0.8,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
   cardTitle: {
     fontSize: 16,
