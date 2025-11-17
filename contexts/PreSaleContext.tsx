@@ -26,12 +26,21 @@ export function usePreSale() {
 
 // Helper function to safely convert database numeric values to JavaScript numbers
 function safeNumeric(value: any): number {
-  if (value === null || value === undefined) return 0;
-  if (typeof value === 'number') return value;
+  if (value === null || value === undefined) {
+    console.log('⚠️ safeNumeric: null/undefined value, returning 0');
+    return 0;
+  }
+  if (typeof value === 'number') {
+    console.log('✅ safeNumeric: number value:', value);
+    return value;
+  }
   if (typeof value === 'string') {
     const parsed = parseFloat(value);
-    return isNaN(parsed) ? 0 : parsed;
+    const result = isNaN(parsed) ? 0 : parsed;
+    console.log('✅ safeNumeric: string value:', value, '-> parsed:', result);
+    return result;
   }
+  console.log('⚠️ safeNumeric: unknown type:', typeof value, 'value:', value, 'returning 0');
   return 0;
 }
 

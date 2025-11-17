@@ -429,17 +429,18 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown
-  const totalMXI = (vestingData?.totalMXI || 0);
-  const referralMXI = (referralStats?.totalMXIEarned || 0);
+  // Calculate MXI breakdown - ensure we use the actual values from referralStats
+  const totalMXI = vestingData?.totalMXI || 0;
+  const referralMXI = referralStats?.totalMXIEarned || 0;
   const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
-  const vestingRewards = (vestingData?.currentRewards || 0);
+  const vestingRewards = vestingData?.currentRewards || 0;
   
   console.log('🏠 Home Screen - Display Values:', {
     totalMXI,
     referralMXI,
     purchasedMXI,
     vestingRewards,
+    'referralStats object': referralStats,
   });
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;

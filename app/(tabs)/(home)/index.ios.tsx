@@ -1,9 +1,8 @@
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
-import { IconSymbol } from '@/components/IconSymbol';
+import { usePreSale } from '@/contexts/PreSaleContext';
 import { useRouter } from 'expo-router';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import React, { useEffect, useState } from 'react';
+import { IconSymbol } from '@/components/IconSymbol';
 import {
   View,
   Text,
@@ -14,8 +13,9 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { usePreSale } from '@/contexts/PreSaleContext';
-import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { colors, commonStyles } from '@/styles/commonStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const styles = StyleSheet.create({
   container: {
@@ -426,17 +426,18 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown
-  const totalMXI = (vestingData?.totalMXI || 0);
-  const referralMXI = (referralStats?.totalMXIEarned || 0);
+  // Calculate MXI breakdown - ensure we use the actual values from referralStats
+  const totalMXI = vestingData?.totalMXI || 0;
+  const referralMXI = referralStats?.totalMXIEarned || 0;
   const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
-  const vestingRewards = (vestingData?.currentRewards || 0);
+  const vestingRewards = vestingData?.currentRewards || 0;
   
   console.log('🏠 Home Screen (iOS) - Display Values:', {
     totalMXI,
     referralMXI,
     purchasedMXI,
     vestingRewards,
+    'referralStats object': referralStats,
   });
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
@@ -675,7 +676,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
-              ios_icon_name="person.3.fill"
+              ios_icon_name="person.2.fill"
               android_material_icon_name="people"
               size={40} 
               color={colors.highlight}
