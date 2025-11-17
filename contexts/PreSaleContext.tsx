@@ -58,6 +58,57 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, isAuthenticated]);
 
+  // Real-time subscription for referrals
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      return;
+    }
+
+    console.log('🔔 Setting up real-time subscription for referrals');
+
+    // Subscribe to changes in the referrals table
+    const referralsSubscription = supabase
+      .channel('referrals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'referrals',
+          filter: `referrer_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Referral change detected:', payload);
+          loadReferralStats();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to changes in vesting table
+    const vestingSubscription = supabase
+      .channel('vesting-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vesting',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Vesting change detected:', payload);
+          loadVestingData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🛑 Cleaning up real-time subscriptions');
+      referralsSubscription.unsubscribe();
+      vestingSubscription.unsubscribe();
+    };
+  }, [user?.id, isAuthenticated]);
+
   // Real-time vesting updates
   useEffect(() => {
     if (!isAuthenticated || !user || !vestingData?.totalMXI) {
@@ -244,35 +295,41 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         throw referralsError;
       }
 
-      console.log('✅ All referrals loaded:', allReferrals?.length || 0, allReferrals);
+      console.log('✅ Raw referrals data loaded:', JSON.stringify(allReferrals, null, 2));
 
       // Separate by level
       const level1Data = allReferrals?.filter(r => r.level === 1) || [];
       const level2Data = allReferrals?.filter(r => r.level === 2) || [];
       const level3Data = allReferrals?.filter(r => r.level === 3) || [];
 
-      // Calculate total MXI earned from commissions using safeNumeric
+      console.log('📊 Referrals by level:', {
+        level1: level1Data.length,
+        level2: level2Data.length,
+        level3: level3Data.length,
+      });
+
+      // Calculate total MXI earned from commissions using commission_mxi field
       const level1MXI = level1Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 1 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
+        console.log('💰 Level 1 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
       const level2MXI = level2Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 2 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
+        console.log('💰 Level 2 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
       const level3MXI = level3Data.reduce((sum, r) => {
         const commission = safeNumeric(r.commission_mxi);
-        console.log('💰 Level 3 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
+        console.log('💰 Level 3 - Referral ID:', r.id, 'Commission:', commission, 'Raw:', r.commission_mxi, 'Type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
       const totalEarned = level1MXI + level2MXI + level3MXI;
 
-      console.log('📊 Referral stats summary:', {
+      console.log('📊 Referral stats calculated:', {
         level1Count: level1Data.length,
         level2Count: level2Data.length,
         level3Count: level3Data.length,
@@ -282,7 +339,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         totalEarned,
       });
 
-      setReferralStats({
+      const newStats = {
         totalReferrals: allReferrals?.length || 0,
         level1Count: level1Data.length,
         level2Count: level2Data.length,
@@ -292,10 +349,13 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         level3MXI: level3MXI,
         totalMXIEarned: totalEarned,
         referrals: allReferrals || [],
-      });
+      };
+
+      console.log('✅ Setting referral stats:', newStats);
+      setReferralStats(newStats);
     } catch (error) {
       console.error('❌ Failed to load referral stats:', error);
-      setReferralStats({
+      const emptyStats = {
         totalReferrals: 0,
         level1Count: 0,
         level2Count: 0,
@@ -305,7 +365,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         level3MXI: 0,
         totalMXIEarned: 0,
         referrals: [],
-      });
+      };
+      console.log('⚠️ Setting empty referral stats due to error');
+      setReferralStats(emptyStats);
     }
   };
 

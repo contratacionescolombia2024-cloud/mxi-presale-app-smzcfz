@@ -368,6 +368,20 @@ export default function HomeScreen() {
     seconds: 0,
   });
 
+  // Debug logging for referral stats
+  useEffect(() => {
+    console.log('🏠 Home Screen (iOS) - Referral Stats Update:', {
+      totalReferrals: referralStats?.totalReferrals,
+      level1Count: referralStats?.level1Count,
+      level2Count: referralStats?.level2Count,
+      level3Count: referralStats?.level3Count,
+      level1MXI: referralStats?.level1MXI,
+      level2MXI: referralStats?.level2MXI,
+      level3MXI: referralStats?.level3MXI,
+      totalMXIEarned: referralStats?.totalMXIEarned,
+    });
+  }, [referralStats]);
+
   // Countdown to February 20, 2026
   useEffect(() => {
     const targetDate = new Date('2026-02-20T00:00:00').getTime();
@@ -395,6 +409,7 @@ export default function HomeScreen() {
   }, []);
 
   const onRefresh = async () => {
+    console.log('🔄 Home Screen (iOS) - Manual refresh triggered');
     setRefreshing(true);
     await refreshData();
     setRefreshing(false);
@@ -416,6 +431,13 @@ export default function HomeScreen() {
   const referralMXI = (referralStats?.totalMXIEarned || 0);
   const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
   const vestingRewards = (vestingData?.currentRewards || 0);
+  
+  console.log('🏠 Home Screen (iOS) - Display Values:', {
+    totalMXI,
+    referralMXI,
+    purchasedMXI,
+    vestingRewards,
+  });
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
 
