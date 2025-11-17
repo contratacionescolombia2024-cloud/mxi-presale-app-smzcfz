@@ -21,15 +21,63 @@ import { IconSymbol } from '@/components/IconSymbol';
 import * as Clipboard from 'expo-clipboard';
 import { supabase } from '@/app/integrations/supabase/client';
 
+interface TransferHistoryItem {
+  id: string;
+  amount_transferred: number;
+  old_referral_balance: number;
+  new_referral_balance: number;
+  old_total_mxi: number;
+  new_total_mxi: number;
+  status: 'success' | 'error';
+  error_message?: string;
+  created_at: string;
+}
+
 export default function ReferralsScreen() {
   const { user } = useAuth();
   const { referralStats, forceReloadReferrals } = usePreSale();
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [transferAmount, setTransferAmount] = useState('');
   const [isTransferring, setIsTransferring] = useState(false);
+  const [transferHistory, setTransferHistory] = useState<TransferHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const referralLink = `https://mxi-presale.com/register?ref=${user?.referralCode}`;
+
+  useEffect(() => {
+    if (user?.id) {
+      loadTransferHistory();
+    }
+  }, [user?.id]);
+
+  const loadTransferHistory = async () => {
+    if (!user?.id) return;
+    
+    setLoadingHistory(true);
+    try {
+      console.log('📜 Loading transfer history for user:', user.id);
+      const { data, error } = await supabase
+        .from('referral_transfer_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('❌ Error loading transfer history:', error);
+        throw error;
+      }
+
+      console.log(`✅ Loaded ${data?.length || 0} transfer history records`);
+      setTransferHistory(data || []);
+    } catch (error: any) {
+      console.error('❌ Exception in loadTransferHistory:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const handleCopyCode = async () => {
     if (user?.referralCode) {
@@ -188,6 +236,7 @@ export default function ReferralsScreen() {
                 setShowTransferModal(false);
                 setTransferAmount('');
                 forceReloadReferrals();
+                loadTransferHistory();
               }
             }
           ]
@@ -286,6 +335,23 @@ export default function ReferralsScreen() {
               color={colors.card} 
             />
             <Text style={styles.unifyButtonText}>Unify to Balance</Text>
+          </TouchableOpacity>
+          
+          {/* TRANSFER HISTORY BUTTON */}
+          <TouchableOpacity 
+            style={styles.historyButton}
+            onPress={() => {
+              loadTransferHistory();
+              setShowHistoryModal(true);
+            }}
+          >
+            <IconSymbol 
+              ios_icon_name="clock.fill" 
+              android_material_icon_name="history" 
+              size={18} 
+              color={colors.primary} 
+            />
+            <Text style={styles.historyButtonText}>View Transfer History</Text>
           </TouchableOpacity>
           
           {(!referralStats?.totalMXIEarned || referralStats.totalMXIEarned < 50) && (
@@ -451,6 +517,7 @@ export default function ReferralsScreen() {
                     • Minimum transfer: 50 MXI{'\n'}
                     • This will NOT generate commissions{'\n'}
                     • The amount will be added to your main balance{'\n'}
+                    • Your referral earnings will be debited{'\n'}
                     • This action cannot be undone
                   </Text>
                 </View>
@@ -519,6 +586,7 @@ export default function ReferralsScreen() {
                 <Text style={styles.confirmWarningTitle}>⚠️ Important:</Text>
                 <Text style={styles.confirmWarningText}>
                   • This will NOT generate commissions{'\n'}
+                  • Your referral earnings will be debited{'\n'}
                   • The amount will be added to your main balance{'\n'}
                   • This action cannot be undone
                 </Text>
@@ -543,6 +611,111 @@ export default function ReferralsScreen() {
                 <Text style={styles.confirmButtonText}>Transfer</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Transfer History Modal */}
+      <Modal
+        visible={showHistoryModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowHistoryModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Transfer History</Text>
+              <TouchableOpacity onPress={() => setShowHistoryModal(false)}>
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel" 
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.historyScrollView}>
+              {loadingHistory ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                  <Text style={styles.loadingText}>Loading history...</Text>
+                </View>
+              ) : transferHistory.length > 0 ? (
+                transferHistory.map((item) => (
+                  <View 
+                    key={item.id} 
+                    style={[
+                      styles.historyItem,
+                      item.status === 'error' && styles.historyItemError
+                    ]}
+                  >
+                    <View style={styles.historyItemHeader}>
+                      <IconSymbol 
+                        ios_icon_name={item.status === 'success' ? "checkmark.circle.fill" : "xmark.circle.fill"} 
+                        android_material_icon_name={item.status === 'success' ? "check_circle" : "cancel"} 
+                        size={24} 
+                        color={item.status === 'success' ? colors.success : colors.error} 
+                      />
+                      <Text style={styles.historyItemDate}>
+                        {new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString()}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.historyItemContent}>
+                      <View style={styles.historyItemRow}>
+                        <Text style={styles.historyItemLabel}>Amount Transferred:</Text>
+                        <Text style={styles.historyItemValue}>
+                          {item.amount_transferred.toFixed(2)} MXI
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.historyItemRow}>
+                        <Text style={styles.historyItemLabel}>Referral Balance:</Text>
+                        <Text style={styles.historyItemValue}>
+                          {item.old_referral_balance.toFixed(2)} → {item.new_referral_balance.toFixed(2)} MXI
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.historyItemRow}>
+                        <Text style={styles.historyItemLabel}>Total MXI:</Text>
+                        <Text style={styles.historyItemValue}>
+                          {item.old_total_mxi.toFixed(2)} → {item.new_total_mxi.toFixed(2)} MXI
+                        </Text>
+                      </View>
+                      
+                      {item.status === 'error' && item.error_message && (
+                        <View style={styles.errorMessageBox}>
+                          <Text style={styles.errorMessageText}>
+                            Error: {item.error_message}
+                          </Text>
+                        </View>
+                      )}
+                      
+                      {item.status === 'success' && (
+                        <View style={styles.successBadge}>
+                          <Text style={styles.successBadgeText}>✓ Transfer Completed</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyHistoryContainer}>
+                  <IconSymbol 
+                    ios_icon_name="tray.fill" 
+                    android_material_icon_name="inbox" 
+                    size={64} 
+                    color={colors.textSecondary} 
+                  />
+                  <Text style={styles.emptyHistoryText}>No transfer history yet</Text>
+                  <Text style={styles.emptyHistorySubtext}>
+                    Your transfers will appear here
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -622,6 +795,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
+  },
+  historyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: `${colors.primary}20`,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  historyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
   minimumNote: {
     fontSize: 12,
@@ -914,5 +1104,100 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
+  },
+  historyScrollView: {
+    maxHeight: 500,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  historyItem: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  historyItemError: {
+    borderColor: colors.error,
+    backgroundColor: `${colors.error}05`,
+  },
+  historyItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  historyItemDate: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  historyItemContent: {
+    gap: 8,
+  },
+  historyItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  historyItemLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  historyItemValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  errorMessageBox: {
+    backgroundColor: `${colors.error}15`,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  errorMessageText: {
+    fontSize: 12,
+    color: colors.error,
+    lineHeight: 18,
+  },
+  successBadge: {
+    backgroundColor: `${colors.success}20`,
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  successBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.success,
+  },
+  emptyHistoryContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyHistoryText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+  },
+  emptyHistorySubtext: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
