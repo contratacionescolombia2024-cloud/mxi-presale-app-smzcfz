@@ -149,6 +149,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.accent,
   },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(16, 185, 129, 0.3)',
+    marginVertical: 8,
+  },
   vestingCard: {
     backgroundColor: colors.sectionPurple,
     borderRadius: 20,
@@ -409,10 +414,11 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate total MXI including commissions
+  // Calculate MXI breakdown
   const totalMXI = (vestingData?.totalMXI || 0);
   const referralMXI = (referralStats?.totalMXIEarned || 0);
-  const grandTotal = totalMXI;
+  const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
+  const vestingRewards = (vestingData?.currentRewards || 0);
   
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
 
@@ -464,27 +470,49 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - Moved directly below countdown */}
+        {/* Balance Card - Detailed breakdown */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
-          <Text style={styles.balanceAmount}>{grandTotal.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Total Vesting MXI</Text>
-              <Text style={styles.balanceRowValue}>{totalMXI.toFixed(2)}</Text>
+              <Text style={styles.balanceRowLabel}>MXI Purchased</Text>
+              <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)}</Text>
             </View>
+            
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Referral Commissions</Text>
+              <Text style={styles.balanceRowLabel}>Referral Commissions</Text>
               <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)}</Text>
             </View>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
-              <Text style={styles.balanceRowValue}>{(vestingData?.currentRewards || 0).toFixed(4)}</Text>
-            </View>
+
+            <View style={styles.divider} />
+            
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Total Referrals</Text>
               <Text style={styles.balanceRowValue}>{referralStats?.totalReferrals || 0}</Text>
+            </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level1MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level2MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level3MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
+              <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)}</Text>
             </View>
           </View>
         </View>
@@ -503,7 +531,7 @@ export default function HomeScreen() {
             <View style={styles.vestingRewardsContainer}>
               <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
               <Text style={styles.vestingRewardsAmount}>
-                {(vestingData?.currentRewards || 0).toFixed(6)} MXI
+                {vestingRewards.toFixed(6)} MXI
               </Text>
               <Text style={styles.vestingRewardsUpdate}>
                 ⚡ Updating every second
@@ -512,7 +540,7 @@ export default function HomeScreen() {
 
             <View style={styles.metricRow}>
               <Text style={styles.metricLabel}>Total Vesting MXI</Text>
-              <Text style={styles.metricValue}>{(vestingData?.totalMXI || 0).toFixed(2)} MXI</Text>
+              <Text style={styles.metricValue}>{totalMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.metricRow}>

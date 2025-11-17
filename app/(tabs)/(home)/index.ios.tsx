@@ -1,8 +1,9 @@
 
-import { usePreSale } from '@/contexts/PreSaleContext';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
+import { useRouter } from 'expo-router';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import {
   View,
   Text,
@@ -13,9 +14,8 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePreSale } from '@/contexts/PreSaleContext';
+import React, { useEffect, useState } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -145,6 +145,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.accent,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(16, 185, 129, 0.3)',
+    marginVertical: 8,
   },
   vestingCard: {
     backgroundColor: colors.sectionPurple,
@@ -406,11 +411,12 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate total MXI including commissions
+  // Calculate MXI breakdown
   const totalMXI = (vestingData?.totalMXI || 0);
   const referralMXI = (referralStats?.totalMXIEarned || 0);
-  const grandTotal = totalMXI;
-
+  const purchasedMXI = totalMXI - referralMXI; // Subtract commissions from total to get purchased amount
+  const vestingRewards = (vestingData?.currentRewards || 0);
+  
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
 
   return (
@@ -434,7 +440,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer */}
+        {/* Countdown Timer - Translucent Orange */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
@@ -461,32 +467,54 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card */}
+        {/* Balance Card - Detailed breakdown */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
-          <Text style={styles.balanceAmount}>{grandTotal.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Total Vesting MXI</Text>
-              <Text style={styles.balanceRowValue}>{totalMXI.toFixed(2)}</Text>
+              <Text style={styles.balanceRowLabel}>MXI Purchased</Text>
+              <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)}</Text>
             </View>
+            
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Referral Commissions</Text>
+              <Text style={styles.balanceRowLabel}>Referral Commissions</Text>
               <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)}</Text>
             </View>
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
-              <Text style={styles.balanceRowValue}>{(vestingData?.currentRewards || 0).toFixed(4)}</Text>
-            </View>
+
+            <View style={styles.divider} />
+            
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Total Referrals</Text>
               <Text style={styles.balanceRowValue}>{referralStats?.totalReferrals || 0}</Text>
             </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level1MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level2MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0})</Text>
+              <Text style={styles.balanceRowValue}>{(referralStats?.level3MXI || 0).toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
+              <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)}</Text>
+            </View>
           </View>
         </View>
 
-        {/* Vesting Display */}
+        {/* Vesting Display with Real-Time Updates */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -496,10 +524,11 @@ export default function HomeScreen() {
           </View>
           
           <View style={styles.vestingMetrics}>
+            {/* Real-time rewards display */}
             <View style={styles.vestingRewardsContainer}>
               <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
               <Text style={styles.vestingRewardsAmount}>
-                {(vestingData?.currentRewards || 0).toFixed(6)} MXI
+                {vestingRewards.toFixed(6)} MXI
               </Text>
               <Text style={styles.vestingRewardsUpdate}>
                 ⚡ Updating every second
@@ -508,7 +537,7 @@ export default function HomeScreen() {
 
             <View style={styles.metricRow}>
               <Text style={styles.metricLabel}>Total Vesting MXI</Text>
-              <Text style={styles.metricValue}>{(vestingData?.totalMXI || 0).toFixed(2)} MXI</Text>
+              <Text style={styles.metricValue}>{totalMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.metricRow}>
@@ -516,6 +545,7 @@ export default function HomeScreen() {
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
+            {/* Projections */}
             <View style={styles.projectionsContainer}>
               <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings</Text>
               
@@ -543,7 +573,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Phase Status */}
+        {/* Phase Counter - Single counter for current phase */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -597,7 +627,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/purchase')}
           >
             <IconSymbol 
-              ios_icon_name="cart.fill" 
+              ios_icon_name="cart.fill"
               android_material_icon_name="shopping_cart"
               size={40} 
               color={colors.accent}
@@ -610,7 +640,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/vesting')}
           >
             <IconSymbol 
-              ios_icon_name="chart.line.uptrend.xyaxis" 
+              ios_icon_name="chart.line.uptrend.xyaxis"
               android_material_icon_name="trending_up"
               size={40} 
               color={colors.success}
@@ -623,8 +653,8 @@ export default function HomeScreen() {
             onPress={() => router.push('/referrals')}
           >
             <IconSymbol 
-              ios_icon_name="person.3.fill" 
-              android_material_icon_name="group"
+              ios_icon_name="person.3.fill"
+              android_material_icon_name="people"
               size={40} 
               color={colors.highlight}
             />
@@ -636,7 +666,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/kyc')}
           >
             <IconSymbol 
-              ios_icon_name="checkmark.shield.fill" 
+              ios_icon_name="checkmark.shield.fill"
               android_material_icon_name="verified_user"
               size={40} 
               color="#14B8A6"
