@@ -24,6 +24,17 @@ export function usePreSale() {
   return context;
 }
 
+// Helper function to safely convert database numeric values to JavaScript numbers
+function safeNumeric(value: any): number {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = parseFloat(value);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
 export function PreSaleProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [currentStage, setCurrentStage] = useState<PreSaleStage | null>(null);
@@ -103,9 +114,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         setCurrentStage({
           id: data.id,
           stage: data.stage,
-          price: data.price,
-          totalMXI: data.total_mxi,
-          soldMXI: data.sold_mxi,
+          price: safeNumeric(data.price),
+          totalMXI: safeNumeric(data.total_mxi),
+          soldMXI: safeNumeric(data.sold_mxi),
           startDate: data.start_date,
           endDate: data.end_date,
           isActive: data.is_active,
@@ -168,18 +179,21 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       if (data) {
         console.log('✅ Vesting data loaded:', data);
-        const monthlyRate = data.monthly_rate || 0.03;
+        const monthlyRate = safeNumeric(data.monthly_rate) || 0.03;
+        const totalMXI = safeNumeric(data.total_mxi);
+        const currentRewards = safeNumeric(data.current_rewards);
+        
         setVestingData({
           id: data.id,
           userId: data.user_id,
-          totalMXI: data.total_mxi || 0,
-          currentRewards: data.current_rewards || 0,
+          totalMXI: totalMXI,
+          currentRewards: currentRewards,
           monthlyRate: monthlyRate,
           lastUpdate: data.last_update || new Date().toISOString(),
           projections: {
-            days7: (data.total_mxi || 0) * monthlyRate * (7 / 30),
-            days15: (data.total_mxi || 0) * monthlyRate * (15 / 30),
-            days30: (data.total_mxi || 0) * monthlyRate,
+            days7: totalMXI * monthlyRate * (7 / 30),
+            days15: totalMXI * monthlyRate * (15 / 30),
+            days30: totalMXI * monthlyRate,
           },
         });
       } else {
@@ -237,23 +251,22 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       const level2Data = allReferrals?.filter(r => r.level === 2) || [];
       const level3Data = allReferrals?.filter(r => r.level === 3) || [];
 
-      // Calculate total MXI earned from commissions
-      // Use Number() instead of parseFloat() for better handling of numeric types
+      // Calculate total MXI earned from commissions using safeNumeric
       const level1MXI = level1Data.reduce((sum, r) => {
-        const commission = Number(r.commission_mxi) || 0;
-        console.log('Level 1 commission:', commission, 'from referral:', r.id);
+        const commission = safeNumeric(r.commission_mxi);
+        console.log('💰 Level 1 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
       const level2MXI = level2Data.reduce((sum, r) => {
-        const commission = Number(r.commission_mxi) || 0;
-        console.log('Level 2 commission:', commission, 'from referral:', r.id);
+        const commission = safeNumeric(r.commission_mxi);
+        console.log('💰 Level 2 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
       const level3MXI = level3Data.reduce((sum, r) => {
-        const commission = Number(r.commission_mxi) || 0;
-        console.log('Level 3 commission:', commission, 'from referral:', r.id);
+        const commission = safeNumeric(r.commission_mxi);
+        console.log('💰 Level 3 commission:', commission, 'from referral:', r.id, 'raw value:', r.commission_mxi, 'type:', typeof r.commission_mxi);
         return sum + commission;
       }, 0);
       
@@ -359,10 +372,11 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (existingVesting) {
+        const newTotal = safeNumeric(existingVesting.total_mxi) + mxiAmount;
         const { error: vestingError } = await supabase
           .from('vesting')
           .update({
-            total_mxi: existingVesting.total_mxi + mxiAmount,
+            total_mxi: newTotal,
             last_update: new Date().toISOString(),
           })
           .eq('user_id', user.id);

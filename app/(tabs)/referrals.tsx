@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,20 @@ import * as Clipboard from 'expo-clipboard';
 export default function ReferralsScreen() {
   const { user } = useAuth();
   const { referralStats } = usePreSale();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Referrals Screen - Current referralStats:', {
+      totalReferrals: referralStats?.totalReferrals,
+      level1Count: referralStats?.level1Count,
+      level2Count: referralStats?.level2Count,
+      level3Count: referralStats?.level3Count,
+      level1MXI: referralStats?.level1MXI,
+      level2MXI: referralStats?.level2MXI,
+      level3MXI: referralStats?.level3MXI,
+      totalMXIEarned: referralStats?.totalMXIEarned,
+    });
+  }, [referralStats]);
 
   const referralLink = `https://mxi-presale.com/register?ref=${user?.referralCode}`;
 
@@ -165,11 +179,11 @@ export default function ReferralsScreen() {
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>How It Works</Text>
             <Text style={styles.infoText}>
-              {'\u2022'} Level 1: 5% commission on direct referrals{'\n'}
-              {'\u2022'} Level 2: 2% commission on their referrals{'\n'}
-              {'\u2022'} Level 3: 1% commission on third level{'\n'}
-              {'\u2022'} Commissions paid in MXI instantly{'\n'}
-              {'\u2022'} No limit on referrals
+              - Level 1: 5% commission on direct referrals{'\n'}
+              - Level 2: 2% commission on their referrals{'\n'}
+              - Level 3: 1% commission on third level{'\n'}
+              - Commissions paid in MXI instantly{'\n'}
+              - No limit on referrals
             </Text>
           </View>
         </View>
