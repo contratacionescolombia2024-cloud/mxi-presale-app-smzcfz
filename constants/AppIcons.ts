@@ -16,8 +16,11 @@ export const ICONS = {
   MENU: 'menu',
   BACK: 'arrow-back',
   FORWARD: 'arrow-forward',
+  ARROW_FORWARD: 'arrow-forward',
+  ARROW_UP: 'arrow-upward',
   CHEVRON_LEFT: 'chevron-left',
   CHEVRON_RIGHT: 'chevron-right',
+  LINK: 'link',
   
   // Shopping & Money
   SHOPPING_CART: 'shopping-cart',

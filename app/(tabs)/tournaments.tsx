@@ -228,6 +228,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
+  challengesCard: {
+    backgroundColor: colors.sectionPink,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(236, 72, 153, 0.4)',
+  },
+  challengesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  challengesTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  challengesSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  challengesInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  challengesInfoItem: {
+    alignItems: 'center',
+  },
+  challengesInfoLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  challengesInfoValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
 });
 
 export default function TournamentsScreen() {
@@ -323,6 +364,10 @@ export default function TournamentsScreen() {
     { type: 'snake_retro', icon: 'videogame-asset' },
   ];
 
+  const handleNavigateToChallenges = () => {
+    router.push('/challenges' as any);
+  };
+
   const limitPercentage = (totalActiveTournaments / MAX_ACTIVE_TOURNAMENTS) * 100;
 
   return (
@@ -363,9 +408,34 @@ export default function TournamentsScreen() {
           </View>
         </View>
 
+        {/* Challenges Card */}
+        <TouchableOpacity style={styles.challengesCard} onPress={handleNavigateToChallenges}>
+          <View style={styles.challengesHeader}>
+            <View>
+              <Text style={styles.challengesTitle}>⚔️ 1 vs 3 Challenges</Text>
+              <Text style={styles.challengesSubtitle}>Create custom challenges with friends!</Text>
+            </View>
+            <IconSymbol name={ICONS.ARROW_FORWARD} size={24} color={colors.light} />
+          </View>
+          <View style={styles.challengesInfo}>
+            <View style={styles.challengesInfoItem}>
+              <Text style={styles.challengesInfoLabel}>Entry Fee</Text>
+              <Text style={styles.challengesInfoValue}>5-1000 MXI</Text>
+            </View>
+            <View style={styles.challengesInfoItem}>
+              <Text style={styles.challengesInfoLabel}>Players</Text>
+              <Text style={styles.challengesInfoValue}>1 vs 3</Text>
+            </View>
+            <View style={styles.challengesInfoItem}>
+              <Text style={styles.challengesInfoLabel}>Winner Takes</Text>
+              <Text style={styles.challengesInfoValue}>All</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>ℹ️ How It Works</Text>
+          <Text style={styles.infoTitle}>ℹ️ Tournaments</Text>
           <View style={styles.infoRow}>
             <IconSymbol name={ICONS.CHECK_CIRCLE} size={20} color={colors.info} />
             <Text style={styles.infoText}>Entry fee: 3 MXI per tournament</Text>
@@ -385,7 +455,7 @@ export default function TournamentsScreen() {
         </View>
 
         {/* Games Grid */}
-        <Text style={styles.sectionTitle}>🎮 Available Games</Text>
+        <Text style={styles.sectionTitle}>🎮 Tournament Games</Text>
         <View style={styles.gamesGrid}>
           {games.map((game, index) => {
             const gameType = game.type as keyof typeof GAME_NAMES;
