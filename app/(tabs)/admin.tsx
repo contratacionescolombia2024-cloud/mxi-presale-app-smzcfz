@@ -258,9 +258,14 @@ export default function AdminScreen() {
       return;
     }
 
+    const amount = parseFloat(balanceAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Error', 'Please enter a valid positive number');
+      return;
+    }
+
     setLoading(true);
     try {
-      const amount = parseFloat(balanceAmount);
       console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id}`);
       
       // Get current vesting data
@@ -321,9 +326,14 @@ export default function AdminScreen() {
       return;
     }
 
+    const amount = parseFloat(balanceAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Error', 'Please enter a valid positive number');
+      return;
+    }
+
     setLoading(true);
     try {
-      const amount = parseFloat(balanceAmount);
       console.log(`💸 Removing ${amount} MXI from user ${selectedUser.id}`);
       
       const { data: vestingData, error: vestingError } = await supabase
@@ -368,11 +378,21 @@ export default function AdminScreen() {
       return;
     }
 
+    const amount = parseFloat(referralAmount);
+    const level = parseInt(referralLevel);
+
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Error', 'Please enter a valid positive amount');
+      return;
+    }
+
+    if (isNaN(level) || level < 1 || level > 3) {
+      Alert.alert('Error', 'Referral level must be between 1 and 3');
+      return;
+    }
+
     setLoading(true);
     try {
-      const amount = parseFloat(referralAmount);
-      const level = parseInt(referralLevel);
-
       console.log(`🔗 Adding referral: ${amount} MXI at level ${level} for user ${selectedUser.id}`);
 
       // Create a referral record
@@ -424,9 +444,13 @@ export default function AdminScreen() {
         if (insertError) throw insertError;
       }
 
-      console.log(`✅ Added referral earning of ${amount} MXI`);
-      Alert.alert('Success', `Added referral earning of ${amount} MXI to ${selectedUser.name}`);
+      console.log(`✅ Added referral earning of ${amount} MXI at level ${level}`);
+      Alert.alert(
+        'Success', 
+        `Added ${amount} MXI referral earnings (Level ${level}) to ${selectedUser.name}'s account`
+      );
       setReferralAmount('');
+      setReferralLevel('1');
       setShowUserModal(false);
       await loadUsers();
     } catch (error: any) {
@@ -986,6 +1010,9 @@ export default function AdminScreen() {
 
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>Balance Management</Text>
+                  <Text style={styles.modalSectionDescription}>
+                    Add or remove MXI tokens from user&apos;s balance
+                  </Text>
                   <TextInput
                     style={styles.input}
                     placeholder="Amount (MXI)"
@@ -1021,8 +1048,11 @@ export default function AdminScreen() {
                 </View>
 
                 <View style={styles.modalSection}>
-                  <Text style={styles.modalSectionTitle}>Referral Management</Text>
-                  <Text style={styles.inputLabel}>Referral Level</Text>
+                  <Text style={styles.modalSectionTitle}>Referral Earnings Management</Text>
+                  <Text style={styles.modalSectionDescription}>
+                    Add MXI earned from referrals to user&apos;s account
+                  </Text>
+                  <Text style={styles.inputLabel}>Referral Level (1-3)</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="Level (1-3)"
@@ -1031,6 +1061,11 @@ export default function AdminScreen() {
                     onChangeText={setReferralLevel}
                     keyboardType="number-pad"
                   />
+                  <View style={styles.levelInfo}>
+                    <Text style={styles.levelInfoText}>• Level 1: 5% commission</Text>
+                    <Text style={styles.levelInfoText}>• Level 2: 2% commission</Text>
+                    <Text style={styles.levelInfoText}>• Level 3: 1% commission</Text>
+                  </View>
                   <Text style={styles.inputLabel}>Referral Earnings (MXI)</Text>
                   <TextInput
                     style={styles.input}
@@ -1048,7 +1083,15 @@ export default function AdminScreen() {
                     {loading ? (
                       <ActivityIndicator color={colors.card} size="small" />
                     ) : (
-                      <Text style={styles.modalButtonText}>Add Referral Earnings</Text>
+                      <>
+                        <IconSymbol 
+                          ios_icon_name="link.circle.fill" 
+                          android_material_icon_name="link" 
+                          size={20} 
+                          color={colors.card} 
+                        />
+                        <Text style={styles.modalButtonText}>Add Referral Earnings</Text>
+                      </>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -1604,7 +1647,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+    marginBottom: 8,
+  },
+  modalSectionDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
     marginBottom: 12,
+    lineHeight: 18,
+  },
+  levelInfo: {
+    backgroundColor: `${colors.primary}10`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  levelInfoText: {
+    fontSize: 12,
+    color: colors.text,
+    marginBottom: 4,
   },
   buttonRow: {
     flexDirection: 'row',

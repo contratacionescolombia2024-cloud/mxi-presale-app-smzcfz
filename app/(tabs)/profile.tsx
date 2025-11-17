@@ -89,12 +89,12 @@ export default function ProfileScreen() {
           
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Identification</Text>
-            <Text style={styles.infoValue}>{user?.identification}</Text>
+            <Text style={styles.infoValue}>{user?.identification || 'Not set'}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Address</Text>
-            <Text style={styles.infoValue}>{user?.address}</Text>
+            <Text style={styles.infoValue}>{user?.address || 'Not set'}</Text>
           </View>
           
           <View style={styles.infoRow}>
@@ -122,13 +122,32 @@ export default function ProfileScreen() {
 
         <TouchableOpacity 
           style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/edit-profile')}
+        >
+          <IconSymbol 
+            ios_icon_name="pencil.circle.fill" 
+            android_material_icon_name="edit" 
+            size={24} 
+            color={colors.primary} 
+          />
+          <Text style={styles.menuItemText}>Edit Profile</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.textSecondary} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.menuItem}
           onPress={() => router.push('/(tabs)/kyc')}
         >
           <IconSymbol 
             ios_icon_name="checkmark.shield.fill" 
             android_material_icon_name="verified_user" 
             size={24} 
-            color={colors.primary} 
+            color={colors.secondary} 
           />
           <Text style={styles.menuItemText}>KYC Verification</Text>
           <IconSymbol 
@@ -147,7 +166,7 @@ export default function ProfileScreen() {
             ios_icon_name="message.fill" 
             android_material_icon_name="message" 
             size={24} 
-            color={colors.secondary} 
+            color={colors.accent} 
           />
           <Text style={styles.menuItemText}>Messages</Text>
           <IconSymbol 
@@ -167,7 +186,7 @@ export default function ProfileScreen() {
               ios_icon_name="gearshape.fill" 
               android_material_icon_name="settings" 
               size={24} 
-              color={colors.accent} 
+              color={colors.error} 
             />
             <Text style={styles.menuItemText}>Admin Panel</Text>
             <IconSymbol 
