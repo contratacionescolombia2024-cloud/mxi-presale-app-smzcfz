@@ -486,49 +486,97 @@ export default function AdminScreen() {
             setLoading(true);
             try {
               console.log('💰 ========================================');
-              console.log('💰 CALLING admin_add_balance_without_commissions');
+              console.log('💰 AGGRESSIVE APPROACH: Direct database update');
               console.log('💰 User ID:', selectedUser.id);
               console.log('💰 Amount:', amount);
               console.log('💰 ========================================');
               
-              const { data, error } = await supabase.rpc('admin_add_balance_without_commissions', {
-                p_user_id: selectedUser.id,
-                p_mxi_amount: amount,
-              });
+              // First, check if vesting record exists
+              const { data: existingVesting, error: fetchError } = await supabase
+                .from('vesting')
+                .select('*')
+                .eq('user_id', selectedUser.id)
+                .maybeSingle();
 
-              console.log('💰 ========================================');
-              console.log('💰 RPC CALL COMPLETED');
-              console.log('💰 Error:', error);
-              console.log('💰 Data:', JSON.stringify(data, null, 2));
-              console.log('💰 Data type:', typeof data);
-              console.log('💰 Is Array:', Array.isArray(data));
-              console.log('💰 ========================================');
+              if (fetchError) {
+                console.error('❌ Error fetching vesting:', fetchError);
+                Alert.alert('Error', `Failed to fetch vesting data: ${fetchError.message}`);
+                return;
+              }
 
-              if (error) {
-                console.error('❌ RPC Error:', error);
+              console.log('📊 Existing vesting:', existingVesting);
+
+              let updateError;
+              
+              if (existingVesting) {
+                // Update existing record
+                const oldTotal = parseFloat(existingVesting.total_mxi || '0');
+                const oldPurchased = parseFloat(existingVesting.purchased_mxi || '0');
+                const newTotal = oldTotal + amount;
+                const newPurchased = oldPurchased + amount;
+
+                console.log('📝 Updating existing vesting:');
+                console.log('   Old total:', oldTotal);
+                console.log('   Old purchased:', oldPurchased);
+                console.log('   New total:', newTotal);
+                console.log('   New purchased:', newPurchased);
+
+                const { error } = await supabase
+                  .from('vesting')
+                  .update({
+                    total_mxi: newTotal,
+                    purchased_mxi: newPurchased,
+                    last_update: new Date().toISOString(),
+                  })
+                  .eq('user_id', selectedUser.id);
+
+                updateError = error;
+              } else {
+                // Create new record
+                console.log('📝 Creating new vesting record');
+
+                const { error } = await supabase
+                  .from('vesting')
+                  .insert({
+                    user_id: selectedUser.id,
+                    total_mxi: amount,
+                    purchased_mxi: amount,
+                    current_rewards: 0,
+                    monthly_rate: 0.03,
+                    last_update: new Date().toISOString(),
+                  });
+
+                updateError = error;
+              }
+
+              if (updateError) {
+                console.error('❌ Database error:', updateError);
                 Alert.alert(
-                  'Error', 
-                  `Failed to add balance: ${error.message}\n\nDetails: ${error.details || 'No details'}\n\nHint: ${error.hint || 'No hint'}`
+                  'Error',
+                  `Failed to update balance: ${updateError.message}\n\nDetails: ${updateError.details || 'No details'}\n\nHint: ${updateError.hint || 'No hint'}`
                 );
                 return;
               }
 
-              // Handle the response - it could be an object directly or wrapped in an array
-              let responseData = data;
-              
-              // If data is an array, get the first element
-              if (Array.isArray(data) && data.length > 0) {
-                responseData = data[0];
-                console.log('📦 Extracted data from array:', responseData);
+              console.log('✅ Balance updated successfully in database');
+
+              // Verify the update
+              const { data: verifyData, error: verifyError } = await supabase
+                .from('vesting')
+                .select('*')
+                .eq('user_id', selectedUser.id)
+                .single();
+
+              if (verifyError) {
+                console.error('⚠️ Could not verify update:', verifyError);
+              } else {
+                console.log('✅ Verified new balance:', verifyData);
               }
 
-              // Check if the operation was successful
-              if (responseData && responseData.success === true) {
-                const successMessage = `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance\n\n📊 New Balance:\n• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
-                
-                console.log('✅ Balance added successfully');
-                
-                Alert.alert('Success', successMessage, [
+              Alert.alert(
+                'Success',
+                `✅ Successfully added ${amount} MXI to ${selectedUser.name}'s balance\n\n📊 New Balance:\n• Total MXI: ${verifyData?.total_mxi || 'N/A'}\n• Purchased MXI: ${verifyData?.purchased_mxi || 'N/A'}`,
+                [
                   {
                     text: 'OK',
                     onPress: async () => {
@@ -540,13 +588,8 @@ export default function AdminScreen() {
                       console.log('✅ Data refresh complete');
                     }
                   }
-                ]);
-              } else {
-                const errorMsg = responseData?.error || 'Failed to add balance - no success flag in response';
-                console.error('❌ Balance addition failed:', errorMsg);
-                console.error('❌ Full response data:', responseData);
-                Alert.alert('Error', errorMsg);
-              }
+                ]
+              );
             } catch (error: any) {
               console.error('❌ Exception in handleAddBalance:', error);
               Alert.alert('Error', `Exception: ${error.message || 'Unknown error'}\n\nPlease check the console logs.`);
