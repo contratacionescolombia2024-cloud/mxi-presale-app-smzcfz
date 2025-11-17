@@ -88,6 +88,7 @@ export default function AdminScreen() {
 
   // Form states
   const [balanceAmount, setBalanceAmount] = useState('');
+  const [balanceType, setBalanceType] = useState<'with_commission' | 'without_commission'>('without_commission');
   const [referralLevel, setReferralLevel] = useState('1');
   const [referralAmount, setReferralAmount] = useState('');
   const [messageResponse, setMessageResponse] = useState('');
@@ -317,52 +318,74 @@ export default function AdminScreen() {
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id} with referral commissions`);
-      
-      // Use the new function that processes referral commissions
-      const { data, error } = await supabase.rpc('admin_add_balance_with_commissions', {
-        p_user_id: selectedUser.id,
-        p_mxi_amount: amount,
-      });
+    // Confirm the action with the user
+    const actionType = balanceType === 'with_commission' ? 'with referral commissions' : 'without referral commissions';
+    const confirmMessage = balanceType === 'with_commission'
+      ? `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\nThis will trigger referral commissions:\n• Level 1: 5% (${(amount * 0.05).toFixed(2)} MXI)\n• Level 2: 2% (${(amount * 0.02).toFixed(2)} MXI)\n• Level 3: 1% (${(amount * 0.01).toFixed(2)} MXI)\n\nTotal commissions: ${(amount * 0.08).toFixed(2)} MXI`
+      : `Add ${amount} MXI to ${selectedUser.name}'s balance?\n\nNo referral commissions will be generated.`;
 
-      if (error) {
-        console.error('❌ Error adding balance:', error);
-        throw error;
-      }
+    Alert.alert(
+      'Confirm Action',
+      confirmMessage,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const functionName = balanceType === 'with_commission'
+                ? 'admin_add_balance_with_commissions'
+                : 'admin_add_balance_without_commissions';
 
-      console.log('✅ Balance added result:', data);
+              console.log(`💰 Adding ${amount} MXI to user ${selectedUser.id} ${actionType}`);
+              
+              const { data, error } = await supabase.rpc(functionName, {
+                p_user_id: selectedUser.id,
+                p_mxi_amount: amount,
+              });
 
-      if (data.success) {
-        const commissionsMsg = data.total_commissions_distributed > 0 
-          ? `\n\nReferral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`
-          : '';
-        
-        Alert.alert(
-          'Success', 
-          `Added ${amount} MXI to ${selectedUser.name}'s balance${commissionsMsg}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setBalanceAmount('');
-                setShowUserModal(false);
-                loadUsers();
-                loadMetrics();
+              if (error) {
+                console.error('❌ Error adding balance:', error);
+                throw error;
               }
+
+              console.log('✅ Balance added result:', data);
+
+              if (data.success) {
+                let successMessage = `Added ${amount} MXI to ${selectedUser.name}'s balance`;
+                
+                if (balanceType === 'with_commission' && data.total_commissions_distributed > 0) {
+                  successMessage += `\n\n✅ Referral commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`;
+                } else if (balanceType === 'without_commission') {
+                  successMessage += '\n\n✅ No commissions generated';
+                }
+                
+                Alert.alert('Success', successMessage, [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      setBalanceAmount('');
+                      setBalanceType('without_commission');
+                      setShowUserModal(false);
+                      loadUsers();
+                      loadMetrics();
+                    }
+                  }
+                ]);
+              } else {
+                Alert.alert('Error', data.error || 'Failed to add balance');
+              }
+            } catch (error: any) {
+              console.error('❌ Error adding balance:', error);
+              Alert.alert('Error', error.message || 'Failed to add balance');
+            } finally {
+              setLoading(false);
             }
-          ]
-        );
-      } else {
-        Alert.alert('Error', data.error || 'Failed to add balance');
-      }
-    } catch (error: any) {
-      console.error('❌ Error adding balance:', error);
-      Alert.alert('Error', error.message || 'Failed to add balance');
-    } finally {
-      setLoading(false);
-    }
+          }
+        }
+      ]
+    );
   };
 
   const handleRemoveBalance = async () => {
@@ -377,44 +400,63 @@ export default function AdminScreen() {
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log(`💸 Removing ${amount} MXI from user ${selectedUser.id}`);
-      
-      const { data: vestingData, error: vestingError } = await supabase
-        .from('vesting')
-        .select('*')
-        .eq('user_id', selectedUser.id)
-        .single();
+    Alert.alert(
+      'Confirm Removal',
+      `Remove ${amount} MXI from ${selectedUser.name}'s balance?\n\nThis action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              console.log(`💸 Removing ${amount} MXI from user ${selectedUser.id}`);
+              
+              const { data: vestingData, error: vestingError } = await supabase
+                .from('vesting')
+                .select('*')
+                .eq('user_id', selectedUser.id)
+                .single();
 
-      if (vestingError) {
-        Alert.alert('Error', 'User has no balance to remove');
-        return;
-      }
+              if (vestingError) {
+                Alert.alert('Error', 'User has no balance to remove');
+                return;
+              }
 
-      const newTotal = Math.max(0, parseFloat(vestingData.total_mxi) - amount);
+              const currentBalance = parseFloat(vestingData.total_mxi);
+              if (currentBalance < amount) {
+                Alert.alert('Error', `User only has ${currentBalance.toFixed(2)} MXI. Cannot remove ${amount} MXI.`);
+                return;
+              }
 
-      const { error: updateError } = await supabase
-        .from('vesting')
-        .update({
-          total_mxi: newTotal,
-          last_update: new Date().toISOString(),
-        })
-        .eq('user_id', selectedUser.id);
+              const newTotal = Math.max(0, currentBalance - amount);
 
-      if (updateError) throw updateError;
+              const { error: updateError } = await supabase
+                .from('vesting')
+                .update({
+                  total_mxi: newTotal,
+                  last_update: new Date().toISOString(),
+                })
+                .eq('user_id', selectedUser.id);
 
-      console.log(`✅ Removed ${amount} MXI, new balance: ${newTotal} MXI`);
-      Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance`);
-      setBalanceAmount('');
-      setShowUserModal(false);
-      await loadUsers();
-    } catch (error: any) {
-      console.error('❌ Error removing balance:', error);
-      Alert.alert('Error', error.message || 'Failed to remove balance');
-    } finally {
-      setLoading(false);
-    }
+              if (updateError) throw updateError;
+
+              console.log(`✅ Removed ${amount} MXI, new balance: ${newTotal} MXI`);
+              Alert.alert('Success', `Removed ${amount} MXI from ${selectedUser.name}'s balance\n\nNew balance: ${newTotal.toFixed(2)} MXI`);
+              setBalanceAmount('');
+              setShowUserModal(false);
+              await loadUsers();
+            } catch (error: any) {
+              console.error('❌ Error removing balance:', error);
+              Alert.alert('Error', error.message || 'Failed to remove balance');
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleAddReferral = async () => {
@@ -1144,27 +1186,108 @@ export default function AdminScreen() {
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>Balance Management</Text>
                   <Text style={styles.modalSectionDescription}>
-                    Add or remove MXI tokens from user&apos;s balance. Adding balance will automatically distribute referral commissions.
+                    Add or remove MXI tokens from user&apos;s balance.
                   </Text>
-                  <View style={styles.infoBox}>
-                    <IconSymbol 
-                      ios_icon_name="info.circle.fill" 
-                      android_material_icon_name="info" 
-                      size={20} 
-                      color={colors.primary} 
-                    />
-                    <Text style={styles.infoText}>
-                      When you add balance, referral commissions will be automatically calculated and distributed to all referrers (5%, 2%, 1%).
-                    </Text>
+
+                  {/* Balance Type Selector */}
+                  <View style={styles.balanceTypeContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.balanceTypeButton,
+                        balanceType === 'without_commission' && styles.balanceTypeButtonActive
+                      ]}
+                      onPress={() => setBalanceType('without_commission')}
+                    >
+                      <View style={styles.balanceTypeContent}>
+                        <IconSymbol 
+                          ios_icon_name="plus.circle.fill" 
+                          android_material_icon_name="add_circle" 
+                          size={24} 
+                          color={balanceType === 'without_commission' ? colors.card : colors.text} 
+                        />
+                        <Text style={[
+                          styles.balanceTypeTitle,
+                          balanceType === 'without_commission' && styles.balanceTypeTextActive
+                        ]}>
+                          Add Balance
+                        </Text>
+                        <Text style={[
+                          styles.balanceTypeDescription,
+                          balanceType === 'without_commission' && styles.balanceTypeDescActive
+                        ]}>
+                          No commissions
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.balanceTypeButton,
+                        balanceType === 'with_commission' && styles.balanceTypeButtonActive
+                      ]}
+                      onPress={() => setBalanceType('with_commission')}
+                    >
+                      <View style={styles.balanceTypeContent}>
+                        <IconSymbol 
+                          ios_icon_name="arrow.triangle.branch" 
+                          android_material_icon_name="call_split" 
+                          size={24} 
+                          color={balanceType === 'with_commission' ? colors.card : colors.text} 
+                        />
+                        <Text style={[
+                          styles.balanceTypeTitle,
+                          balanceType === 'with_commission' && styles.balanceTypeTextActive
+                        ]}>
+                          Simulate Sale
+                        </Text>
+                        <Text style={[
+                          styles.balanceTypeDescription,
+                          balanceType === 'with_commission' && styles.balanceTypeDescActive
+                        ]}>
+                          With commissions (5%, 2%, 1%)
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   </View>
+
+                  {balanceType === 'with_commission' && (
+                    <View style={styles.commissionInfoBox}>
+                      <IconSymbol 
+                        ios_icon_name="info.circle.fill" 
+                        android_material_icon_name="info" 
+                        size={20} 
+                        color={colors.secondary} 
+                      />
+                      <Text style={styles.commissionInfoText}>
+                        This will distribute referral commissions to all referrers as if this were a real purchase.
+                      </Text>
+                    </View>
+                  )}
+
+                  {balanceType === 'without_commission' && (
+                    <View style={styles.noCommissionInfoBox}>
+                      <IconSymbol 
+                        ios_icon_name="checkmark.circle.fill" 
+                        android_material_icon_name="check_circle" 
+                        size={20} 
+                        color={colors.success} 
+                      />
+                      <Text style={styles.noCommissionInfoText}>
+                        Balance will be added directly without generating any referral commissions.
+                      </Text>
+                    </View>
+                  )}
+
+                  <Text style={styles.inputLabel}>Amount (MXI)</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Amount (MXI)"
+                    placeholder="Enter amount in MXI"
                     placeholderTextColor={colors.textSecondary}
                     value={balanceAmount}
                     onChangeText={setBalanceAmount}
                     keyboardType="decimal-pad"
                   />
+
                   <View style={styles.buttonRow}>
                     <TouchableOpacity 
                       style={[styles.modalButton, styles.modalButtonSuccess]}
@@ -1174,7 +1297,15 @@ export default function AdminScreen() {
                       {loading ? (
                         <ActivityIndicator color={colors.card} size="small" />
                       ) : (
-                        <Text style={styles.modalButtonText}>Add Balance</Text>
+                        <>
+                          <IconSymbol 
+                            ios_icon_name="plus.circle.fill" 
+                            android_material_icon_name="add_circle" 
+                            size={20} 
+                            color={colors.card} 
+                          />
+                          <Text style={styles.modalButtonText}>Add Balance</Text>
+                        </>
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity 
@@ -1185,7 +1316,15 @@ export default function AdminScreen() {
                       {loading ? (
                         <ActivityIndicator color={colors.card} size="small" />
                       ) : (
-                        <Text style={styles.modalButtonText}>Remove Balance</Text>
+                        <>
+                          <IconSymbol 
+                            ios_icon_name="minus.circle.fill" 
+                            android_material_icon_name="remove_circle" 
+                            size={20} 
+                            color={colors.card} 
+                          />
+                          <Text style={styles.modalButtonText}>Remove Balance</Text>
+                        </>
                       )}
                     </TouchableOpacity>
                   </View>
@@ -1619,23 +1758,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 18,
   },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: `${colors.primary}15`,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.text,
-    lineHeight: 16,
-  },
   linkButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1870,8 +1992,83 @@ const styles = StyleSheet.create({
   modalSectionDescription: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 16,
     lineHeight: 18,
+  },
+  balanceTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  balanceTypeButton: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  balanceTypeButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  balanceTypeContent: {
+    alignItems: 'center',
+  },
+  balanceTypeTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  balanceTypeTextActive: {
+    color: colors.card,
+  },
+  balanceTypeDescription: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  balanceTypeDescActive: {
+    color: colors.card,
+    opacity: 0.9,
+  },
+  commissionInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: `${colors.secondary}15`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.secondary,
+  },
+  commissionInfoText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.text,
+    lineHeight: 16,
+  },
+  noCommissionInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: `${colors.success}15`,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.success,
+  },
+  noCommissionInfoText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.text,
+    lineHeight: 16,
   },
   levelInfo: {
     backgroundColor: `${colors.primary}10`,
