@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,15 +32,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   logo: {
-    width: 70,
+    width: 180,
     height: 70,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 20,
-    boxShadow: '0px 8px 24px rgba(108, 92, 231, 0.4)',
-    elevation: 8,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 28,
@@ -107,6 +103,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 4,
   },
+  infoBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+  },
+  infoText: {
+    fontSize: 13,
+    color: colors.success,
+    lineHeight: 20,
+  },
+  infoBullet: {
+    fontSize: 13,
+    color: colors.success,
+    lineHeight: 20,
+    marginLeft: 8,
+  },
 });
 
 export default function RegisterScreen() {
@@ -128,6 +143,11 @@ export default function RegisterScreen() {
       return;
     }
 
+    if (formData.password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
     try {
       await register(
@@ -141,14 +161,14 @@ export default function RegisterScreen() {
         formData.referralCode || undefined
       );
       
-      Alert.alert(
-        'Success',
-        'Account created! Please check your email to verify your account.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
-      );
+      // Success alert is shown in the register function
+      // Navigate to login after user acknowledges
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 2000);
     } catch (error: any) {
       console.error('Registration error:', error);
-      Alert.alert('Error', error.message || 'Registration failed');
+      Alert.alert('Registration Failed', error.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -158,14 +178,10 @@ export default function RegisterScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.logo}>
-            <IconSymbol
-              ios_icon_name="person.badge.plus.fill"
-              android_material_icon_name="person_add"
-              size={40}
-              color="#FFFFFF"
-            />
-          </View>
+          <Image
+            source={require('@/assets/images/147d13e8-074e-4fdc-8329-5701bd44e857.jpeg')}
+            style={styles.logo}
+          />
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join the MXI Pre-Sale</Text>
         </View>
@@ -227,7 +243,7 @@ export default function RegisterScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Create a password"
+                placeholder="Create a password (min 6 characters)"
                 placeholderTextColor={colors.textSecondary}
                 value={formData.password}
                 onChangeText={(text) => setFormData({ ...formData, password: text })}
@@ -298,6 +314,13 @@ export default function RegisterScreen() {
                 editable={!loading}
               />
             </View>
+          </View>
+
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>📧 Important: After registration</Text>
+            <Text style={styles.infoBullet}>• Check your email inbox</Text>
+            <Text style={styles.infoBullet}>• Click the verification link</Text>
+            <Text style={styles.infoBullet}>• Then you can log in to your account</Text>
           </View>
 
           <TouchableOpacity

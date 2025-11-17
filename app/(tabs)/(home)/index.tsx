@@ -14,6 +14,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import React, { useEffect, useState } from 'react';
@@ -27,6 +28,15 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 100,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 150,
+    height: 60,
+    resizeMode: 'contain',
   },
   header: {
     marginBottom: 24,
@@ -405,6 +415,14 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* Logo at the top */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@/assets/images/147d13e8-074e-4fdc-8329-5701bd44e857.jpeg')}
+            style={styles.logo}
+          />
+        </View>
+
         <View style={styles.header}>
           <Text style={styles.greeting}>Welcome, {user?.name || 'User'}!</Text>
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>

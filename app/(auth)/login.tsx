@@ -9,6 +9,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,15 +32,10 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   logo: {
-    width: 80,
+    width: 200,
     height: 80,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 24,
-    boxShadow: '0px 8px 24px rgba(108, 92, 231, 0.4)',
-    elevation: 8,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 32,
@@ -145,6 +141,20 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginTop: 4,
   },
+  infoBox: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  infoText: {
+    fontSize: 13,
+    color: colors.info,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
 });
 
 export default function LoginScreen() {
@@ -152,7 +162,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, resendVerificationEmail } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -174,7 +184,25 @@ export default function LoginScreen() {
       await login(email, password);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      const errorMessage = err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+      
+      // Show alert for email verification error
+      if (errorMessage.includes('verify your email')) {
+        Alert.alert(
+          '📧 Email Verification Required',
+          errorMessage + '\n\nWould you like us to resend the verification email?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Resend Email',
+              onPress: () => handleResendVerification(),
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Login Failed', errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -186,38 +214,24 @@ export default function LoginScreen() {
       return;
     }
 
-    Alert.alert(
-      'Verification Email',
-      'A new verification email will be sent to your address.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send',
-          onPress: async () => {
-            try {
-              // Implement resend verification logic
-              Alert.alert('Success', 'Verification email sent!');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to send verification email');
-            }
-          },
-        },
-      ]
-    );
+    try {
+      setLoading(true);
+      await resendVerificationEmail(email);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send verification email');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.logo}>
-            <IconSymbol
-              ios_icon_name="bitcoinsign.circle.fill"
-              android_material_icon_name="currency_bitcoin"
-              size={48}
-              color="#FFFFFF"
-            />
-          </View>
+          <Image
+            source={require('@/assets/images/147d13e8-074e-4fdc-8329-5701bd44e857.jpeg')}
+            style={styles.logo}
+          />
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to your MXI account</Text>
         </View>
@@ -288,9 +302,16 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>
+              ℹ️ New users must verify their email address before logging in. Check your inbox for the verification link after registration.
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={styles.resendButton}
             onPress={handleResendVerification}
+            disabled={loading}
           >
             <Text style={styles.resendButtonText}>Resend Verification Email</Text>
           </TouchableOpacity>

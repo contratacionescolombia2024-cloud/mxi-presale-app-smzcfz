@@ -1,9 +1,9 @@
 
-import { Alert } from 'react-native';
-import type { Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types';
 import { supabase } from '@/app/integrations/supabase/client';
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Alert } from 'react-native';
+import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -185,7 +185,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('❌ Login error:', error);
-        throw error;
+        
+        // Handle specific error cases
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Please verify your email address before logging in. Check your inbox for the verification link.');
+        } else if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid email or password. Please check your credentials and try again.');
+        } else {
+          throw new Error(error.message);
+        }
       }
 
       if (!data.user) {
@@ -246,9 +254,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('✅ Registration complete');
+      
+      // Show success message with clear instructions
       Alert.alert(
-        'Registration Successful',
-        'Please check your email to verify your account before logging in.',
+        '✅ Registration Successful!',
+        'Please check your email inbox and click the verification link to activate your account. You must verify your email before you can log in.',
         [{ text: 'OK' }]
       );
     } catch (error: any) {
@@ -321,7 +331,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('✅ Verification email sent');
-      Alert.alert('Success', 'Verification email sent. Please check your inbox.');
+      Alert.alert(
+        'Email Sent!',
+        'A new verification email has been sent to your inbox. Please check your email and click the verification link.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       console.error('❌ Resend failed:', error);
       throw error;
