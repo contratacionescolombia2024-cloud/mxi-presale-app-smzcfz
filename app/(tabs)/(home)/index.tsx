@@ -144,6 +144,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  balanceRowHighlight: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.accent,
+  },
   vestingCard: {
     backgroundColor: colors.sectionPurple,
     borderRadius: 20,
@@ -404,7 +409,11 @@ export default function HomeScreen() {
     );
   }
 
-  const totalMXI = (vestingData?.totalMXI || 0) + (referralStats?.totalMXIEarned || 0);
+  // Calculate total MXI including commissions
+  const totalMXI = (vestingData?.totalMXI || 0);
+  const referralMXI = (referralStats?.totalMXIEarned || 0);
+  const grandTotal = totalMXI;
+  
   const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
 
   return (
@@ -458,20 +467,24 @@ export default function HomeScreen() {
         {/* Balance Card - Moved directly below countdown */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
-          <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceAmount}>{grandTotal.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Purchased MXI</Text>
-              <Text style={styles.balanceRowValue}>{(vestingData?.totalMXI || 0).toFixed(2)}</Text>
+              <Text style={styles.balanceRowLabel}>Total Vesting MXI</Text>
+              <Text style={styles.balanceRowValue}>{totalMXI.toFixed(2)}</Text>
             </View>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Referral MXI</Text>
-              <Text style={styles.balanceRowValue}>{(referralStats?.totalMXIEarned || 0).toFixed(2)}</Text>
+              <Text style={styles.balanceRowLabel}>• Referral Commissions</Text>
+              <Text style={styles.balanceRowHighlight}>{referralMXI.toFixed(2)}</Text>
             </View>
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
               <Text style={styles.balanceRowValue}>{(vestingData?.currentRewards || 0).toFixed(4)}</Text>
+            </View>
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>Total Referrals</Text>
+              <Text style={styles.balanceRowValue}>{referralStats?.totalReferrals || 0}</Text>
             </View>
           </View>
         </View>

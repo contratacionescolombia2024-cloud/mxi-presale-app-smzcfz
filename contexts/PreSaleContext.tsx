@@ -213,76 +213,56 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('👥 Loading referral stats for:', user.id);
+      console.log('👥 Loading referral stats for user:', user.id);
       
-      // Get all direct referrals (level 1)
-      const { data: level1Data, error: level1Error } = await supabase
+      // Get all referrals where this user is the referrer
+      const { data: allReferrals, error: referralsError } = await supabase
         .from('referrals')
-        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
+        .select(`
+          *,
+          referred:users_profiles!referrals_referred_id_fkey(id, email, name)
+        `)
         .eq('referrer_id', user.id)
-        .eq('level', 1);
+        .order('level', { ascending: true });
 
-      if (level1Error) {
-        console.error('❌ Error loading level 1 referrals:', level1Error);
-        throw level1Error;
+      if (referralsError) {
+        console.error('❌ Error loading referrals:', referralsError);
+        throw referralsError;
       }
 
-      console.log('✅ Level 1 referrals loaded:', level1Data?.length || 0);
+      console.log('✅ All referrals loaded:', allReferrals?.length || 0, allReferrals);
 
-      // Get level 2 referrals (referrals of my referrals)
-      const { data: level2Data, error: level2Error } = await supabase
-        .from('referrals')
-        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
-        .eq('referrer_id', user.id)
-        .eq('level', 2);
+      // Separate by level
+      const level1Data = allReferrals?.filter(r => r.level === 1) || [];
+      const level2Data = allReferrals?.filter(r => r.level === 2) || [];
+      const level3Data = allReferrals?.filter(r => r.level === 3) || [];
 
-      if (level2Error) {
-        console.error('❌ Error loading level 2 referrals:', level2Error);
-      }
-
-      console.log('✅ Level 2 referrals loaded:', level2Data?.length || 0);
-
-      // Get level 3 referrals
-      const { data: level3Data, error: level3Error } = await supabase
-        .from('referrals')
-        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
-        .eq('referrer_id', user.id)
-        .eq('level', 3);
-
-      if (level3Error) {
-        console.error('❌ Error loading level 3 referrals:', level3Error);
-      }
-
-      console.log('✅ Level 3 referrals loaded:', level3Data?.length || 0);
-
-      const allReferrals = [
-        ...(level1Data || []),
-        ...(level2Data || []),
-        ...(level3Data || []),
-      ];
-
-      const level1MXI = level1Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
-      const level2MXI = level2Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
-      const level3MXI = level3Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+      // Calculate total MXI earned from commissions
+      const level1MXI = level1Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
+      const level2MXI = level2Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
+      const level3MXI = level3Data.reduce((sum, r) => sum + (parseFloat(r.commission_mxi) || 0), 0);
       const totalEarned = level1MXI + level2MXI + level3MXI;
 
       console.log('📊 Referral stats summary:', {
-        level1: level1Data?.length || 0,
-        level2: level2Data?.length || 0,
-        level3: level3Data?.length || 0,
+        level1Count: level1Data.length,
+        level2Count: level2Data.length,
+        level3Count: level3Data.length,
+        level1MXI,
+        level2MXI,
+        level3MXI,
         totalEarned,
       });
 
       setReferralStats({
-        totalReferrals: allReferrals.length,
-        level1Count: level1Data?.length || 0,
-        level2Count: level2Data?.length || 0,
-        level3Count: level3Data?.length || 0,
+        totalReferrals: allReferrals?.length || 0,
+        level1Count: level1Data.length,
+        level2Count: level2Data.length,
+        level3Count: level3Data.length,
         level1MXI: level1MXI,
         level2MXI: level2MXI,
         level3MXI: level3MXI,
         totalMXIEarned: totalEarned,
-        referrals: allReferrals,
+        referrals: allReferrals || [],
       });
     } catch (error) {
       console.error('❌ Failed to load referral stats:', error);
