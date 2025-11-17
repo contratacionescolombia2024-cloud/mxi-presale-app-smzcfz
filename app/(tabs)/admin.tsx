@@ -498,10 +498,12 @@ export default function AdminScreen() {
               console.log('💰 ========================================');
               console.log(`💰 CALLING ${functionName}`);
               console.log('💰 User ID:', selectedUser.id);
+              console.log('💰 User ID type:', typeof selectedUser.id);
               console.log('💰 Amount:', amount);
+              console.log('💰 Amount type:', typeof amount);
               console.log('💰 ========================================');
               
-              // CRITICAL FIX: Make sure we're passing the correct parameter types
+              // CRITICAL FIX: Ensure proper parameter types and wait for response
               const { data, error } = await supabase.rpc(functionName, {
                 p_user_id: selectedUser.id,
                 p_mxi_amount: amount,
