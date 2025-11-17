@@ -15,8 +15,9 @@ import {
   Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
+import * as Linking from "expo-linking";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -49,6 +50,7 @@ const customDarkTheme: Theme = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -58,6 +60,37 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  // Handle deep linking for password reset
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      console.log('🔗 Deep link received:', event.url);
+      
+      const url = Linking.parse(event.url);
+      console.log('🔗 Parsed URL:', url);
+      
+      // Handle password reset deep link
+      if (url.path === 'reset-password' || url.hostname === 'reset-password') {
+        console.log('🔐 Navigating to reset password screen');
+        router.push('/(auth)/reset-password');
+      }
+    };
+
+    // Listen for deep links
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('🔗 Initial URL:', url);
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const { isConnected } = useNetworkState();
 

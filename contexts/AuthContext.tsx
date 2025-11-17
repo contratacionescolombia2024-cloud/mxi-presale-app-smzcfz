@@ -15,6 +15,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         console.log('🔄 Auth state changed:', _event, session ? 'Session active' : 'No session');
+        
+        // Handle password recovery event
+        if (_event === 'PASSWORD_RECOVERY') {
+          console.log('🔐 Password recovery event detected in AuthContext');
+          // The reset-password screen will handle the actual password update
+        }
+        
         if (session?.user) {
           await loadUserProfile(session.user.id, session.user.email || '');
         } else {
@@ -320,6 +328,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      console.log('🔐 Sending password reset email to:', email);
+      
+      // Use the app's custom scheme for deep linking
+      const redirectUrl = 'natively://reset-password';
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        console.error('❌ Password reset error:', error);
+        throw error;
+      }
+
+      console.log('✅ Password reset email sent');
+    } catch (error) {
+      console.error('❌ Password reset failed:', error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -332,6 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateUser,
         resendVerificationEmail,
+        resetPassword,
       }}
     >
       {children}
