@@ -214,31 +214,75 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('👥 Loading referral stats for:', user.id);
-      const { data, error } = await supabase
+      
+      // Get all direct referrals (level 1)
+      const { data: level1Data, error: level1Error } = await supabase
         .from('referrals')
-        .select('*')
-        .eq('referrer_id', user.id);
+        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
+        .eq('referrer_id', user.id)
+        .eq('level', 1);
 
-      if (error) {
-        console.error('❌ Error loading referral stats:', error);
-        throw error;
+      if (level1Error) {
+        console.error('❌ Error loading level 1 referrals:', level1Error);
+        throw level1Error;
       }
 
-      console.log('✅ Referral stats loaded:', data?.length || 0, 'referrals');
+      console.log('✅ Level 1 referrals loaded:', level1Data?.length || 0);
 
-      const level1 = data?.filter((r) => r.level === 1) || [];
-      const level2 = data?.filter((r) => r.level === 2) || [];
-      const level3 = data?.filter((r) => r.level === 3) || [];
+      // Get level 2 referrals (referrals of my referrals)
+      const { data: level2Data, error: level2Error } = await supabase
+        .from('referrals')
+        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
+        .eq('referrer_id', user.id)
+        .eq('level', 2);
 
-      const totalEarned = data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+      if (level2Error) {
+        console.error('❌ Error loading level 2 referrals:', level2Error);
+      }
+
+      console.log('✅ Level 2 referrals loaded:', level2Data?.length || 0);
+
+      // Get level 3 referrals
+      const { data: level3Data, error: level3Error } = await supabase
+        .from('referrals')
+        .select('*, referred:users_profiles!referrals_referred_id_fkey(id, email, name)')
+        .eq('referrer_id', user.id)
+        .eq('level', 3);
+
+      if (level3Error) {
+        console.error('❌ Error loading level 3 referrals:', level3Error);
+      }
+
+      console.log('✅ Level 3 referrals loaded:', level3Data?.length || 0);
+
+      const allReferrals = [
+        ...(level1Data || []),
+        ...(level2Data || []),
+        ...(level3Data || []),
+      ];
+
+      const level1MXI = level1Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+      const level2MXI = level2Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+      const level3MXI = level3Data?.reduce((sum, r) => sum + (r.commission_mxi || 0), 0) || 0;
+      const totalEarned = level1MXI + level2MXI + level3MXI;
+
+      console.log('📊 Referral stats summary:', {
+        level1: level1Data?.length || 0,
+        level2: level2Data?.length || 0,
+        level3: level3Data?.length || 0,
+        totalEarned,
+      });
 
       setReferralStats({
-        totalReferrals: data?.length || 0,
-        level1Count: level1.length,
-        level2Count: level2.length,
-        level3Count: level3.length,
+        totalReferrals: allReferrals.length,
+        level1Count: level1Data?.length || 0,
+        level2Count: level2Data?.length || 0,
+        level3Count: level3Data?.length || 0,
+        level1MXI: level1MXI,
+        level2MXI: level2MXI,
+        level3MXI: level3MXI,
         totalMXIEarned: totalEarned,
-        referrals: data || [],
+        referrals: allReferrals,
       });
     } catch (error) {
       console.error('❌ Failed to load referral stats:', error);
@@ -247,6 +291,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         level1Count: 0,
         level2Count: 0,
         level3Count: 0,
+        level1MXI: 0,
+        level2MXI: 0,
+        level3MXI: 0,
         totalMXIEarned: 0,
         referrals: [],
       });
@@ -292,7 +339,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         .from('purchases')
         .insert({
           user_id: user.id,
-          stage_id: currentStage.id,
+          stage_id: currentStage.stage,
           amount_usd: amount,
           mxi_amount: mxiAmount,
           payment_method: paymentMethod,
@@ -351,11 +398,43 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         .update({
           sold_mxi: currentStage.soldMXI + mxiAmount,
         })
-        .eq('id', currentStage.id);
+        .eq('stage', currentStage.stage);
 
       if (stageError) {
         console.error('❌ Stage update error:', stageError);
         throw stageError;
+      }
+
+      // Process referral commissions if user was referred
+      if (user.referredBy) {
+        console.log('🔗 Processing referral commissions for purchase...');
+        
+        // Get the referrer's user ID
+        const { data: referrerData } = await supabase
+          .from('users_profiles')
+          .select('id')
+          .eq('referral_code', user.referredBy)
+          .maybeSingle();
+
+        if (referrerData) {
+          // Calculate and update level 1 commission (5%)
+          const level1Commission = mxiAmount * 0.05;
+          
+          const { error: commissionError } = await supabase
+            .from('referrals')
+            .update({
+              commission_mxi: level1Commission,
+            })
+            .eq('referrer_id', referrerData.id)
+            .eq('referred_id', user.id)
+            .eq('level', 1);
+
+          if (commissionError) {
+            console.error('❌ Error updating commission:', commissionError);
+          } else {
+            console.log('✅ Level 1 commission updated:', level1Commission);
+          }
+        }
       }
 
       console.log('✅ Purchase completed successfully');

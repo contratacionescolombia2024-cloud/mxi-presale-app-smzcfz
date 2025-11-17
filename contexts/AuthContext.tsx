@@ -28,6 +28,16 @@ export function useAuth() {
   return context;
 }
 
+// Helper function to generate a unique referral code
+function generateReferralCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = 'REF';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,6 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If profile doesn't exist, create it
         if (error.code === 'PGRST116') {
           console.log('📝 Creating new profile for user:', userId);
+          const referralCode = generateReferralCode();
+          
           const { data: newProfile, error: createError } = await supabase
             .from('users_profiles')
             .insert({
@@ -95,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: email.split('@')[0],
               kyc_status: 'pending',
               is_admin: false,
+              referral_code: referralCode,
             })
             .select()
             .single();
@@ -136,6 +149,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.log('⚠️ No profile found, creating one...');
         // Create profile if it doesn't exist
+        const referralCode = generateReferralCode();
+        
         const { data: newProfile, error: createError } = await supabase
           .from('users_profiles')
           .insert({
@@ -144,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: email.split('@')[0],
             kyc_status: 'pending',
             is_admin: false,
+            referral_code: referralCode,
           })
           .select()
           .single();
@@ -208,12 +224,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (userData: Partial<User>, password: string) => {
+  const register = async (userData: Partial<User>, password: string, referralCode?: string) => {
     try {
       console.log('📝 Attempting registration for:', userData.email);
+      console.log('🔗 Referral code provided:', referralCode);
       
       if (!userData.email) {
         throw new Error('Email is required');
+      }
+
+      // Validate referral code if provided
+      let referrerId: string | null = null;
+      if (referralCode && referralCode.trim() !== '') {
+        console.log('🔍 Validating referral code:', referralCode);
+        const { data: referrerData, error: referrerError } = await supabase
+          .from('users_profiles')
+          .select('id, email, name')
+          .eq('referral_code', referralCode.trim().toUpperCase())
+          .maybeSingle();
+
+        if (referrerError) {
+          console.error('❌ Error validating referral code:', referrerError);
+        } else if (referrerData) {
+          referrerId = referrerData.id;
+          console.log('✅ Valid referral code from user:', referrerData.email);
+        } else {
+          console.log('⚠️ Invalid referral code provided:', referralCode);
+          Alert.alert('Invalid Referral Code', 'The referral code you entered is not valid. Registration will continue without a referral.');
+        }
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -235,7 +273,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Registration successful, creating profile...');
 
-      // Create user profile
+      // Generate unique referral code for new user
+      const newUserReferralCode = generateReferralCode();
+
+      // Create user profile with referral information
       const { error: profileError } = await supabase
         .from('users_profiles')
         .insert({
@@ -246,11 +287,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           address: userData.address,
           kyc_status: 'pending',
           is_admin: false,
+          referral_code: newUserReferralCode,
+          referred_by: referralCode && referrerId ? referralCode.trim().toUpperCase() : null,
         });
 
       if (profileError) {
         console.error('❌ Profile creation error:', profileError);
         throw profileError;
+      }
+
+      console.log('✅ Profile created with referral code:', newUserReferralCode);
+
+      // Create referral relationship if referral code was valid
+      if (referrerId) {
+        console.log('🔗 Creating referral relationship...');
+        const { error: referralError } = await supabase
+          .from('referrals')
+          .insert({
+            referrer_id: referrerId,
+            referred_id: data.user.id,
+            level: 1,
+            mxi_earned: 0,
+            commission_mxi: 0,
+          });
+
+        if (referralError) {
+          console.error('❌ Referral creation error:', referralError);
+          // Don't throw error here, profile is already created
+        } else {
+          console.log('✅ Referral relationship created');
+        }
       }
 
       console.log('✅ Registration complete');

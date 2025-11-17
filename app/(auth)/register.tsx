@@ -138,8 +138,8 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const handleRegister = async () => {
-    if (!formData.name || !formData.email || !formData.password || !formData.identification || !formData.address) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (!formData.name || !formData.email || !formData.password) {
+      Alert.alert('Error', 'Please fill in all required fields (Name, Email, Password)');
       return;
     }
 
@@ -150,12 +150,14 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
+      console.log('🔐 Registering user with referral code:', formData.referralCode);
+      
       await register(
         {
           name: formData.name,
           email: formData.email,
-          identification: formData.identification,
-          address: formData.address,
+          identification: formData.identification || undefined,
+          address: formData.address || undefined,
         },
         formData.password,
         formData.referralCode || undefined
@@ -254,7 +256,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Identification *</Text>
+            <Text style={styles.label}>Identification (Optional)</Text>
             <View style={styles.inputWrapper}>
               <IconSymbol
                 ios_icon_name="creditcard.fill"
@@ -275,7 +277,7 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Address *</Text>
+            <Text style={styles.label}>Address (Optional)</Text>
             <View style={styles.inputWrapper}>
               <IconSymbol
                 ios_icon_name="house.fill"
@@ -310,7 +312,8 @@ export default function RegisterScreen() {
                 placeholder="Enter referral code"
                 placeholderTextColor={colors.textSecondary}
                 value={formData.referralCode}
-                onChangeText={(text) => setFormData({ ...formData, referralCode: text })}
+                onChangeText={(text) => setFormData({ ...formData, referralCode: text.toUpperCase() })}
+                autoCapitalize="characters"
                 editable={!loading}
               />
             </View>
