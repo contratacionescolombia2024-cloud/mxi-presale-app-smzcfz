@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { MiniBattle, MINI_BATTLE_GAME_NAMES } from '@/types/tournaments';
+import { MiniBattle } from '@/types/tournaments';
 import MXIBeatBounce from '@/components/games/MXIBeatBounce';
 import MXIPerfectDistance from '@/components/games/MXIPerfectDistance';
 import MXISwipeMaster from '@/components/games/MXISwipeMaster';
@@ -22,6 +22,7 @@ import RhythmTapGame from '@/components/games/RhythmTapGame';
 import MentalMathSpeedGame from '@/components/games/MentalMathSpeedGame';
 import DangerPathGame from '@/components/games/DangerPathGame';
 import MXIClimberGame from '@/components/games/MXIClimberGame';
+import FloorIsLavaGame from '@/components/games/FloorIsLavaGame';
 
 const styles = StyleSheet.create({
   container: {
@@ -65,10 +66,7 @@ export default function MiniBattleGameScreen() {
         .eq('id', miniBattleId)
         .single();
 
-      if (error) {
-        console.error('❌ Error loading mini battle:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       console.log('✅ Mini battle loaded:', data);
       setMiniBattle(data);
@@ -90,7 +88,6 @@ export default function MiniBattleGameScreen() {
     try {
       console.log('🎮 Submitting score:', score);
 
-      // Submit score
       const { error: scoreError } = await supabase.from('mini_battle_scores').upsert({
         mini_battle_id: miniBattle.id,
         user_id: user.id,
@@ -98,36 +95,25 @@ export default function MiniBattleGameScreen() {
         score: score,
       });
 
-      if (scoreError) {
-        console.error('❌ Error submitting score:', scoreError);
-        throw scoreError;
-      }
+      if (scoreError) throw scoreError;
 
-      // Update participant score
       const { error: participantError } = await supabase
         .from('mini_battle_participants')
         .update({ score: score })
         .eq('mini_battle_id', miniBattle.id)
         .eq('user_id', user.id);
 
-      if (participantError) {
-        console.error('❌ Error updating participant:', participantError);
-        throw participantError;
-      }
+      if (participantError) throw participantError;
 
       console.log('✅ Score submitted successfully');
       Alert.alert('Score Submitted', `Your score of ${score} has been recorded!`);
 
-      // Check if all players have completed
       const { data: participants, error: participantsError } = await supabase
         .from('mini_battle_participants')
         .select('score')
         .eq('mini_battle_id', miniBattle.id);
 
-      if (participantsError) {
-        console.error('❌ Error checking participants:', participantsError);
-      } else if (participants && participants.length === miniBattle.max_players) {
-        // All players have scores, complete the mini battle
+      if (!participantsError && participants && participants.length === miniBattle.max_players) {
         const allScored = participants.every((p) => p.score > 0);
         if (allScored) {
           const { error: completeError } = await supabase.rpc('complete_mini_battle', {
@@ -142,7 +128,6 @@ export default function MiniBattleGameScreen() {
         }
       }
 
-      // Navigate back
       router.back();
     } catch (error) {
       console.error('❌ Failed to submit score:', error);
@@ -204,6 +189,7 @@ export default function MiniBattleGameScreen() {
         {gameType === 'mental_math_speed' && <MentalMathSpeedGame {...gameProps} />}
         {gameType === 'danger_path' && <DangerPathGame {...gameProps} />}
         {gameType === 'mxi_climber' && <MXIClimberGame {...gameProps} />}
+        {gameType === 'floor_is_lava' && <FloorIsLavaGame {...gameProps} />}
       </View>
     </SafeAreaView>
   );

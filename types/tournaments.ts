@@ -44,7 +44,7 @@ export interface LeaderboardEntry {
 
 export interface MiniBattle {
   id: string;
-  game_type: 'beat_bounce' | 'perfect_distance' | 'swipe_master' | 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
+  game_type: 'beat_bounce' | 'perfect_distance' | 'swipe_master' | 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber' | 'floor_is_lava';
   creator_id: string;
   entry_fee: number;
   prize_pool: number;
@@ -146,6 +146,7 @@ export const MINI_BATTLE_GAME_TYPES = {
   MENTAL_MATH_SPEED: 'mental_math_speed',
   DANGER_PATH: 'danger_path',
   MXI_CLIMBER: 'mxi_climber',
+  FLOOR_IS_LAVA: 'floor_is_lava',
 } as const;
 
 // Deprecated
@@ -184,6 +185,7 @@ export const MINI_BATTLE_GAME_NAMES = {
   mental_math_speed: 'Mental Math Speed',
   danger_path: 'Danger Path',
   mxi_climber: 'MXI Climber',
+  floor_is_lava: 'Floor is Lava',
 } as const;
 
 // Deprecated
@@ -222,6 +224,7 @@ export const MINI_BATTLE_GAME_DESCRIPTIONS = {
   mental_math_speed: 'Solve math problems quickly. First correct answer wins!',
   danger_path: 'Navigate through the maze without touching walls.',
   mxi_climber: 'Tap to climb higher while dodging obstacles!',
+  floor_is_lava: 'Jump between platforms without falling. Survive the longest!',
 } as const;
 
 // Deprecated

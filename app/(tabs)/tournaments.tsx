@@ -231,47 +231,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  miniBattlesCard: {
-    backgroundColor: colors.sectionPink,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(236, 72, 153, 0.4)',
-  },
-  miniBattlesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  miniBattlesTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  miniBattlesSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  miniBattlesInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  miniBattlesInfoItem: {
-    alignItems: 'center',
-  },
-  miniBattlesInfoLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  miniBattlesInfoValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
 });
 
 export default function TournamentsScreen() {
@@ -281,7 +240,9 @@ export default function TournamentsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
   const [activeTournaments, setActiveTournaments] = useState<Record<string, number>>({});
+  const [activeMiniBattles, setActiveMiniBattles] = useState<Record<string, number>>({});
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
+  const [totalActiveMiniBattles, setTotalActiveMiniBattles] = useState(0);
   const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
 
   const loadData = useCallback(async () => {
@@ -324,6 +285,25 @@ export default function TournamentsScreen() {
         setTotalActiveTournaments(total);
       }
 
+      // Load mini battles
+      const { data: miniBattles, error: miniBattlesError } = await supabase
+        .from('mini_battles')
+        .select('game_type, current_players')
+        .eq('status', 'waiting');
+
+      if (miniBattlesError) {
+        console.error('❌ Error loading mini battles:', miniBattlesError);
+      } else {
+        const counts: Record<string, number> = {};
+        let total = 0;
+        miniBattles?.forEach((mb) => {
+          counts[mb.game_type] = (counts[mb.game_type] || 0) + 1;
+          total++;
+        });
+        setActiveMiniBattles(counts);
+        setTotalActiveMiniBattles(total);
+      }
+
       // Load max active tournaments from game settings
       const { data: gameSettings, error: settingsError } = await supabase
         .from('game_settings')
@@ -358,8 +338,9 @@ export default function TournamentsScreen() {
     router.push(`/games/${gameType}` as any);
   };
 
-  const handleNavigateToMiniBattles = () => {
-    router.push('/mini-battles' as any);
+  const handlePlayMiniBattle = (gameType: string) => {
+    console.log('🎮 Starting mini battle:', gameType);
+    router.push(`/mini-battles?game=${gameType}` as any);
   };
 
   if (isLoading) {
@@ -389,7 +370,20 @@ export default function TournamentsScreen() {
     { type: 'reflex_bomb', icon: 'alarm' },
   ];
 
+  const miniBattleGames = [
+    { type: 'beat_bounce', icon: 'music-note', emoji: '🔊' },
+    { type: 'perfect_distance', icon: 'straighten', emoji: '📏' },
+    { type: 'swipe_master', icon: 'swipe', emoji: '🔥' },
+    { type: 'quick_draw_duel', icon: 'flash-on', emoji: '🔫' },
+    { type: 'tap_rush', icon: 'touch-app', emoji: '⚡' },
+    { type: 'rhythm_tap', icon: 'music-note', emoji: '🎵' },
+    { type: 'mental_math_speed', icon: 'calculate', emoji: '🧮' },
+    { type: 'danger_path', icon: 'explore', emoji: '🎯' },
+    { type: 'mxi_climber', icon: 'terrain', emoji: '⛰️' },
+  ];
+
   const limitPercentage = (totalActiveTournaments / maxActiveTournaments) * 100;
+  const miniBattleLimitPercentage = (totalActiveMiniBattles / maxActiveTournaments) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -543,30 +537,79 @@ export default function TournamentsScreen() {
           </View>
         </View>
 
-        {/* Mini Battles Section */}
-        <TouchableOpacity style={styles.miniBattlesCard} onPress={handleNavigateToMiniBattles}>
-          <View style={styles.miniBattlesHeader}>
-            <View>
-              <Text style={styles.miniBattlesTitle}>⚔️ MXI Mini Battles</Text>
-              <Text style={styles.miniBattlesSubtitle}>Quick battles with 2-4 players!</Text>
+        {/* MXI Mini Battles Section */}
+        <View style={styles.categorySection}>
+          <View style={styles.categoryHeader}>
+            <View style={[styles.categoryIcon, styles.categoryMiniBattles]}>
+              <IconSymbol name="sports-esports" size={28} color={colors.light} />
             </View>
-            <IconSymbol name={ICONS.ARROW_FORWARD} size={24} color={colors.light} />
+            <Text style={styles.categoryTitle}>⚔️ MXI Mini Battles</Text>
           </View>
-          <View style={styles.miniBattlesInfo}>
-            <View style={styles.miniBattlesInfoItem}>
-              <Text style={styles.miniBattlesInfoLabel}>Entry Fee</Text>
-              <Text style={styles.miniBattlesInfoValue}>5-1000 MXI</Text>
-            </View>
-            <View style={styles.miniBattlesInfoItem}>
-              <Text style={styles.miniBattlesInfoLabel}>Players</Text>
-              <Text style={styles.miniBattlesInfoValue}>2-4</Text>
-            </View>
-            <View style={styles.miniBattlesInfoItem}>
-              <Text style={styles.miniBattlesInfoLabel}>Winner Takes</Text>
-              <Text style={styles.miniBattlesInfoValue}>All</Text>
+          <Text style={styles.categoryDescription}>
+            Entry: 5-1000 MXI • Players: 2-4 • Winner Takes All • Create custom battles with friends!
+          </Text>
+          
+          <View style={styles.limitCard}>
+            <Text style={styles.limitTitle}>📊 Active Mini Battles</Text>
+            <Text style={styles.limitText}>
+              Current active mini battles. Maximum {maxActiveTournaments} battles can be active at once.
+            </Text>
+            <View style={styles.limitProgress}>
+              <View style={styles.limitBar}>
+                <View style={[styles.limitBarFill, { width: `${miniBattleLimitPercentage}%` }]} />
+              </View>
+              <Text style={styles.limitCount}>
+                {totalActiveMiniBattles}/{maxActiveTournaments}
+              </Text>
             </View>
           </View>
-        </TouchableOpacity>
+
+          <View style={styles.gamesGrid}>
+            {miniBattleGames.map((game, index) => {
+              const gameType = game.type as keyof typeof MINI_BATTLE_GAME_NAMES;
+              const activeMiniBattleCount = activeMiniBattles[game.type] || 0;
+
+              return (
+                <View key={index} style={styles.gameCard}>
+                  <View style={styles.gameHeader}>
+                    <View style={[styles.gameIcon, { backgroundColor: colors.accent }]}>
+                      <Text style={{ fontSize: 28 }}>{game.emoji}</Text>
+                    </View>
+                    <View style={styles.gameInfo}>
+                      <Text style={styles.gameName}>{MINI_BATTLE_GAME_NAMES[gameType]}</Text>
+                      <Text style={styles.gameDescription}>{MINI_BATTLE_GAME_DESCRIPTIONS[gameType]}</Text>
+                    </View>
+                    {activeMiniBattleCount > 0 && (
+                      <View style={styles.activeTournamentsBadge}>
+                        <Text style={styles.activeTournamentsBadgeText}>{activeMiniBattleCount} Active</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.gameStats}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Entry Fee</Text>
+                      <Text style={styles.statValue}>5-1000 MXI</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Players</Text>
+                      <Text style={styles.statValue}>2-4</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>Winner</Text>
+                      <Text style={styles.statValue}>Takes All</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity style={[styles.playButton, { backgroundColor: colors.accent }]} onPress={() => handlePlayMiniBattle(game.type)}>
+                    <IconSymbol name={ICONS.PLAY} size={20} color={colors.light} />
+                    <Text style={styles.playButtonText}>Play Now</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 
 interface FloorIsLavaGameProps {
-  tournamentId: string;
+  tournamentId?: string;
+  miniBattleId?: string;
   onComplete: (score: number) => void;
   onExit: () => void;
 }
 
 const { width, height } = Dimensions.get('window');
+const GRACE_PERIOD = 3; // 3 seconds grace period
 
 const styles = StyleSheet.create({
   container: {
@@ -23,6 +25,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    paddingTop: 60,
   },
   exitButton: {
     padding: 10,
@@ -69,6 +72,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  graceOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  graceText: {
+    fontSize: 72,
+    fontWeight: 'bold',
+    color: colors.light,
+  },
+  graceSubtext: {
+    fontSize: 24,
+    color: colors.textSecondary,
+    marginTop: 16,
+  },
+  tapToStartOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  tapToStartText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: colors.light,
+    textAlign: 'center',
+  },
 });
 
 interface Platform {
@@ -79,26 +120,38 @@ interface Platform {
   height: number;
 }
 
-export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: FloorIsLavaGameProps) {
+export default function FloorIsLavaGame({ tournamentId, miniBattleId, onComplete, onExit }: FloorIsLavaGameProps) {
   const [score, setScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [timerStarted, setTimerStarted] = useState(false);
+  const [graceCountdown, setGraceCountdown] = useState(GRACE_PERIOD);
+  const [showGraceOverlay, setShowGraceOverlay] = useState(false);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [playerPos, setPlayerPos] = useState({ x: width / 2 - 20, y: 100 });
   const gameLoopRef = useRef<any>(null);
+  const graceTimerRef = useRef<any>(null);
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
       generatePlatforms();
-      startGameLoop();
     }
 
     return () => {
       if (gameLoopRef.current) {
         clearInterval(gameLoopRef.current);
       }
+      if (graceTimerRef.current) {
+        clearInterval(graceTimerRef.current);
+      }
     };
   }, [gameStarted, gameOver]);
+
+  useEffect(() => {
+    if (timerStarted && !gameOver) {
+      startGameLoop();
+    }
+  }, [timerStarted, gameOver]);
 
   const generatePlatforms = () => {
     const newPlatforms: Platform[] = [];
@@ -115,13 +168,29 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
     setPlayerPos({ x: newPlatforms[0].x + 20, y: newPlatforms[0].y - 40 });
   };
 
+  const startGracePeriod = () => {
+    setShowGraceOverlay(true);
+    setGraceCountdown(GRACE_PERIOD);
+
+    graceTimerRef.current = setInterval(() => {
+      setGraceCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(graceTimerRef.current);
+          setShowGraceOverlay(false);
+          setTimerStarted(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const startGameLoop = () => {
     let tickCount = 0;
     gameLoopRef.current = setInterval(() => {
       tickCount++;
       setScore((prev) => prev + 1);
       
-      // Only check game over after 1 second to give player time to start
       if (tickCount > 10) {
         checkGameOver();
       }
@@ -129,7 +198,6 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
   };
 
   const checkGameOver = () => {
-    // Check if player is on any platform
     const onPlatform = platforms.some(
       (platform) =>
         playerPos.x + 20 > platform.x &&
@@ -138,16 +206,17 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
         playerPos.y + 40 <= platform.y + platform.height
     );
 
-    // Only trigger game over if not on platform and player has moved from initial position
     if (!onPlatform && playerPos.y > 50) {
       handleGameOver();
     }
   };
 
   const handlePlatformPress = (platform: Platform) => {
-    if (gameOver) {
-      console.log('⚠️ Game over');
-      return;
+    if (gameOver) return;
+
+    // Start timer on first touch
+    if (!timerStarted && !showGraceOverlay) {
+      startGracePeriod();
     }
 
     const distance = Math.abs(playerPos.y - (platform.y - 40));
@@ -161,23 +230,40 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
     if (gameLoopRef.current) {
       clearInterval(gameLoopRef.current);
     }
+    if (graceTimerRef.current) {
+      clearInterval(graceTimerRef.current);
+    }
   };
 
   const handleStart = () => {
     setGameStarted(true);
     setScore(0);
     setGameOver(false);
+    setTimerStarted(false);
+    setShowGraceOverlay(false);
+    setGraceCountdown(GRACE_PERIOD);
   };
 
   const handleComplete = () => {
     onComplete(score);
   };
 
+  const handleExitPress = () => {
+    Alert.alert(
+      'Exit Game?',
+      'Are you sure you want to exit? Your progress will be lost.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Exit', style: 'destructive', onPress: onExit },
+      ]
+    );
+  };
+
   if (!gameStarted) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+          <TouchableOpacity style={styles.exitButton} onPress={handleExitPress}>
             <IconSymbol name={ICONS.CLOSE} size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -186,7 +272,9 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
           Jump between platforms!{'\n'}
           Tap a platform to jump to it{'\n\n'}
           Don&apos;t fall into the lava!{'\n'}
-          Survive as long as possible!
+          Survive as long as possible!{'\n\n'}
+          Timer starts when you tap the screen{'\n'}
+          You get 3 seconds grace period!
         </Text>
         <TouchableOpacity style={styles.startButton} onPress={handleStart}>
           <Text style={styles.startButtonText}>Start Game</Text>
@@ -199,7 +287,7 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+          <TouchableOpacity style={styles.exitButton} onPress={handleExitPress}>
             <IconSymbol name={ICONS.CLOSE} size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -218,10 +306,12 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+        <TouchableOpacity style={styles.exitButton} onPress={handleExitPress}>
           <IconSymbol name={ICONS.CLOSE} size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.scoreText}>Time: {(score / 10).toFixed(1)}s</Text>
+        <Text style={styles.scoreText}>
+          {timerStarted ? `Time: ${(score / 10).toFixed(1)}s` : 'Ready...'}
+        </Text>
       </View>
       <View style={styles.gameArea}>
         {platforms.map((platform) => (
@@ -250,6 +340,21 @@ export default function FloorIsLavaGame({ tournamentId, onComplete, onExit }: Fl
         >
           <IconSymbol name="person" size={24} color={colors.light} />
         </View>
+
+        {!timerStarted && !showGraceOverlay && (
+          <View style={styles.tapToStartOverlay}>
+            <Text style={styles.tapToStartText}>
+              Tap any platform{'\n'}to start the timer!
+            </Text>
+          </View>
+        )}
+
+        {showGraceOverlay && (
+          <View style={styles.graceOverlay}>
+            <Text style={styles.graceText}>{graceCountdown}</Text>
+            <Text style={styles.graceSubtext}>Get Ready!</Text>
+          </View>
+        )}
       </View>
     </View>
   );

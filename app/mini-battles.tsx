@@ -13,7 +13,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -216,28 +216,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: 'center',
   },
-  gameOption: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  gameOptionSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.sectionPurple,
-  },
-  gameOptionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  gameOptionDescription: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
   input: {
     backgroundColor: colors.background,
     borderRadius: 12,
@@ -274,9 +252,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.light,
-  },
-  gamesScrollView: {
-    maxHeight: 300,
   },
   participantSelector: {
     marginBottom: 16,
@@ -315,33 +290,31 @@ const styles = StyleSheet.create({
 export default function MiniBattlesScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const preselectedGame = params.game as string | undefined;
+  
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
   const [miniBattles, setMiniBattles] = useState<MiniBattle[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedGame, setSelectedGame] = useState<string>('beat_bounce');
+  const [selectedGame, setSelectedGame] = useState<string>(preselectedGame || 'beat_bounce');
   const [entryFee, setEntryFee] = useState('50');
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [isCreating, setIsCreating] = useState(false);
-
-  const miniBattleGames = [
-    { type: 'beat_bounce', icon: '🔊' },
-    { type: 'perfect_distance', icon: '📏' },
-    { type: 'swipe_master', icon: '🔥' },
-    { type: 'quick_draw_duel', icon: '🔫' },
-    { type: 'tap_rush', icon: '⚡' },
-    { type: 'rhythm_tap', icon: '🎵' },
-    { type: 'mental_math_speed', icon: '🧮' },
-    { type: 'danger_path', icon: '🎯' },
-    { type: 'mxi_climber', icon: '⛰️' },
-  ];
 
   const participantOptions = [2, 3, 4];
 
   useEffect(() => {
     loadData();
   }, [user]);
+
+  useEffect(() => {
+    if (preselectedGame) {
+      setSelectedGame(preselectedGame);
+      setShowCreateModal(true);
+    }
+  }, [preselectedGame]);
 
   const loadData = async () => {
     if (!user?.id) {
@@ -353,7 +326,6 @@ export default function MiniBattlesScreen() {
     try {
       console.log('🎮 Loading mini battles data for user:', user.id);
 
-      // Load tournaments balance
       const { data: vestingData, error: vestingError } = await supabase
         .from('vesting')
         .select('tournaments_balance')
@@ -366,7 +338,6 @@ export default function MiniBattlesScreen() {
         setTournamentsBalance(vestingData?.tournaments_balance || 0);
       }
 
-      // Load mini battles
       const { data: battlesData, error: battlesError } = await supabase
         .from('mini_battles')
         .select('*')
@@ -395,7 +366,6 @@ export default function MiniBattlesScreen() {
 
   const handleCreateMiniBattle = async () => {
     if (!user?.id) {
-      console.log('⚠️ No user ID');
       Alert.alert('Error', 'You must be logged in to create a mini battle.');
       return;
     }
@@ -414,11 +384,7 @@ export default function MiniBattlesScreen() {
     setIsCreating(true);
 
     try {
-      console.log('🎮 Creating mini battle:', {
-        game: selectedGame,
-        entryFee: fee,
-        maxPlayers: maxPlayers,
-      });
+      console.log('🎮 Creating mini battle:', { game: selectedGame, entryFee: fee, maxPlayers });
 
       const { data, error } = await supabase.rpc('create_mini_battle', {
         p_user_id: user.id,
@@ -427,12 +393,7 @@ export default function MiniBattlesScreen() {
         p_max_players: maxPlayers,
       });
 
-      if (error) {
-        console.error('❌ Error creating mini battle:', error);
-        throw error;
-      }
-
-      console.log('✅ Mini battle created:', data);
+      if (error) throw error;
 
       if (!data.success) {
         Alert.alert('Error', data.message || 'Failed to create mini battle');
@@ -452,34 +413,25 @@ export default function MiniBattlesScreen() {
 
   const handleJoinMiniBattle = async (miniBattleId: string) => {
     if (!user?.id) {
-      console.log('⚠️ No user ID');
       Alert.alert('Error', 'You must be logged in to join a mini battle.');
       return;
     }
 
     try {
-      console.log('🎮 Joining mini battle:', miniBattleId);
-
       const { data, error } = await supabase.rpc('join_mini_battle', {
         p_mini_battle_id: miniBattleId,
         p_user_id: user.id,
       });
 
-      if (error) {
-        console.error('❌ Error joining mini battle:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       if (!data.success) {
         Alert.alert('Cannot Join', data.message);
         return;
       }
 
-      console.log('✅ Joined mini battle successfully');
       Alert.alert('Success', 'You have joined the mini battle! Good luck!');
       await loadData();
 
-      // Navigate to game
       const miniBattle = miniBattles.find((mb) => mb.id === miniBattleId);
       if (miniBattle) {
         router.push(`/mini-battle-game/${miniBattle.game_type}?miniBattleId=${miniBattleId}` as any);
@@ -505,6 +457,9 @@ export default function MiniBattlesScreen() {
     );
   }
 
+  const myBattles = miniBattles.filter((mb) => mb.creator_id === user?.id);
+  const availableBattles = miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting');
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -523,125 +478,116 @@ export default function MiniBattlesScreen() {
           </View>
         </View>
 
-        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Tournaments Balance</Text>
           <Text style={styles.balanceAmount}>{tournamentsBalance.toFixed(2)} MXI</Text>
         </View>
 
-        {/* Create Mini Battle Button */}
         <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateModal(true)}>
           <IconSymbol name={ICONS.ADD_CIRCLE} size={24} color={colors.light} />
           <Text style={styles.createButtonText}>Create Mini Battle</Text>
         </TouchableOpacity>
 
-        {/* My Mini Battles */}
         <Text style={styles.sectionTitle}>📋 My Mini Battles</Text>
-        {miniBattles.filter((mb) => mb.creator_id === user?.id).length === 0 ? (
+        {myBattles.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol name={ICONS.INFO} size={64} color={colors.textSecondary} />
             <Text style={styles.emptyStateText}>You haven&apos;t created any mini battles yet.</Text>
           </View>
         ) : (
-          miniBattles
-            .filter((mb) => mb.creator_id === user?.id)
-            .map((miniBattle) => (
-              <View key={miniBattle.id} style={styles.battleCard}>
-                <View style={styles.battleHeader}>
-                  <Text style={styles.battleTitle}>
-                    {MINI_BATTLE_GAME_NAMES[miniBattle.game_type as keyof typeof MINI_BATTLE_GAME_NAMES]}
+          myBattles.map((miniBattle) => (
+            <View key={miniBattle.id} style={styles.battleCard}>
+              <View style={styles.battleHeader}>
+                <Text style={styles.battleTitle}>
+                  {MINI_BATTLE_GAME_NAMES[miniBattle.game_type as keyof typeof MINI_BATTLE_GAME_NAMES]}
+                </Text>
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusBadgeText}>
+                    {miniBattle.status === 'waiting' ? 'Waiting' : 'In Progress'}
                   </Text>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>
-                      {miniBattle.status === 'waiting' ? 'Waiting' : 'In Progress'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.battleInfo}>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Players</Text>
-                    <Text style={styles.battleInfoValue}>
-                      {miniBattle.current_players}/{miniBattle.max_players}
-                    </Text>
-                  </View>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Entry Fee</Text>
-                    <Text style={styles.battleInfoValue}>{miniBattle.entry_fee} MXI</Text>
-                  </View>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Prize Pool</Text>
-                    <Text style={styles.battleInfoValue}>{miniBattle.prize_pool} MXI</Text>
-                  </View>
-                </View>
-
-                <View style={styles.battleButtons}>
-                  {miniBattle.current_players >= miniBattle.max_players && (
-                    <TouchableOpacity
-                      style={[styles.battleButton, styles.battleButtonSecondary]}
-                      onPress={() => handlePlayMiniBattle(miniBattle)}
-                    >
-                      <Text style={styles.battleButtonText}>Play</Text>
-                    </TouchableOpacity>
-                  )}
                 </View>
               </View>
-            ))
+
+              <View style={styles.battleInfo}>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Players</Text>
+                  <Text style={styles.battleInfoValue}>
+                    {miniBattle.current_players}/{miniBattle.max_players}
+                  </Text>
+                </View>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Entry Fee</Text>
+                  <Text style={styles.battleInfoValue}>{miniBattle.entry_fee} MXI</Text>
+                </View>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Prize Pool</Text>
+                  <Text style={styles.battleInfoValue}>{miniBattle.prize_pool} MXI</Text>
+                </View>
+              </View>
+
+              <View style={styles.battleButtons}>
+                {miniBattle.current_players >= miniBattle.max_players && (
+                  <TouchableOpacity
+                    style={[styles.battleButton, styles.battleButtonSecondary]}
+                    onPress={() => handlePlayMiniBattle(miniBattle)}
+                  >
+                    <Text style={styles.battleButtonText}>Play</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ))
         )}
 
-        {/* Available Mini Battles */}
         <Text style={styles.sectionTitle}>🎮 Available Mini Battles</Text>
-        {miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting').length === 0 ? (
+        {availableBattles.length === 0 ? (
           <View style={styles.emptyState}>
             <IconSymbol name={ICONS.INFO} size={64} color={colors.textSecondary} />
             <Text style={styles.emptyStateText}>No available mini battles at the moment.</Text>
           </View>
         ) : (
-          miniBattles
-            .filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting')
-            .map((miniBattle) => (
-              <View key={miniBattle.id} style={styles.battleCard}>
-                <View style={styles.battleHeader}>
-                  <Text style={styles.battleTitle}>
-                    {MINI_BATTLE_GAME_NAMES[miniBattle.game_type as keyof typeof MINI_BATTLE_GAME_NAMES]}
-                  </Text>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>Open</Text>
-                  </View>
+          availableBattles.map((miniBattle) => (
+            <View key={miniBattle.id} style={styles.battleCard}>
+              <View style={styles.battleHeader}>
+                <Text style={styles.battleTitle}>
+                  {MINI_BATTLE_GAME_NAMES[miniBattle.game_type as keyof typeof MINI_BATTLE_GAME_NAMES]}
+                </Text>
+                <View style={styles.statusBadge}>
+                  <Text style={styles.statusBadgeText}>Open</Text>
                 </View>
-
-                <View style={styles.battleInfo}>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Players</Text>
-                    <Text style={styles.battleInfoValue}>
-                      {miniBattle.current_players}/{miniBattle.max_players}
-                    </Text>
-                  </View>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Entry Fee</Text>
-                    <Text style={styles.battleInfoValue}>{miniBattle.entry_fee} MXI</Text>
-                  </View>
-                  <View style={styles.battleInfoRow}>
-                    <Text style={styles.battleInfoLabel}>Prize Pool</Text>
-                    <Text style={styles.battleInfoValue}>{miniBattle.prize_pool} MXI</Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.battleButton}
-                  onPress={() => handleJoinMiniBattle(miniBattle.id)}
-                  disabled={miniBattle.current_players >= miniBattle.max_players}
-                >
-                  <Text style={styles.battleButtonText}>
-                    {miniBattle.current_players >= miniBattle.max_players ? 'Full' : 'Join Battle'}
-                  </Text>
-                </TouchableOpacity>
               </View>
-            ))
+
+              <View style={styles.battleInfo}>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Players</Text>
+                  <Text style={styles.battleInfoValue}>
+                    {miniBattle.current_players}/{miniBattle.max_players}
+                  </Text>
+                </View>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Entry Fee</Text>
+                  <Text style={styles.battleInfoValue}>{miniBattle.entry_fee} MXI</Text>
+                </View>
+                <View style={styles.battleInfoRow}>
+                  <Text style={styles.battleInfoLabel}>Prize Pool</Text>
+                  <Text style={styles.battleInfoValue}>{miniBattle.prize_pool} MXI</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.battleButton}
+                onPress={() => handleJoinMiniBattle(miniBattle.id)}
+                disabled={miniBattle.current_players >= miniBattle.max_players}
+              >
+                <Text style={styles.battleButtonText}>
+                  {miniBattle.current_players >= miniBattle.max_players ? 'Full' : 'Join Battle'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))
         )}
       </ScrollView>
 
-      {/* Create Mini Battle Modal */}
       <Modal
         visible={showCreateModal}
         transparent
@@ -651,24 +597,9 @@ export default function MiniBattlesScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create Mini Battle</Text>
-            <Text style={styles.modalSubtitle}>Choose a game, set entry fee, and select number of players</Text>
-
-            <ScrollView style={styles.gamesScrollView}>
-              {miniBattleGames.map((game) => (
-                <TouchableOpacity
-                  key={game.type}
-                  style={[styles.gameOption, selectedGame === game.type && styles.gameOptionSelected]}
-                  onPress={() => setSelectedGame(game.type)}
-                >
-                  <Text style={styles.gameOptionTitle}>
-                    {game.icon} {MINI_BATTLE_GAME_NAMES[game.type as keyof typeof MINI_BATTLE_GAME_NAMES]}
-                  </Text>
-                  <Text style={styles.gameOptionDescription}>
-                    {MINI_BATTLE_GAME_DESCRIPTIONS[game.type as keyof typeof MINI_BATTLE_GAME_DESCRIPTIONS]}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <Text style={styles.modalSubtitle}>
+              {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
+            </Text>
 
             <View style={styles.participantSelector}>
               <Text style={styles.inputLabel}>Number of Players (including you)</Text>
