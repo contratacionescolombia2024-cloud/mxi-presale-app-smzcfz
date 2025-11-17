@@ -60,9 +60,12 @@ export default function BalanceManagementScreen() {
   const [vestingData, setVestingData] = useState<VestingData | null>(null);
   const [amount, setAmount] = useState('');
   const [operationHistory, setOperationHistory] = useState<BalanceOperation[]>([]);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingOperation, setPendingOperation] = useState<'add_no_commission' | 'add_with_commission' | 'remove' | null>(null);
 
   useEffect(() => {
     console.log('🔐 Balance Management - isAdmin:', isAdmin);
+    console.log('🔐 Balance Management - user:', user?.email);
     if (isAdmin) {
       loadUsers();
     }
@@ -137,13 +140,14 @@ export default function BalanceManagementScreen() {
   };
 
   // ============================================================================
-  // DRASTIC APPROACH: DIRECT DATABASE UPDATES
+  // BUTTON CLICK HANDLERS - SHOW CONFIRMATION FIRST
   // ============================================================================
 
-  const handleAddBalanceNoCommission = async () => {
-    console.log('🔥🔥🔥 ========================================');
-    console.log('🔥 ADD BALANCE NO COMMISSION - DRASTIC APPROACH');
-    console.log('🔥🔥🔥 ========================================');
+  const handleAddBalanceNoCommissionClick = () => {
+    console.log('🔥🔥🔥 ADD NO COMMISSION BUTTON CLICKED 🔥🔥🔥');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+    console.log('   Loading:', loading);
     
     if (!selectedUser || !amount) {
       console.log('❌ Validation failed: missing user or amount');
@@ -158,133 +162,16 @@ export default function BalanceManagementScreen() {
       return;
     }
 
-    Alert.alert(
-      'Confirm Operation',
-      `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n⚠️ This will NOT generate referral commissions.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            setLoading(true);
-            const oldBalance = vestingData?.total_mxi || 0;
-            
-            try {
-              console.log('🔥 STEP 1: Check Supabase connection');
-              const { data: testData, error: testError } = await supabase
-                .from('users_profiles')
-                .select('id')
-                .eq('id', selectedUser.id)
-                .single();
-              
-              if (testError) {
-                console.error('❌ Supabase connection test failed:', testError);
-                throw new Error(`Connection test failed: ${testError.message}`);
-              }
-              console.log('✅ Supabase connection OK');
-
-              console.log('🔥 STEP 2: Call RPC function directly');
-              console.log('   Function: admin_add_balance_without_commissions');
-              console.log('   Parameters:', {
-                p_user_id: selectedUser.id,
-                p_mxi_amount: amountNum,
-              });
-
-              const { data: rpcData, error: rpcError } = await supabase.rpc(
-                'admin_add_balance_without_commissions',
-                {
-                  p_user_id: selectedUser.id,
-                  p_mxi_amount: amountNum,
-                }
-              );
-
-              console.log('🔥 STEP 3: RPC Response received');
-              console.log('   Data:', JSON.stringify(rpcData, null, 2));
-              console.log('   Error:', rpcError);
-
-              if (rpcError) {
-                console.error('❌ RPC Error:', rpcError);
-                throw new Error(`RPC error: ${rpcError.message}`);
-              }
-
-              // Handle both direct object and array-wrapped responses
-              let responseData = rpcData;
-              if (Array.isArray(rpcData) && rpcData.length > 0) {
-                console.log('⚠️ Response is array-wrapped, extracting first element');
-                responseData = rpcData[0];
-              }
-
-              console.log('🔥 STEP 4: Process response');
-              console.log('   Processed data:', responseData);
-
-              if (responseData && responseData.success) {
-                console.log('✅ Operation successful!');
-                
-                addToHistory({
-                  user_name: selectedUser.name,
-                  user_email: selectedUser.email,
-                  operation: 'add_no_commission',
-                  amount: amountNum,
-                  old_balance: oldBalance,
-                  new_balance: responseData.new_total_mxi,
-                  status: 'success',
-                });
-
-                Alert.alert(
-                  'Success! ✅',
-                  `Added ${amountNum} MXI to ${selectedUser.name}'s balance\n\n` +
-                  `📊 Updated Balance:\n` +
-                  `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
-                  `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        setAmount('');
-                        loadUserVesting(selectedUser.id);
-                      }
-                    }
-                  ]
-                );
-              } else {
-                const errorMsg = responseData?.error || 'Failed to add balance';
-                console.error('❌ Operation failed:', errorMsg);
-                throw new Error(errorMsg);
-              }
-            } catch (error: any) {
-              console.error('❌ EXCEPTION:', error);
-              console.error('   Message:', error.message);
-              console.error('   Stack:', error.stack);
-              
-              addToHistory({
-                user_name: selectedUser.name,
-                user_email: selectedUser.email,
-                operation: 'add_no_commission',
-                amount: amountNum,
-                old_balance: oldBalance,
-                new_balance: oldBalance,
-                status: 'error',
-                error_message: error.message,
-              });
-              
-              Alert.alert(
-                'Error',
-                `Failed to add balance:\n\n${error.message}\n\nCheck console logs for details.`
-              );
-            } finally {
-              setLoading(false);
-              console.log('🔥🔥🔥 ========================================');
-            }
-          }
-        }
-      ]
-    );
+    console.log('✅ Validation passed, showing confirmation');
+    setPendingOperation('add_no_commission');
+    setShowConfirmDialog(true);
   };
 
-  const handleAddBalanceWithCommission = async () => {
-    console.log('🔥🔥🔥 ========================================');
-    console.log('🔥 ADD BALANCE WITH COMMISSION - DRASTIC APPROACH');
-    console.log('🔥🔥🔥 ========================================');
+  const handleAddBalanceWithCommissionClick = () => {
+    console.log('🔥🔥🔥 ADD WITH COMMISSION BUTTON CLICKED 🔥🔥🔥');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+    console.log('   Loading:', loading);
     
     if (!selectedUser || !amount) {
       console.log('❌ Validation failed: missing user or amount');
@@ -299,136 +186,16 @@ export default function BalanceManagementScreen() {
       return;
     }
 
-    Alert.alert(
-      'Confirm Operation',
-      `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n✅ This WILL generate referral commissions for their upline.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            setLoading(true);
-            const oldBalance = vestingData?.total_mxi || 0;
-            
-            try {
-              console.log('🔥 STEP 1: Check Supabase connection');
-              const { data: testData, error: testError } = await supabase
-                .from('users_profiles')
-                .select('id')
-                .eq('id', selectedUser.id)
-                .single();
-              
-              if (testError) {
-                console.error('❌ Supabase connection test failed:', testError);
-                throw new Error(`Connection test failed: ${testError.message}`);
-              }
-              console.log('✅ Supabase connection OK');
-
-              console.log('🔥 STEP 2: Call RPC function directly');
-              console.log('   Function: admin_add_balance_with_commissions');
-              console.log('   Parameters:', {
-                p_user_id: selectedUser.id,
-                p_amount: amountNum,
-              });
-
-              const { data: rpcData, error: rpcError } = await supabase.rpc(
-                'admin_add_balance_with_commissions',
-                {
-                  p_user_id: selectedUser.id,
-                  p_amount: amountNum,
-                }
-              );
-
-              console.log('🔥 STEP 3: RPC Response received');
-              console.log('   Data:', JSON.stringify(rpcData, null, 2));
-              console.log('   Error:', rpcError);
-
-              if (rpcError) {
-                console.error('❌ RPC Error:', rpcError);
-                throw new Error(`RPC error: ${rpcError.message}`);
-              }
-
-              // Handle both direct object and array-wrapped responses
-              let responseData = rpcData;
-              if (Array.isArray(rpcData) && rpcData.length > 0) {
-                console.log('⚠️ Response is array-wrapped, extracting first element');
-                responseData = rpcData[0];
-              }
-
-              console.log('🔥 STEP 4: Process response');
-              console.log('   Processed data:', responseData);
-
-              if (responseData && responseData.success) {
-                console.log('✅ Operation successful!');
-                
-                addToHistory({
-                  user_name: selectedUser.name,
-                  user_email: selectedUser.email,
-                  operation: 'add_with_commission',
-                  amount: amountNum,
-                  old_balance: oldBalance,
-                  new_balance: responseData.new_total_mxi,
-                  commissions_paid: responseData.total_commissions,
-                  referrers_paid: responseData.referrers_paid,
-                  status: 'success',
-                });
-
-                const commissionsMsg = responseData.total_commissions 
-                  ? `\n\n💰 Commissions Distributed:\n${responseData.total_commissions.toFixed(2)} MXI to ${responseData.referrers_paid || 0} referrer(s)`
-                  : '\n\n(No referrers to pay commissions to)';
-
-                Alert.alert(
-                  'Success! ✅',
-                  `Added ${amountNum} MXI to ${selectedUser.name}'s balance${commissionsMsg}`,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        setAmount('');
-                        loadUserVesting(selectedUser.id);
-                      }
-                    }
-                  ]
-                );
-              } else {
-                const errorMsg = responseData?.error || 'Failed to add balance with commissions';
-                console.error('❌ Operation failed:', errorMsg);
-                throw new Error(errorMsg);
-              }
-            } catch (error: any) {
-              console.error('❌ EXCEPTION:', error);
-              console.error('   Message:', error.message);
-              console.error('   Stack:', error.stack);
-              
-              addToHistory({
-                user_name: selectedUser.name,
-                user_email: selectedUser.email,
-                operation: 'add_with_commission',
-                amount: amountNum,
-                old_balance: oldBalance,
-                new_balance: oldBalance,
-                status: 'error',
-                error_message: error.message,
-              });
-              
-              Alert.alert(
-                'Error',
-                `Failed to add balance with commissions:\n\n${error.message}\n\nCheck console logs for details.`
-              );
-            } finally {
-              setLoading(false);
-              console.log('🔥🔥🔥 ========================================');
-            }
-          }
-        }
-      ]
-    );
+    console.log('✅ Validation passed, showing confirmation');
+    setPendingOperation('add_with_commission');
+    setShowConfirmDialog(true);
   };
 
-  const handleRemoveBalance = async () => {
-    console.log('🔥🔥🔥 ========================================');
-    console.log('🔥 REMOVE BALANCE - DRASTIC APPROACH');
-    console.log('🔥🔥🔥 ========================================');
+  const handleRemoveBalanceClick = () => {
+    console.log('🔥🔥🔥 REMOVE BALANCE BUTTON CLICKED 🔥🔥🔥');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+    console.log('   Loading:', loading);
     
     if (!selectedUser || !amount) {
       console.log('❌ Validation failed: missing user or amount');
@@ -453,128 +220,171 @@ export default function BalanceManagementScreen() {
       return;
     }
 
-    Alert.alert(
-      'Confirm Removal',
-      `Remove ${amountNum} MXI from ${selectedUser.name}'s balance?\n\n⚠️ This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            const oldBalance = vestingData?.total_mxi || 0;
-            
-            try {
-              console.log('🔥 STEP 1: Check Supabase connection');
-              const { data: testData, error: testError } = await supabase
-                .from('users_profiles')
-                .select('id')
-                .eq('id', selectedUser.id)
-                .single();
-              
-              if (testError) {
-                console.error('❌ Supabase connection test failed:', testError);
-                throw new Error(`Connection test failed: ${testError.message}`);
-              }
-              console.log('✅ Supabase connection OK');
+    console.log('✅ Validation passed, showing confirmation');
+    setPendingOperation('remove');
+    setShowConfirmDialog(true);
+  };
 
-              console.log('🔥 STEP 2: Call RPC function directly');
-              console.log('   Function: admin_remove_balance');
-              console.log('   Parameters:', {
-                p_user_id: selectedUser.id,
-                p_amount: amountNum,
-              });
+  // ============================================================================
+  // ACTUAL OPERATION EXECUTION
+  // ============================================================================
 
-              const { data: rpcData, error: rpcError } = await supabase.rpc(
-                'admin_remove_balance',
-                {
-                  p_user_id: selectedUser.id,
-                  p_amount: amountNum,
-                }
-              );
+  const executeOperation = async () => {
+    console.log('🚀 EXECUTING OPERATION:', pendingOperation);
+    setShowConfirmDialog(false);
+    
+    if (!selectedUser || !amount || !pendingOperation) {
+      console.log('❌ Missing required data');
+      return;
+    }
 
-              console.log('🔥 STEP 3: RPC Response received');
-              console.log('   Data:', JSON.stringify(rpcData, null, 2));
-              console.log('   Error:', rpcError);
+    const amountNum = parseFloat(amount);
+    const oldBalance = vestingData?.total_mxi || 0;
 
-              if (rpcError) {
-                console.error('❌ RPC Error:', rpcError);
-                throw new Error(`RPC error: ${rpcError.message}`);
-              }
+    setLoading(true);
 
-              // Handle both direct object and array-wrapped responses
-              let responseData = rpcData;
-              if (Array.isArray(rpcData) && rpcData.length > 0) {
-                console.log('⚠️ Response is array-wrapped, extracting first element');
-                responseData = rpcData[0];
-              }
+    try {
+      console.log('🔥 STEP 1: Verify Supabase connection');
+      const { data: testData, error: testError } = await supabase
+        .from('users_profiles')
+        .select('id')
+        .eq('id', selectedUser.id)
+        .single();
+      
+      if (testError) {
+        console.error('❌ Supabase connection test failed:', testError);
+        throw new Error(`Connection test failed: ${testError.message}`);
+      }
+      console.log('✅ Supabase connection OK');
 
-              console.log('🔥 STEP 4: Process response');
-              console.log('   Processed data:', responseData);
+      let rpcFunction = '';
+      let rpcParams: any = {};
 
-              if (responseData && responseData.success) {
-                console.log('✅ Operation successful!');
-                
-                addToHistory({
-                  user_name: selectedUser.name,
-                  user_email: selectedUser.email,
-                  operation: 'remove',
-                  amount: amountNum,
-                  old_balance: oldBalance,
-                  new_balance: responseData.new_total_mxi,
-                  status: 'success',
-                });
+      if (pendingOperation === 'add_no_commission') {
+        rpcFunction = 'admin_add_balance_without_commissions';
+        rpcParams = {
+          p_user_id: selectedUser.id,
+          p_mxi_amount: amountNum,
+        };
+      } else if (pendingOperation === 'add_with_commission') {
+        rpcFunction = 'admin_add_balance_with_commissions';
+        rpcParams = {
+          p_user_id: selectedUser.id,
+          p_amount: amountNum,
+        };
+      } else if (pendingOperation === 'remove') {
+        rpcFunction = 'admin_remove_balance';
+        rpcParams = {
+          p_user_id: selectedUser.id,
+          p_amount: amountNum,
+        };
+      }
 
-                Alert.alert(
-                  'Success! ✅',
-                  `Removed ${amountNum} MXI from ${selectedUser.name}'s balance\n\n` +
-                  `📊 Updated Balance:\n` +
-                  `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
-                  `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`,
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        setAmount('');
-                        loadUserVesting(selectedUser.id);
-                      }
-                    }
-                  ]
-                );
-              } else {
-                const errorMsg = responseData?.error || 'Failed to remove balance';
-                console.error('❌ Operation failed:', errorMsg);
-                throw new Error(errorMsg);
-              }
-            } catch (error: any) {
-              console.error('❌ EXCEPTION:', error);
-              console.error('   Message:', error.message);
-              console.error('   Stack:', error.stack);
-              
-              addToHistory({
-                user_name: selectedUser.name,
-                user_email: selectedUser.email,
-                operation: 'remove',
-                amount: amountNum,
-                old_balance: oldBalance,
-                new_balance: oldBalance,
-                status: 'error',
-                error_message: error.message,
-              });
-              
-              Alert.alert(
-                'Error',
-                `Failed to remove balance:\n\n${error.message}\n\nCheck console logs for details.`
-              );
-            } finally {
-              setLoading(false);
-              console.log('🔥🔥🔥 ========================================');
+      console.log('🔥 STEP 2: Calling RPC function');
+      console.log('   Function:', rpcFunction);
+      console.log('   Parameters:', JSON.stringify(rpcParams, null, 2));
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        rpcFunction,
+        rpcParams
+      );
+
+      console.log('🔥 STEP 3: RPC Response received');
+      console.log('   Data:', JSON.stringify(rpcData, null, 2));
+      console.log('   Error:', rpcError);
+
+      if (rpcError) {
+        console.error('❌ RPC Error:', rpcError);
+        throw new Error(`RPC error: ${rpcError.message}`);
+      }
+
+      // Handle both direct object and array-wrapped responses
+      let responseData = rpcData;
+      if (Array.isArray(rpcData) && rpcData.length > 0) {
+        console.log('⚠️ Response is array-wrapped, extracting first element');
+        responseData = rpcData[0];
+      }
+
+      console.log('🔥 STEP 4: Process response');
+      console.log('   Processed data:', responseData);
+
+      if (responseData && responseData.success) {
+        console.log('✅ Operation successful!');
+        
+        const historyEntry: Omit<BalanceOperation, 'id' | 'timestamp'> = {
+          user_name: selectedUser.name,
+          user_email: selectedUser.email,
+          operation: pendingOperation,
+          amount: amountNum,
+          old_balance: oldBalance,
+          new_balance: responseData.new_total_mxi,
+          status: 'success',
+        };
+
+        if (pendingOperation === 'add_with_commission') {
+          historyEntry.commissions_paid = responseData.total_commissions;
+          historyEntry.referrers_paid = responseData.referrers_paid;
+        }
+
+        addToHistory(historyEntry);
+
+        let successMessage = '';
+        if (pendingOperation === 'add_no_commission') {
+          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s balance\n\n` +
+            `📊 Updated Balance:\n` +
+            `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
+            `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
+        } else if (pendingOperation === 'add_with_commission') {
+          const commissionsMsg = responseData.total_commissions 
+            ? `\n\n💰 Commissions Distributed:\n${responseData.total_commissions.toFixed(2)} MXI to ${responseData.referrers_paid || 0} referrer(s)`
+            : '\n\n(No referrers to pay commissions to)';
+          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s balance${commissionsMsg}`;
+        } else if (pendingOperation === 'remove') {
+          successMessage = `Removed ${amountNum} MXI from ${selectedUser.name}'s balance\n\n` +
+            `📊 Updated Balance:\n` +
+            `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
+            `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
+        }
+
+        Alert.alert('Success! ✅', successMessage, [
+          {
+            text: 'OK',
+            onPress: () => {
+              setAmount('');
+              loadUserVesting(selectedUser.id);
             }
           }
-        }
-      ]
-    );
+        ]);
+      } else {
+        const errorMsg = responseData?.error || 'Operation failed';
+        console.error('❌ Operation failed:', errorMsg);
+        throw new Error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error('❌ EXCEPTION:', error);
+      console.error('   Message:', error.message);
+      console.error('   Stack:', error.stack);
+      
+      addToHistory({
+        user_name: selectedUser.name,
+        user_email: selectedUser.email,
+        operation: pendingOperation,
+        amount: amountNum,
+        old_balance: oldBalance,
+        new_balance: oldBalance,
+        status: 'error',
+        error_message: error.message,
+      });
+      
+      Alert.alert(
+        'Error',
+        `Operation failed:\n\n${error.message}\n\nCheck console logs for details.`
+      );
+    } finally {
+      setLoading(false);
+      setPendingOperation(null);
+      console.log('🔥🔥🔥 ========================================');
+    }
   };
 
   if (!isAdmin) {
@@ -612,6 +422,22 @@ export default function BalanceManagementScreen() {
       default:
         return operation;
     }
+  };
+
+  const getConfirmationMessage = () => {
+    if (!selectedUser || !amount || !pendingOperation) return '';
+    
+    const amountNum = parseFloat(amount);
+    
+    if (pendingOperation === 'add_no_commission') {
+      return `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n⚠️ This will NOT generate referral commissions.`;
+    } else if (pendingOperation === 'add_with_commission') {
+      return `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n✅ This WILL generate referral commissions for their upline.`;
+    } else if (pendingOperation === 'remove') {
+      return `Remove ${amountNum} MXI from ${selectedUser.name}'s balance?\n\n⚠️ This action cannot be undone.`;
+    }
+    
+    return '';
   };
 
   return (
@@ -777,15 +603,21 @@ export default function BalanceManagementScreen() {
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
+              editable={!loading}
             />
 
             <View style={styles.operationButtons}>
               <TouchableOpacity 
-                style={[styles.operationButton, styles.operationButtonNoCommission]}
-                onPress={handleAddBalanceNoCommission}
+                style={[
+                  styles.operationButton, 
+                  styles.operationButtonNoCommission,
+                  (loading || !amount) && styles.operationButtonDisabled
+                ]}
+                onPress={handleAddBalanceNoCommissionClick}
                 disabled={loading || !amount}
+                activeOpacity={0.7}
               >
-                {loading ? (
+                {loading && pendingOperation === 'add_no_commission' ? (
                   <ActivityIndicator color={colors.card} size="small" />
                 ) : (
                   <React.Fragment>
@@ -804,11 +636,16 @@ export default function BalanceManagementScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={[styles.operationButton, styles.operationButtonWithCommission]}
-                onPress={handleAddBalanceWithCommission}
+                style={[
+                  styles.operationButton, 
+                  styles.operationButtonWithCommission,
+                  (loading || !amount) && styles.operationButtonDisabled
+                ]}
+                onPress={handleAddBalanceWithCommissionClick}
                 disabled={loading || !amount}
+                activeOpacity={0.7}
               >
-                {loading ? (
+                {loading && pendingOperation === 'add_with_commission' ? (
                   <ActivityIndicator color={colors.card} size="small" />
                 ) : (
                   <React.Fragment>
@@ -827,11 +664,16 @@ export default function BalanceManagementScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={[styles.operationButton, styles.operationButtonRemove]}
-                onPress={handleRemoveBalance}
+                style={[
+                  styles.operationButton, 
+                  styles.operationButtonRemove,
+                  (loading || !amount) && styles.operationButtonDisabled
+                ]}
+                onPress={handleRemoveBalanceClick}
                 disabled={loading || !amount}
+                activeOpacity={0.7}
               >
-                {loading ? (
+                {loading && pendingOperation === 'remove' ? (
                   <ActivityIndicator color={colors.card} size="small" />
                 ) : (
                   <React.Fragment>
@@ -936,6 +778,36 @@ export default function BalanceManagementScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Custom Confirmation Dialog */}
+      {showConfirmDialog && (
+        <View style={styles.dialogOverlay}>
+          <View style={styles.dialogContainer}>
+            <Text style={styles.dialogTitle}>Confirm Operation</Text>
+            <Text style={styles.dialogMessage}>{getConfirmationMessage()}</Text>
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity 
+                style={[styles.dialogButton, styles.dialogButtonCancel]}
+                onPress={() => {
+                  console.log('❌ Operation cancelled by user');
+                  setShowConfirmDialog(false);
+                  setPendingOperation(null);
+                }}
+              >
+                <Text style={styles.dialogButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.dialogButton, styles.dialogButtonConfirm]}
+                onPress={executeOperation}
+              >
+                <Text style={[styles.dialogButtonText, styles.dialogButtonTextConfirm]}>
+                  {pendingOperation === 'remove' ? 'Remove' : 'Confirm'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -1102,6 +974,9 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 12,
   },
+  operationButtonDisabled: {
+    opacity: 0.5,
+  },
   operationButtonNoCommission: {
     backgroundColor: colors.primary,
   },
@@ -1217,6 +1092,73 @@ const styles = StyleSheet.create({
   historyItemStatusText: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.card,
+  },
+  dialogOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  dialogContainer: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  dialogTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  dialogMessage: {
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  dialogButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dialogButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  dialogButtonCancel: {
+    backgroundColor: colors.border,
+  },
+  dialogButtonConfirm: {
+    backgroundColor: colors.primary,
+  },
+  dialogButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  dialogButtonTextConfirm: {
     color: colors.card,
   },
 });
