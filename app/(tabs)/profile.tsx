@@ -163,25 +163,6 @@ export default function ProfileScreen() {
 
         <TouchableOpacity 
           style={styles.menuItem}
-          onPress={() => router.push('/(tabs)/language-settings')}
-        >
-          <IconSymbol 
-            ios_icon_name="globe" 
-            android_material_icon_name="language" 
-            size={24} 
-            color={colors.info} 
-          />
-          <Text style={styles.menuItemText}>{t('language')}</Text>
-          <IconSymbol 
-            ios_icon_name="chevron.right" 
-            android_material_icon_name="chevron_right" 
-            size={20} 
-            color={colors.textSecondary} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.menuItem}
           onPress={() => router.push('/(tabs)/messages')}
         >
           <IconSymbol 
