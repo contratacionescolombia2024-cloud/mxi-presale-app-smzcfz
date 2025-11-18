@@ -829,21 +829,21 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card - UNIFIED DISPLAY WITH ALL BALANCES */}
+        {/* Balance Card - CLARIFIED TERMINOLOGY */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
-            {/* STANDARDIZED: MXI Purchased */}
+            {/* MXI Purchased */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>💎 MXI Purchased</Text>
               <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
             
-            {/* STANDARDIZED: Referral Commission - Same format and color */}
+            {/* Referral Commissions - From referrals */}
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>🎁 Referral Commission</Text>
+              <Text style={styles.balanceRowLabel}>🎁 Referral Commissions</Text>
               <Text style={styles.balanceRowValue}>{referralMXI.toFixed(2)} MXI</Text>
             </View>
 
@@ -877,7 +877,7 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
-            {/* GAME BALANCES - HIGHLIGHTED */}
+            {/* GAME BALANCES - CLARIFIED NAMES */}
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
                 🏆 Tournament Winnings
@@ -889,7 +889,7 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                💼 Commission Balance
+                💼 Referral Commissions (Available)
               </Text>
               <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 18 }]}>
                 {commissionBalance.toFixed(2)} MXI

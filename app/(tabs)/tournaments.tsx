@@ -735,7 +735,7 @@ export default function TournamentsScreen() {
       console.error('❌ Insufficient balance in selected source:', selectedBalance, '<', fee);
       Alert.alert(
         'Insufficient Balance', 
-        `You do not have enough balance in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'}.\n\nRequired: ${fee} MXI\nAvailable: ${selectedBalance.toFixed(2)} MXI\n\nPlease select a different balance source or add funds.`
+        `You do not have enough balance in ${balanceSource === 'tournaments' ? 'Tournament Winnings' : 'Referral Commissions'}.\n\nRequired: ${fee} MXI\nAvailable: ${selectedBalance.toFixed(2)} MXI\n\nPlease select a different balance source or add funds.`
       );
       return;
     }
@@ -784,7 +784,7 @@ export default function TournamentsScreen() {
 
     if (selectedBalance < fee) {
       console.error('❌ Insufficient balance', { selectedBalance, fee });
-      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${selectedBalance.toFixed(2)} MXI in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'} balance.`);
+      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${selectedBalance.toFixed(2)} MXI in ${balanceSource === 'tournaments' ? 'Tournament Winnings' : 'Referral Commissions'} balance.`);
       return;
     }
 
@@ -853,11 +853,11 @@ export default function TournamentsScreen() {
       'Choose which balance to use for the entry fee:',
       [
         {
-          text: `Tournaments (${tournamentsBalance.toFixed(2)} MXI)`,
+          text: `Tournament Winnings (${tournamentsBalance.toFixed(2)} MXI)`,
           onPress: () => performJoinMiniBattle(miniBattleId, 'tournaments'),
         },
         {
-          text: `Commissions (${commissionBalance.toFixed(2)} MXI)`,
+          text: `Referral Commissions (${commissionBalance.toFixed(2)} MXI)`,
           onPress: () => performJoinMiniBattle(miniBattleId, 'commissions'),
         },
         {
@@ -969,17 +969,17 @@ export default function TournamentsScreen() {
           
           <View style={styles.balanceBreakdown}>
             <View style={styles.balanceBreakdownItem}>
-              <Text style={styles.balanceBreakdownLabel}>🏆 Tournaments</Text>
+              <Text style={styles.balanceBreakdownLabel}>🏆 Tournament Winnings</Text>
               <Text style={styles.balanceBreakdownValue}>{tournamentsBalance.toFixed(2)}</Text>
             </View>
             <View style={styles.balanceBreakdownItem}>
-              <Text style={styles.balanceBreakdownLabel}>💼 Commissions</Text>
+              <Text style={styles.balanceBreakdownLabel}>💼 Referral Commissions</Text>
               <Text style={styles.balanceBreakdownValue}>{commissionBalance.toFixed(2)}</Text>
             </View>
           </View>
           
           <Text style={styles.balanceNote}>
-            💡 You can use either balance source to join games and tournaments
+            💡 Both balances can be used to join games and tournaments
           </Text>
           
           <TouchableOpacity 
@@ -1287,7 +1287,7 @@ export default function TournamentsScreen() {
                     onPress={() => setBalanceSource('tournaments')}
                   >
                     <View style={styles.balanceSourceOptionHeader}>
-                      <Text style={styles.balanceSourceOptionTitle}>🏆 Tournaments Balance</Text>
+                      <Text style={styles.balanceSourceOptionTitle}>🏆 Tournament Winnings</Text>
                       <Text style={styles.balanceSourceOptionBalance}>{tournamentsBalance.toFixed(2)} MXI</Text>
                     </View>
                     <Text style={styles.balanceSourceOptionDescription}>
@@ -1303,7 +1303,7 @@ export default function TournamentsScreen() {
                     onPress={() => setBalanceSource('commissions')}
                   >
                     <View style={styles.balanceSourceOptionHeader}>
-                      <Text style={styles.balanceSourceOptionTitle}>💼 Commission Balance</Text>
+                      <Text style={styles.balanceSourceOptionTitle}>💼 Referral Commissions</Text>
                       <Text style={styles.balanceSourceOptionBalance}>{commissionBalance.toFixed(2)} MXI</Text>
                     </View>
                     <Text style={styles.balanceSourceOptionDescription}>
@@ -1414,7 +1414,7 @@ export default function TournamentsScreen() {
               <View style={styles.confirmationRow}>
                 <Text style={styles.confirmationLabel}>Balance Source:</Text>
                 <Text style={styles.confirmationValue}>
-                  {balanceSource === 'tournaments' ? '🏆 Tournaments' : '💼 Commissions'}
+                  {balanceSource === 'tournaments' ? '🏆 Tournament Winnings' : '💼 Referral Commissions'}
                 </Text>
               </View>
 
