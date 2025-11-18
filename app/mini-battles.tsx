@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -205,15 +205,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 20,
     padding: 24,
-    width: '85%',
-    maxWidth: 400,
-    maxHeight: '80%',
+    width: '90%',
+    maxWidth: 450,
+    maxHeight: '85%',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 8,
     textAlign: 'center',
   },
   modalSubtitle: {
@@ -234,7 +237,8 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: colors.textSecondary,
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 8,
   },
   modalButtons: {
@@ -244,7 +248,7 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    padding: 14,
+    padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
@@ -260,7 +264,7 @@ const styles = StyleSheet.create({
     color: colors.light,
   },
   participantSelector: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   participantOptions: {
     flexDirection: 'row',
@@ -271,7 +275,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     borderRadius: 12,
-    padding: 16,
+    padding: 20,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.border,
@@ -281,7 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sectionPurple,
   },
   participantOptionText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
   },
@@ -289,6 +293,73 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 4,
+  },
+  confirmationSection: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  confirmationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  confirmationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+  confirmationLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  confirmationValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  confirmationDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 8,
+  },
+  warningText: {
+    fontSize: 12,
+    color: colors.error,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  gameSelector: {
+    marginBottom: 20,
+  },
+  gameOption: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  gameOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionPurple,
+  },
+  gameOptionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  gameOptionDescription: {
+    fontSize: 12,
+    color: colors.textSecondary,
   },
 });
 
@@ -304,6 +375,7 @@ export default function MiniBattlesScreen() {
   const [commissionBalance, setCommissionBalance] = useState(0);
   const [miniBattles, setMiniBattles] = useState<MiniBattle[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>(preselectedGame || 'beat_bounce');
   const [entryFee, setEntryFee] = useState('50');
   const [maxPlayers, setMaxPlayers] = useState(4);
@@ -377,9 +449,45 @@ export default function MiniBattlesScreen() {
     setRefreshing(false);
   };
 
-  const handleCreateMiniBattle = async () => {
+  const handleOpenCreateModal = () => {
+    console.log('🎮 Opening create modal');
+    setShowCreateModal(true);
+  };
+
+  const handleProceedToConfirmation = () => {
     console.log('🎮 ========================================');
-    console.log('🎮 CREATE MINI BATTLE - START');
+    console.log('🎮 PROCEEDING TO CONFIRMATION');
+    console.log('🎮 ========================================');
+    
+    const fee = parseFloat(entryFee);
+    const totalBalance = tournamentsBalance + commissionBalance;
+    
+    console.log('💰 Entry fee:', fee);
+    console.log('💰 Total available balance:', totalBalance);
+    console.log('👥 Max players:', maxPlayers);
+    console.log('🎮 Game type:', selectedGame);
+
+    // Validation
+    if (isNaN(fee) || fee < MINI_BATTLE_MIN_ENTRY || fee > MINI_BATTLE_MAX_ENTRY) {
+      console.error('❌ Invalid entry fee:', fee);
+      Alert.alert('Invalid Entry Fee', `Entry fee must be between ${MINI_BATTLE_MIN_ENTRY} and ${MINI_BATTLE_MAX_ENTRY} MXI`);
+      return;
+    }
+
+    if (totalBalance < fee) {
+      console.error('❌ Insufficient balance:', totalBalance, '<', fee);
+      Alert.alert('Insufficient Balance', 'You do not have enough balance to create this mini battle. Use your Challenge Winnings or Commission Balance.');
+      return;
+    }
+
+    console.log('✅ Validation passed, showing confirmation modal');
+    setShowCreateModal(false);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    console.log('🎮 ========================================');
+    console.log('🎮 CREATE MINI BATTLE - CONFIRMED - START');
     console.log('🎮 ========================================');
     
     if (!user?.id) {
@@ -397,18 +505,6 @@ export default function MiniBattlesScreen() {
     console.log('💰 Commission balance:', commissionBalance);
     console.log('👥 Max players:', maxPlayers);
     console.log('🎮 Game type:', selectedGame);
-
-    if (isNaN(fee) || fee < MINI_BATTLE_MIN_ENTRY || fee > MINI_BATTLE_MAX_ENTRY) {
-      console.error('❌ Invalid entry fee:', fee);
-      Alert.alert('Invalid Entry Fee', `Entry fee must be between ${MINI_BATTLE_MIN_ENTRY} and ${MINI_BATTLE_MAX_ENTRY} MXI`);
-      return;
-    }
-
-    if (totalBalance < fee) {
-      console.error('❌ Insufficient balance:', totalBalance, '<', fee);
-      Alert.alert('Insufficient Balance', 'You do not have enough balance to create this mini battle. Use your Challenge Winnings or Commission Balance.');
-      return;
-    }
 
     setIsCreating(true);
 
@@ -450,7 +546,7 @@ export default function MiniBattlesScreen() {
       console.log('✅ Mini battle created successfully!');
       console.log('✅ Mini battle ID:', data.mini_battle_id);
       
-      setShowCreateModal(false);
+      setShowConfirmModal(false);
       Alert.alert('Success! 🎉', 'Mini battle created! Waiting for players to join.');
       await loadData();
       
@@ -526,6 +622,8 @@ export default function MiniBattlesScreen() {
   const myBattles = miniBattles.filter((mb) => mb.creator_id === user?.id);
   const availableBattles = miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting');
   const totalBalance = tournamentsBalance + commissionBalance;
+  const fee = parseFloat(entryFee) || 0;
+  const prizePool = fee * maxPlayers;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -553,7 +651,7 @@ export default function MiniBattlesScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateModal(true)}>
+        <TouchableOpacity style={styles.createButton} onPress={handleOpenCreateModal}>
           <IconSymbol name={ICONS.ADD_CIRCLE} size={24} color={colors.light} />
           <Text style={styles.createButtonText}>Create Mini Battle</Text>
         </TouchableOpacity>
@@ -658,6 +756,7 @@ export default function MiniBattlesScreen() {
         )}
       </ScrollView>
 
+      {/* CREATE MODAL */}
       <Modal
         visible={showCreateModal}
         transparent
@@ -665,58 +764,158 @@ export default function MiniBattlesScreen() {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Mini Battle</Text>
-            <Text style={styles.modalSubtitle}>
-              {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
-            </Text>
+          <ScrollView contentContainerStyle={styles.modalScrollContent}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>🎮 Create Mini Battle</Text>
+              <Text style={styles.modalSubtitle}>
+                Set up your battle and wait for players to join!
+              </Text>
 
-            <View style={styles.participantSelector}>
-              <Text style={styles.inputLabel}>Number of Players (including you)</Text>
-              <View style={styles.participantOptions}>
-                {participantOptions.map((num) => (
-                  <TouchableOpacity
-                    key={num}
-                    style={[
-                      styles.participantOption,
-                      maxPlayers === num && styles.participantOptionSelected,
-                    ]}
-                    onPress={() => setMaxPlayers(num)}
-                  >
-                    <Text style={styles.participantOptionText}>{num}</Text>
-                    <Text style={styles.participantOptionLabel}>players</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.gameSelector}>
+                <Text style={styles.inputLabel}>Select Game</Text>
+                <ScrollView style={{ maxHeight: 200 }}>
+                  {Object.entries(MINI_BATTLE_GAME_NAMES).map(([key, name]) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.gameOption,
+                        selectedGame === key && styles.gameOptionSelected,
+                      ]}
+                      onPress={() => setSelectedGame(key)}
+                    >
+                      <Text style={styles.gameOptionTitle}>{name}</Text>
+                      <Text style={styles.gameOptionDescription}>
+                        {MINI_BATTLE_GAME_DESCRIPTIONS[key as keyof typeof MINI_BATTLE_GAME_DESCRIPTIONS]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={styles.participantSelector}>
+                <Text style={styles.inputLabel}>Number of Players (including you)</Text>
+                <View style={styles.participantOptions}>
+                  {participantOptions.map((num) => (
+                    <TouchableOpacity
+                      key={num}
+                      style={[
+                        styles.participantOption,
+                        maxPlayers === num && styles.participantOptionSelected,
+                      ]}
+                      onPress={() => setMaxPlayers(num)}
+                    >
+                      <Text style={styles.participantOptionText}>{num}</Text>
+                      <Text style={styles.participantOptionLabel}>players</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <Text style={styles.inputLabel}>Entry Fee (MXI)</Text>
+              <TextInput
+                style={styles.input}
+                value={entryFee}
+                onChangeText={setEntryFee}
+                keyboardType="numeric"
+                placeholder={`${MINI_BATTLE_MIN_ENTRY} - ${MINI_BATTLE_MAX_ENTRY}`}
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => setShowCreateModal(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleProceedToConfirmation}
+                >
+                  <Text style={styles.modalButtonText}>Next →</Text>
+                </TouchableOpacity>
               </View>
             </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
-            <Text style={styles.inputLabel}>Entry Fee (MXI)</Text>
-            <TextInput
-              style={styles.input}
-              value={entryFee}
-              onChangeText={setEntryFee}
-              keyboardType="numeric"
-              placeholder={`${MINI_BATTLE_MIN_ENTRY} - ${MINI_BATTLE_MAX_ENTRY}`}
-              placeholderTextColor={colors.textSecondary}
-            />
+      {/* CONFIRMATION MODAL */}
+      <Modal
+        visible={showConfirmModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>⚠️ Confirm Creation</Text>
+            <Text style={styles.modalSubtitle}>
+              Please review your mini battle details before creating
+            </Text>
+
+            <View style={styles.confirmationSection}>
+              <Text style={styles.confirmationTitle}>📋 Battle Details</Text>
+              
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Game:</Text>
+                <Text style={styles.confirmationValue}>
+                  {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
+                </Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Players:</Text>
+                <Text style={styles.confirmationValue}>{maxPlayers} players</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Entry Fee:</Text>
+                <Text style={styles.confirmationValue}>{fee.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Prize Pool:</Text>
+                <Text style={styles.confirmationValue}>{prizePool.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationDivider} />
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Your Balance:</Text>
+                <Text style={styles.confirmationValue}>{totalBalance.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>After Creation:</Text>
+                <Text style={styles.confirmationValue}>{(totalBalance - fee).toFixed(2)} MXI</Text>
+              </View>
+
+              <Text style={styles.warningText}>
+                ⚠️ The entry fee will be deducted immediately from your Challenge Winnings and/or Commission Balance
+              </Text>
+            </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setShowCreateModal(false)}
+                onPress={() => {
+                  setShowConfirmModal(false);
+                  setShowCreateModal(true);
+                }}
                 disabled={isCreating}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.modalButtonText}>← Back</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handleCreateMiniBattle}
+                onPress={handleConfirmCreate}
                 disabled={isCreating}
               >
                 {isCreating ? (
                   <ActivityIndicator size="small" color={colors.light} />
                 ) : (
-                  <Text style={styles.modalButtonText}>Create</Text>
+                  <Text style={styles.modalButtonText}>✓ Create Battle</Text>
                 )}
               </TouchableOpacity>
             </View>
