@@ -26,10 +26,7 @@ import MemorySpeedGame from '@/components/games/MemorySpeedGame';
 import SnakeRetroGame from '@/components/games/SnakeRetroGame';
 import CatchItGame from '@/components/games/CatchItGame';
 import ShurikenAimGame from '@/components/games/ShurikenAimGame';
-
-import FloorIsLavaGame from '@/components/games/FloorIsLavaGame';
 import NumberTrackerGame from '@/components/games/NumberTrackerGame';
-import ReflexBombGame from '@/components/games/ReflexBombGame';
 import TournamentLeaderboard from '@/components/TournamentLeaderboard';
 
 const styles = StyleSheet.create({
@@ -261,7 +258,8 @@ const styles = StyleSheet.create({
   },
 });
 
-const VIRAL_ZONE_GAMES = ['catch_it', 'shuriken_aim', 'floor_is_lava', 'number_tracker', 'reflex_bomb'];
+// REMOVED: floor_is_lava and reflex_bomb
+const VIRAL_ZONE_GAMES = ['catch_it', 'shuriken_aim', 'number_tracker'];
 
 export default function GameScreen() {
   const { gameType } = useLocalSearchParams<{ gameType: string }>();
@@ -332,7 +330,8 @@ export default function GameScreen() {
       const { data: allTournaments, error: countError } = await supabase
         .from('tournaments')
         .select('id', { count: 'exact' })
-        .eq('status', 'waiting');
+        .eq('status', 'waiting')
+        .eq('game_type', gameType);
 
       if (countError) {
         console.error('❌ Error loading tournament count:', countError);
@@ -569,9 +568,7 @@ export default function GameScreen() {
           {gameType === 'snake_retro' && <SnakeRetroGame {...gameProps} />}
           {gameType === 'catch_it' && <CatchItGame {...gameProps} />}
           {gameType === 'shuriken_aim' && <ShurikenAimGame {...gameProps} />}
-          {gameType === 'floor_is_lava' && <FloorIsLavaGame {...gameProps} />}
           {gameType === 'number_tracker' && <NumberTrackerGame {...gameProps} />}
-          {gameType === 'reflex_bomb' && <ReflexBombGame {...gameProps} />}
         </View>
       </SafeAreaView>
     );

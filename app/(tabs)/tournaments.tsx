@@ -239,6 +239,7 @@ export default function TournamentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
+  const [commissionBalance, setCommissionBalance] = useState(0);
   const [activeTournaments, setActiveTournaments] = useState<Record<string, number>>({});
   const [activeMiniBattles, setActiveMiniBattles] = useState<Record<string, number>>({});
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
@@ -257,14 +258,15 @@ export default function TournamentsScreen() {
 
       const { data: vestingData, error: vestingError } = await supabase
         .from('vesting')
-        .select('tournaments_balance')
+        .select('tournaments_balance, commission_balance')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (vestingError) {
-        console.error('❌ Error loading tournaments balance:', vestingError);
+        console.error('❌ Error loading balances:', vestingError);
       } else {
         setTournamentsBalance(vestingData?.tournaments_balance || 0);
+        setCommissionBalance(vestingData?.commission_balance || 0);
       }
 
       const { data: tournaments, error: tournamentsError } = await supabase
@@ -362,12 +364,11 @@ export default function TournamentsScreen() {
     { type: 'snake_retro', icon: 'videogame-asset' },
   ];
 
+  // REMOVED: floor_is_lava and reflex_bomb
   const viralZoneGames = [
     { type: 'catch_it', icon: 'sports-baseball' },
     { type: 'shuriken_aim', icon: 'gps-fixed' },
-    { type: 'floor_is_lava', icon: 'whatshot' },
     { type: 'number_tracker', icon: 'filter-9-plus' },
-    { type: 'reflex_bomb', icon: 'alarm' },
   ];
 
   const miniBattleGames = [
@@ -399,24 +400,24 @@ export default function TournamentsScreen() {
         </View>
 
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>💰 Tournaments Balance</Text>
-          <Text style={styles.balanceAmount}>{tournamentsBalance.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceLabel}>💰 Available Balance for Games</Text>
+          <Text style={styles.balanceAmount}>{(tournamentsBalance + commissionBalance).toFixed(2)} MXI</Text>
           <Text style={styles.balanceNote}>
-            Winnings from tournaments. Can be withdrawn from Commission & Tournaments balance.
+            Challenge Winnings: {tournamentsBalance.toFixed(2)} MXI • Commission: {commissionBalance.toFixed(2)} MXI
           </Text>
         </View>
 
         <View style={styles.limitCard}>
           <Text style={styles.limitTitle}>📊 Active Tournaments</Text>
           <Text style={styles.limitText}>
-            Current active tournaments will fill up as participants join. Maximum {maxActiveTournaments} tournaments can be active at once.
+            Maximum {maxActiveTournaments} tournaments can be active per game type. Current total across all games.
           </Text>
           <View style={styles.limitProgress}>
             <View style={styles.limitBar}>
               <View style={[styles.limitBarFill, { width: `${limitPercentage}%` }]} />
             </View>
             <Text style={styles.limitCount}>
-              {totalActiveTournaments}/{maxActiveTournaments}
+              {totalActiveTournaments} Active
             </Text>
           </View>
         </View>
@@ -546,20 +547,20 @@ export default function TournamentsScreen() {
             <Text style={styles.categoryTitle}>⚔️ MXI Mini Battles</Text>
           </View>
           <Text style={styles.categoryDescription}>
-            Entry: 5-1000 MXI • Players: 2-4 • Winner Takes All • Create custom battles with friends!
+            Entry: 5-1000 MXI • Players: 2 or 4 • Winner Takes All • Create custom battles with friends!
           </Text>
           
           <View style={styles.limitCard}>
             <Text style={styles.limitTitle}>📊 Active Mini Battles</Text>
             <Text style={styles.limitText}>
-              Current active mini battles. Maximum {maxActiveTournaments} battles can be active at once.
+              Maximum {maxActiveTournaments} battles can be active per game type.
             </Text>
             <View style={styles.limitProgress}>
               <View style={styles.limitBar}>
                 <View style={[styles.limitBarFill, { width: `${miniBattleLimitPercentage}%` }]} />
               </View>
               <Text style={styles.limitCount}>
-                {totalActiveMiniBattles}/{maxActiveTournaments}
+                {totalActiveMiniBattles} Active
               </Text>
             </View>
           </View>
@@ -593,7 +594,7 @@ export default function TournamentsScreen() {
                     </View>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Players</Text>
-                      <Text style={styles.statValue}>2-4</Text>
+                      <Text style={styles.statValue}>2 or 4</Text>
                     </View>
                     <View style={styles.statItem}>
                       <Text style={styles.statLabel}>Winner</Text>

@@ -55,57 +55,74 @@ const styles = StyleSheet.create({
   countdownCard: {
     backgroundColor: colors.sectionOrangeStrong,
     marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 24,
+    padding: 28,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(217, 119, 6, 0.4)',
+    borderWidth: 3,
+    borderColor: 'rgba(217, 119, 6, 0.6)',
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
   },
   countdownTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   countdownSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
+    fontWeight: '500',
   },
   countdownContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 20,
   },
   countdownItem: {
     alignItems: 'center',
-    backgroundColor: 'rgba(217, 119, 6, 0.15)',
-    borderRadius: 12,
-    padding: 12,
-    minWidth: 70,
-    borderWidth: 1,
-    borderColor: 'rgba(217, 119, 6, 0.3)',
+    backgroundColor: 'rgba(217, 119, 6, 0.25)',
+    borderRadius: 16,
+    padding: 16,
+    minWidth: 80,
+    borderWidth: 2,
+    borderColor: 'rgba(217, 119, 6, 0.5)',
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   countdownNumber: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 6,
+    textShadowColor: 'rgba(217, 119, 6, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   countdownLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   launchDate: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#D97706',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   balanceCard: {
     backgroundColor: colors.sectionGreen,
@@ -371,6 +388,7 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [challengeWinnings, setChallengeWinnings] = useState(0);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
@@ -451,12 +469,16 @@ export default function HomeScreen() {
   const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
+  const tournamentsBalance = vestingData?.tournamentsBalance || 0;
+  const commissionBalance = vestingData?.commissionBalance || 0;
   
   console.log('🏠 Display Values:', {
     totalMXI,
     purchasedMXI,
     referralMXI,
     vestingRewards,
+    tournamentsBalance,
+    commissionBalance,
     'Calculation check': `${purchasedMXI} + ${referralMXI} = ${purchasedMXI + referralMXI} (should equal ${totalMXI})`,
   });
   
@@ -483,7 +505,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Translucent Orange */}
+        {/* Countdown Timer - Enhanced Design */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
@@ -510,7 +532,7 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - STANDARDIZED FORMAT AND COLORS */}
+        {/* Balance Card - WITH CHALLENGE WINNINGS */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -554,6 +576,20 @@ export default function HomeScreen() {
               <Text style={styles.balanceRowValue}>
                 {(referralStats?.level3MXI || 0).toFixed(2)} MXI
               </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            {/* NEW: Challenge Winnings Balance */}
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>🏆 Challenge Winnings</Text>
+              <Text style={styles.balanceRowValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
+            </View>
+
+            {/* Commission Balance */}
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>💼 Commission Balance</Text>
+              <Text style={styles.balanceRowValue}>{commissionBalance.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.divider} />

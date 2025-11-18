@@ -1,7 +1,7 @@
 
 export interface Tournament {
   id: string;
-  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro' | 'catch_it' | 'shuriken_aim' | 'floor_is_lava' | 'number_tracker' | 'reflex_bomb';
+  game_type: 'reaction_test' | 'jump_time' | 'slide_puzzle' | 'memory_speed' | 'snake_retro' | 'catch_it' | 'shuriken_aim' | 'number_tracker';
   entry_fee: number;
   prize_pool: number;
   max_players: number;
@@ -44,7 +44,7 @@ export interface LeaderboardEntry {
 
 export interface MiniBattle {
   id: string;
-  game_type: 'beat_bounce' | 'perfect_distance' | 'swipe_master' | 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber' | 'floor_is_lava';
+  game_type: 'beat_bounce' | 'perfect_distance' | 'swipe_master' | 'quick_draw_duel' | 'tap_rush' | 'rhythm_tap' | 'mental_math_speed' | 'danger_path' | 'mxi_climber';
   creator_id: string;
   entry_fee: number;
   prize_pool: number;
@@ -128,12 +128,11 @@ export const GAME_TYPES = {
   SNAKE_RETRO: 'snake_retro',
 } as const;
 
+// REMOVED: floor_is_lava and reflex_bomb
 export const VIRAL_ZONE_GAME_TYPES = {
   CATCH_IT: 'catch_it',
   SHURIKEN_AIM: 'shuriken_aim',
-  FLOOR_IS_LAVA: 'floor_is_lava',
   NUMBER_TRACKER: 'number_tracker',
-  REFLEX_BOMB: 'reflex_bomb',
 } as const;
 
 export const MINI_BATTLE_GAME_TYPES = {
@@ -146,7 +145,6 @@ export const MINI_BATTLE_GAME_TYPES = {
   MENTAL_MATH_SPEED: 'mental_math_speed',
   DANGER_PATH: 'danger_path',
   MXI_CLIMBER: 'mxi_climber',
-  FLOOR_IS_LAVA: 'floor_is_lava',
 } as const;
 
 // Deprecated
@@ -167,12 +165,11 @@ export const GAME_NAMES = {
   snake_retro: 'MXI Snake Retro',
 } as const;
 
+// REMOVED: floor_is_lava and reflex_bomb
 export const VIRAL_ZONE_GAME_NAMES = {
   catch_it: 'Catch It!',
   shuriken_aim: 'Shuriken Aim',
-  floor_is_lava: 'Floor is Lava',
   number_tracker: 'Number Tracker',
-  reflex_bomb: 'Reflex Bomb',
 } as const;
 
 export const MINI_BATTLE_GAME_NAMES = {
@@ -185,7 +182,6 @@ export const MINI_BATTLE_GAME_NAMES = {
   mental_math_speed: 'Mental Math Speed',
   danger_path: 'Danger Path',
   mxi_climber: 'MXI Climber',
-  floor_is_lava: 'Floor is Lava',
 } as const;
 
 // Deprecated
@@ -206,12 +202,11 @@ export const GAME_DESCRIPTIONS = {
   snake_retro: 'Classic snake game. Grow longer and score higher!',
 } as const;
 
+// REMOVED: floor_is_lava and reflex_bomb
 export const VIRAL_ZONE_GAME_DESCRIPTIONS = {
   catch_it: 'Catch correct objects falling from above. Highest score in 30 seconds wins!',
   shuriken_aim: 'Throw ninja stars at the target. Precision determines your score!',
-  floor_is_lava: 'Jump between platforms without falling. Last the longest to win!',
   number_tracker: 'Tap numbers in order from a full screen. Fast and addictive!',
-  reflex_bomb: 'Tap the bomb just before it explodes. Reaction and precision!',
 } as const;
 
 export const MINI_BATTLE_GAME_DESCRIPTIONS = {
@@ -224,7 +219,6 @@ export const MINI_BATTLE_GAME_DESCRIPTIONS = {
   mental_math_speed: 'Solve math problems quickly. First correct answer wins!',
   danger_path: 'Navigate through the maze without touching walls.',
   mxi_climber: 'Tap to climb higher while dodging obstacles!',
-  floor_is_lava: 'Jump between platforms without falling. Survive the longest!',
 } as const;
 
 // Deprecated
@@ -243,8 +237,10 @@ export const VIRAL_ZONE_ENTRY_FEE = 1;
 export const VIRAL_ZONE_MAX_PLAYERS = 100;
 export const MINI_BATTLE_MIN_ENTRY = 5;
 export const MINI_BATTLE_MAX_ENTRY = 1000;
+// UPDATED: Only 2 or 4 players allowed
 export const MINI_BATTLE_MIN_PLAYERS = 2;
 export const MINI_BATTLE_MAX_PLAYERS = 4;
+export const MINI_BATTLE_ALLOWED_PLAYERS = [2, 4] as const;
 // Deprecated
 export const CHALLENGE_MIN_ENTRY = 5;
 export const CHALLENGE_MAX_ENTRY = 1000;

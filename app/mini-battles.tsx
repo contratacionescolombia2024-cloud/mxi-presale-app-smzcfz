@@ -82,6 +82,12 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     color: colors.accent,
+    marginBottom: 8,
+  },
+  balanceNote: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   createButton: {
     backgroundColor: colors.primary,
@@ -258,15 +264,14 @@ const styles = StyleSheet.create({
   },
   participantOptions: {
     flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
   },
   participantOption: {
     flex: 1,
-    minWidth: 60,
     backgroundColor: colors.background,
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.border,
@@ -276,12 +281,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sectionPurple,
   },
   participantOptionText: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
   },
   participantOptionLabel: {
-    fontSize: 10,
+    fontSize: 12,
     color: colors.textSecondary,
     marginTop: 4,
   },
@@ -296,6 +301,7 @@ export default function MiniBattlesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
+  const [commissionBalance, setCommissionBalance] = useState(0);
   const [miniBattles, setMiniBattles] = useState<MiniBattle[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>(preselectedGame || 'beat_bounce');
@@ -303,7 +309,8 @@ export default function MiniBattlesScreen() {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [isCreating, setIsCreating] = useState(false);
 
-  const participantOptions = [2, 3, 4];
+  // RESTRICTED: Only 2 or 4 participants
+  const participantOptions = [2, 4];
 
   useEffect(() => {
     loadData();
@@ -328,15 +335,19 @@ export default function MiniBattlesScreen() {
 
       const { data: vestingData, error: vestingError } = await supabase
         .from('vesting')
-        .select('tournaments_balance')
+        .select('tournaments_balance, commission_balance')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (vestingError) {
-        console.error('❌ Error loading tournaments balance:', vestingError);
+        console.error('❌ Error loading balances:', vestingError);
       } else {
         setTournamentsBalance(vestingData?.tournaments_balance || 0);
-        console.log('💰 Tournaments balance:', vestingData?.tournaments_balance || 0);
+        setCommissionBalance(vestingData?.commission_balance || 0);
+        console.log('💰 Balances:', {
+          tournaments: vestingData?.tournaments_balance || 0,
+          commission: vestingData?.commission_balance || 0,
+        });
       }
 
       const { data: battlesData, error: battlesError } = await supabase
@@ -378,8 +389,12 @@ export default function MiniBattlesScreen() {
     }
 
     const fee = parseFloat(entryFee);
+    const totalBalance = tournamentsBalance + commissionBalance;
+    
     console.log('💰 Entry fee:', fee);
+    console.log('💰 Total available balance:', totalBalance);
     console.log('💰 Tournaments balance:', tournamentsBalance);
+    console.log('💰 Commission balance:', commissionBalance);
     console.log('👥 Max players:', maxPlayers);
     console.log('🎮 Game type:', selectedGame);
 
@@ -389,9 +404,9 @@ export default function MiniBattlesScreen() {
       return;
     }
 
-    if (tournamentsBalance < fee) {
-      console.error('❌ Insufficient balance:', tournamentsBalance, '<', fee);
-      Alert.alert('Insufficient Balance', 'You do not have enough tournaments balance to create this mini battle.');
+    if (totalBalance < fee) {
+      console.error('❌ Insufficient balance:', totalBalance, '<', fee);
+      Alert.alert('Insufficient Balance', 'You do not have enough balance to create this mini battle. Use your Challenge Winnings or Commission Balance.');
       return;
     }
 
@@ -510,6 +525,7 @@ export default function MiniBattlesScreen() {
 
   const myBattles = miniBattles.filter((mb) => mb.creator_id === user?.id);
   const availableBattles = miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting');
+  const totalBalance = tournamentsBalance + commissionBalance;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -525,13 +541,16 @@ export default function MiniBattlesScreen() {
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.title}>⚔️ MXI Mini Battles</Text>
-            <Text style={styles.subtitle}>Quick battles for 2-4 players!</Text>
+            <Text style={styles.subtitle}>Quick battles for 2 or 4 players!</Text>
           </View>
         </View>
 
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>💰 Tournaments Balance</Text>
-          <Text style={styles.balanceAmount}>{tournamentsBalance.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceLabel}>💰 Available Balance for Games</Text>
+          <Text style={styles.balanceAmount}>{totalBalance.toFixed(2)} MXI</Text>
+          <Text style={styles.balanceNote}>
+            Challenge Winnings: {tournamentsBalance.toFixed(2)} MXI • Commission: {commissionBalance.toFixed(2)} MXI
+          </Text>
         </View>
 
         <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateModal(true)}>
