@@ -797,7 +797,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* PROFESSIONAL COUNTDOWN TIMER - SMALLER FONT SIZE */}
+        {/* PROFESSIONAL COUNTDOWN TIMER */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
@@ -829,7 +829,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card - CLARIFIED TERMINOLOGY */}
+        {/* Balance Card - SIMPLIFIED WITHOUT REDUNDANT LINE */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -877,10 +877,10 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
-            {/* GAME BALANCES - CLARIFIED NAMES */}
+            {/* GAME BALANCES - AVAILABLE FOR CHALLENGES */}
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                🏆 Tournament Winnings
+                🏆 Tournament Winnings (Available)
               </Text>
               <Text style={[styles.balanceRowValue, { color: colors.accent, fontSize: 18 }]}>
                 {tournamentsBalance.toFixed(2)} MXI
@@ -889,7 +889,7 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                💼 Referral Commissions (Available)
+                💼 Commissions (Available for Challenges)
               </Text>
               <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 18 }]}>
                 {commissionBalance.toFixed(2)} MXI
@@ -1016,7 +1016,7 @@ export default function HomeScreen() {
 
               <View style={styles.divider} />
 
-              {/* PROFESSIONAL PHASE END COUNTDOWN - SMALLER FONT */}
+              {/* PROFESSIONAL PHASE END COUNTDOWN */}
               <View style={styles.phaseCountdownContainer}>
                 <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
                 <View style={styles.phaseCountdownGrid}>

@@ -973,7 +973,7 @@ export default function TournamentsScreen() {
               <Text style={styles.balanceBreakdownValue}>{tournamentsBalance.toFixed(2)}</Text>
             </View>
             <View style={styles.balanceBreakdownItem}>
-              <Text style={styles.balanceBreakdownLabel}>💼 Referral Commissions</Text>
+              <Text style={styles.balanceBreakdownLabel}>💼 Commissions</Text>
               <Text style={styles.balanceBreakdownValue}>{commissionBalance.toFixed(2)}</Text>
             </View>
           </View>
@@ -1303,7 +1303,7 @@ export default function TournamentsScreen() {
                     onPress={() => setBalanceSource('commissions')}
                   >
                     <View style={styles.balanceSourceOptionHeader}>
-                      <Text style={styles.balanceSourceOptionTitle}>💼 Referral Commissions</Text>
+                      <Text style={styles.balanceSourceOptionTitle}>💼 Commissions</Text>
                       <Text style={styles.balanceSourceOptionBalance}>{commissionBalance.toFixed(2)} MXI</Text>
                     </View>
                     <Text style={styles.balanceSourceOptionDescription}>

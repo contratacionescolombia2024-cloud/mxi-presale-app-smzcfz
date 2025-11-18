@@ -722,11 +722,11 @@ export default function GameScreen() {
 
         <View style={styles.balanceCard}>
           <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>🏆 Tournaments Balance</Text>
+            <Text style={styles.balanceLabel}>🏆 Tournament Winnings</Text>
             <Text style={styles.balanceValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
           </View>
           <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>💼 Commission Balance</Text>
+            <Text style={styles.balanceLabel}>💼 Commissions</Text>
             <Text style={styles.balanceValue}>{commissionBalance.toFixed(2)} MXI</Text>
           </View>
           <View style={styles.balanceDivider} />
@@ -909,7 +909,7 @@ export default function GameScreen() {
                   onPress={() => setBalanceSource('tournaments')}
                 >
                   <View style={styles.balanceSourceOptionHeader}>
-                    <Text style={styles.balanceSourceOptionTitle}>🏆 Tournaments Balance</Text>
+                    <Text style={styles.balanceSourceOptionTitle}>🏆 Tournament Winnings</Text>
                     <Text style={styles.balanceSourceOptionBalance}>{tournamentsBalance.toFixed(2)} MXI</Text>
                   </View>
                   <Text style={styles.balanceSourceOptionDescription}>
@@ -925,7 +925,7 @@ export default function GameScreen() {
                   onPress={() => setBalanceSource('commissions')}
                 >
                   <View style={styles.balanceSourceOptionHeader}>
-                    <Text style={styles.balanceSourceOptionTitle}>💼 Commission Balance</Text>
+                    <Text style={styles.balanceSourceOptionTitle}>💼 Commissions</Text>
                     <Text style={styles.balanceSourceOptionBalance}>{commissionBalance.toFixed(2)} MXI</Text>
                   </View>
                   <Text style={styles.balanceSourceOptionDescription}>
