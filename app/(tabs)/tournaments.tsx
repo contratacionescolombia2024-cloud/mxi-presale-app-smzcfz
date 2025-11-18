@@ -9,6 +9,9 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +20,19 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
-import { Tournament, GAME_NAMES, GAME_DESCRIPTIONS, VIRAL_ZONE_GAME_NAMES, VIRAL_ZONE_GAME_DESCRIPTIONS, MINI_BATTLE_GAME_NAMES, MINI_BATTLE_GAME_DESCRIPTIONS, MAX_ACTIVE_TOURNAMENTS } from '@/types/tournaments';
+import {
+  Tournament,
+  MiniBattle,
+  GAME_NAMES,
+  GAME_DESCRIPTIONS,
+  VIRAL_ZONE_GAME_NAMES,
+  VIRAL_ZONE_GAME_DESCRIPTIONS,
+  MINI_BATTLE_GAME_NAMES,
+  MINI_BATTLE_GAME_DESCRIPTIONS,
+  MAX_ACTIVE_TOURNAMENTS,
+  MINI_BATTLE_MIN_ENTRY,
+  MINI_BATTLE_MAX_ENTRY,
+} from '@/types/tournaments';
 
 const styles = StyleSheet.create({
   container: {
@@ -231,6 +246,234 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 24,
+    width: '90%',
+    maxWidth: 450,
+    maxHeight: '85%',
+  },
+  modalScrollContent: {
+    flexGrow: 1,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: colors.border,
+  },
+  modalButtonConfirm: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.light,
+  },
+  participantSelector: {
+    marginBottom: 20,
+  },
+  participantOptions: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  participantOption: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  participantOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionPurple,
+  },
+  participantOptionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  participantOptionLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  confirmationSection: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  confirmationTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  confirmationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingVertical: 4,
+  },
+  confirmationLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  confirmationValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  confirmationDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 8,
+  },
+  warningText: {
+    fontSize: 12,
+    color: colors.error,
+    textAlign: 'center',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  createButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  createButtonText: {
+    color: colors.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  miniBattlesList: {
+    marginTop: 16,
+    gap: 12,
+  },
+  miniBattleCard: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  miniBattleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  miniBattleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: colors.success,
+  },
+  statusBadgeText: {
+    color: colors.light,
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  miniBattleInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  miniBattleInfoItem: {
+    alignItems: 'center',
+  },
+  miniBattleInfoLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  miniBattleInfoValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  miniBattleButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+  },
+  miniBattleButtonText: {
+    color: colors.light,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
 });
 
 export default function TournamentsScreen() {
@@ -245,6 +488,15 @@ export default function TournamentsScreen() {
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
   const [totalActiveMiniBattles, setTotalActiveMiniBattles] = useState(0);
   const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
+  const [miniBattles, setMiniBattles] = useState<MiniBattle[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<string>('beat_bounce');
+  const [entryFee, setEntryFee] = useState('50');
+  const [maxPlayers, setMaxPlayers] = useState(4);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const participantOptions = [2, 4];
 
   const loadData = useCallback(async () => {
     if (!user?.id) {
@@ -287,26 +539,28 @@ export default function TournamentsScreen() {
         setTotalActiveTournaments(total);
       }
 
-      // Load mini battles
-      const { data: miniBattles, error: miniBattlesError } = await supabase
+      const { data: miniBattlesData, error: miniBattlesError } = await supabase
         .from('mini_battles')
-        .select('game_type, current_players')
-        .eq('status', 'waiting');
+        .select('*')
+        .in('status', ['waiting', 'in_progress'])
+        .order('created_at', { ascending: false });
 
       if (miniBattlesError) {
         console.error('❌ Error loading mini battles:', miniBattlesError);
       } else {
         const counts: Record<string, number> = {};
         let total = 0;
-        miniBattles?.forEach((mb) => {
-          counts[mb.game_type] = (counts[mb.game_type] || 0) + 1;
-          total++;
+        miniBattlesData?.forEach((mb) => {
+          if (mb.status === 'waiting') {
+            counts[mb.game_type] = (counts[mb.game_type] || 0) + 1;
+            total++;
+          }
         });
         setActiveMiniBattles(counts);
         setTotalActiveMiniBattles(total);
+        setMiniBattles(miniBattlesData || []);
       }
 
-      // Load max active tournaments from game settings
       const { data: gameSettings, error: settingsError } = await supabase
         .from('game_settings')
         .select('max_active_tournaments')
@@ -340,9 +594,168 @@ export default function TournamentsScreen() {
     router.push(`/games/${gameType}` as any);
   };
 
-  const handlePlayMiniBattle = (gameType: string) => {
-    console.log('🎮 Starting mini battle:', gameType);
-    router.push(`/mini-battles?game=${gameType}` as any);
+  const handleOpenCreateModal = (gameType: string) => {
+    console.log('🎮 Opening create modal for game:', gameType);
+    setSelectedGame(gameType);
+    setShowCreateModal(true);
+  };
+
+  const handleProceedToConfirmation = () => {
+    console.log('🎮 Proceeding to confirmation');
+    
+    const fee = parseFloat(entryFee);
+    const totalBalance = tournamentsBalance + commissionBalance;
+    
+    console.log('💰 Entry fee:', fee);
+    console.log('💰 Total available balance:', totalBalance);
+    console.log('👥 Max players:', maxPlayers);
+    console.log('🎮 Game type:', selectedGame);
+
+    if (isNaN(fee) || fee < MINI_BATTLE_MIN_ENTRY || fee > MINI_BATTLE_MAX_ENTRY) {
+      console.error('❌ Invalid entry fee:', fee);
+      Alert.alert('Invalid Entry Fee', `Entry fee must be between ${MINI_BATTLE_MIN_ENTRY} and ${MINI_BATTLE_MAX_ENTRY} MXI`);
+      return;
+    }
+
+    if (totalBalance < fee) {
+      console.error('❌ Insufficient balance:', totalBalance, '<', fee);
+      Alert.alert('Insufficient Balance', 'You do not have enough balance to create this mini battle.');
+      return;
+    }
+
+    console.log('✅ Validation passed, showing confirmation modal');
+    setShowCreateModal(false);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmCreate = async () => {
+    console.log('🎮 Creating mini battle - confirmed');
+    
+    if (!user?.id) {
+      console.error('❌ No user ID');
+      Alert.alert('Error', 'You must be logged in to create a mini battle.');
+      return;
+    }
+
+    const fee = parseFloat(entryFee);
+    const totalBalance = tournamentsBalance + commissionBalance;
+    
+    console.log('💰 Entry fee:', fee);
+    console.log('💰 Total available balance:', totalBalance);
+    console.log('👥 Max players:', maxPlayers);
+    console.log('🎮 Game type:', selectedGame);
+    console.log('👤 User ID:', user.id);
+
+    if (!selectedGame) {
+      console.error('❌ No game type selected');
+      Alert.alert('Error', 'Please select a game type.');
+      return;
+    }
+
+    if (isNaN(fee) || fee <= 0) {
+      console.error('❌ Invalid entry fee', fee);
+      Alert.alert('Error', 'Invalid entry fee. Please enter a valid number.');
+      return;
+    }
+
+    if (maxPlayers !== 2 && maxPlayers !== 4) {
+      console.error('❌ Invalid max players', maxPlayers);
+      Alert.alert('Error', 'Max players must be 2 or 4.');
+      return;
+    }
+
+    if (totalBalance < fee) {
+      console.error('❌ Insufficient balance', { totalBalance, fee });
+      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${totalBalance.toFixed(2)} MXI available.`);
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      console.log('📡 Calling RPC: create_mini_battle');
+      console.log('📡 Parameters:', {
+        p_user_id: user.id,
+        p_game_type: selectedGame,
+        p_entry_fee: fee,
+        p_max_players: maxPlayers,
+      });
+
+      const { data, error } = await supabase.rpc('create_mini_battle', {
+        p_user_id: user.id,
+        p_game_type: selectedGame,
+        p_entry_fee: fee,
+        p_max_players: maxPlayers,
+      });
+
+      console.log('📡 RPC response:', { data, error });
+
+      if (error) {
+        console.error('❌ RPC error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ No data returned');
+        Alert.alert('Error', 'Failed to create mini battle. No response from server.');
+        return;
+      }
+
+      if (!data.success) {
+        console.error('❌ RPC returned failure:', data.message);
+        Alert.alert('Error', data.message || 'Failed to create mini battle');
+        return;
+      }
+
+      console.log('✅ Mini battle created successfully:', data.mini_battle_id);
+      
+      setShowConfirmModal(false);
+      Alert.alert('Success! 🎉', 'Mini battle created! Waiting for players to join.');
+      
+      await loadData();
+    } catch (error: any) {
+      console.error('❌ Exception caught:', error);
+      Alert.alert('Error', `Failed to create mini battle: ${error?.message || 'Unknown error'}. Please try again.`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleJoinMiniBattle = async (miniBattleId: string) => {
+    if (!user?.id) {
+      console.log('⚠️ No user ID');
+      return;
+    }
+
+    try {
+      console.log('🎮 Joining mini battle:', miniBattleId);
+
+      const { data, error } = await supabase.rpc('join_mini_battle', {
+        p_mini_battle_id: miniBattleId,
+        p_user_id: user.id,
+      });
+
+      if (error) throw error;
+      if (!data.success) {
+        Alert.alert('Cannot Join', data.message);
+        return;
+      }
+
+      Alert.alert('Success', 'You have joined the mini battle! Good luck!');
+      await loadData();
+
+      const miniBattle = miniBattles.find((mb) => mb.id === miniBattleId);
+      if (miniBattle) {
+        router.push(`/mini-battle-game/${miniBattle.game_type}?miniBattleId=${miniBattleId}` as any);
+      }
+    } catch (error) {
+      console.error('❌ Failed to join mini battle:', error);
+      Alert.alert('Error', 'Failed to join mini battle. Please try again.');
+    }
+  };
+
+  const handlePlayMiniBattle = (miniBattle: MiniBattle) => {
+    router.push(`/mini-battle-game/${miniBattle.game_type}?miniBattleId=${miniBattle.id}` as any);
   };
 
   if (isLoading) {
@@ -364,7 +777,6 @@ export default function TournamentsScreen() {
     { type: 'snake_retro', icon: 'videogame-asset' },
   ];
 
-  // REMOVED: floor_is_lava and reflex_bomb
   const viralZoneGames = [
     { type: 'catch_it', icon: 'sports-baseball' },
     { type: 'shuriken_aim', icon: 'gps-fixed' },
@@ -385,6 +797,12 @@ export default function TournamentsScreen() {
 
   const limitPercentage = (totalActiveTournaments / maxActiveTournaments) * 100;
   const miniBattleLimitPercentage = (totalActiveMiniBattles / maxActiveTournaments) * 100;
+  const totalBalance = tournamentsBalance + commissionBalance;
+  const fee = parseFloat(entryFee) || 0;
+  const prizePool = fee * maxPlayers;
+
+  const myBattles = miniBattles.filter((mb) => mb.creator_id === user?.id);
+  const availableBattles = miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -569,6 +987,7 @@ export default function TournamentsScreen() {
             {miniBattleGames.map((game, index) => {
               const gameType = game.type as keyof typeof MINI_BATTLE_GAME_NAMES;
               const activeMiniBattleCount = activeMiniBattles[game.type] || 0;
+              const gameBattles = miniBattles.filter((mb) => mb.game_type === game.type);
 
               return (
                 <View key={index} style={styles.gameCard}>
@@ -602,16 +1021,232 @@ export default function TournamentsScreen() {
                     </View>
                   </View>
 
-                  <TouchableOpacity style={[styles.playButton, { backgroundColor: colors.accent }]} onPress={() => handlePlayMiniBattle(game.type)}>
-                    <IconSymbol name={ICONS.PLAY} size={20} color={colors.light} />
-                    <Text style={styles.playButtonText}>Play Now</Text>
+                  <TouchableOpacity style={[styles.createButton]} onPress={() => handleOpenCreateModal(game.type)}>
+                    <IconSymbol name={ICONS.ADD_CIRCLE} size={20} color={colors.light} />
+                    <Text style={styles.createButtonText}>Create Battle</Text>
                   </TouchableOpacity>
+
+                  {gameBattles.length > 0 && (
+                    <View style={styles.miniBattlesList}>
+                      {gameBattles.map((miniBattle) => {
+                        const isMyBattle = miniBattle.creator_id === user?.id;
+                        const canJoin = !isMyBattle && miniBattle.status === 'waiting' && miniBattle.current_players < miniBattle.max_players;
+                        const canPlay = isMyBattle && miniBattle.current_players >= miniBattle.max_players;
+
+                        return (
+                          <View key={miniBattle.id} style={styles.miniBattleCard}>
+                            <View style={styles.miniBattleHeader}>
+                              <Text style={styles.miniBattleTitle}>
+                                {isMyBattle ? '👤 Your Battle' : '🎮 Available'}
+                              </Text>
+                              <View style={styles.statusBadge}>
+                                <Text style={styles.statusBadgeText}>
+                                  {miniBattle.status === 'waiting' ? 'Waiting' : 'In Progress'}
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.miniBattleInfo}>
+                              <View style={styles.miniBattleInfoItem}>
+                                <Text style={styles.miniBattleInfoLabel}>Players</Text>
+                                <Text style={styles.miniBattleInfoValue}>
+                                  {miniBattle.current_players}/{miniBattle.max_players}
+                                </Text>
+                              </View>
+                              <View style={styles.miniBattleInfoItem}>
+                                <Text style={styles.miniBattleInfoLabel}>Entry</Text>
+                                <Text style={styles.miniBattleInfoValue}>{miniBattle.entry_fee} MXI</Text>
+                              </View>
+                              <View style={styles.miniBattleInfoItem}>
+                                <Text style={styles.miniBattleInfoLabel}>Prize</Text>
+                                <Text style={styles.miniBattleInfoValue}>{miniBattle.prize_pool} MXI</Text>
+                              </View>
+                            </View>
+
+                            {canJoin && (
+                              <TouchableOpacity
+                                style={styles.miniBattleButton}
+                                onPress={() => handleJoinMiniBattle(miniBattle.id)}
+                              >
+                                <Text style={styles.miniBattleButtonText}>Join Battle</Text>
+                              </TouchableOpacity>
+                            )}
+
+                            {canPlay && (
+                              <TouchableOpacity
+                                style={[styles.miniBattleButton, { backgroundColor: colors.success }]}
+                                onPress={() => handlePlayMiniBattle(miniBattle)}
+                              >
+                                <Text style={styles.miniBattleButtonText}>Play Now</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
                 </View>
               );
             })}
           </View>
         </View>
       </ScrollView>
+
+      {/* CREATE MODAL */}
+      <Modal
+        visible={showCreateModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <ScrollView contentContainerStyle={styles.modalScrollContent}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>🎮 Create Mini Battle</Text>
+              <Text style={styles.modalSubtitle}>
+                {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
+              </Text>
+
+              <View style={styles.participantSelector}>
+                <Text style={styles.inputLabel}>Number of Players (including you)</Text>
+                <View style={styles.participantOptions}>
+                  {participantOptions.map((num) => (
+                    <TouchableOpacity
+                      key={num}
+                      style={[
+                        styles.participantOption,
+                        maxPlayers === num && styles.participantOptionSelected,
+                      ]}
+                      onPress={() => {
+                        console.log('👥 Max players selected:', num);
+                        setMaxPlayers(num);
+                      }}
+                    >
+                      <Text style={styles.participantOptionText}>{num}</Text>
+                      <Text style={styles.participantOptionLabel}>players</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <Text style={styles.inputLabel}>Entry Fee (MXI)</Text>
+              <TextInput
+                style={styles.input}
+                value={entryFee}
+                onChangeText={(text) => {
+                  console.log('💰 Entry fee changed:', text);
+                  setEntryFee(text);
+                }}
+                keyboardType="numeric"
+                placeholder={`${MINI_BATTLE_MIN_ENTRY} - ${MINI_BATTLE_MAX_ENTRY}`}
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonCancel]}
+                  onPress={() => {
+                    console.log('❌ Create modal cancelled');
+                    setShowCreateModal(false);
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonConfirm]}
+                  onPress={handleProceedToConfirmation}
+                >
+                  <Text style={styles.modalButtonText}>Next →</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* CONFIRMATION MODAL */}
+      <Modal
+        visible={showConfirmModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !isCreating && setShowConfirmModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>⚠️ Confirm Creation</Text>
+            <Text style={styles.modalSubtitle}>
+              Please review your mini battle details before creating
+            </Text>
+
+            <View style={styles.confirmationSection}>
+              <Text style={styles.confirmationTitle}>📋 Battle Details</Text>
+              
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Game:</Text>
+                <Text style={styles.confirmationValue}>
+                  {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
+                </Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Players:</Text>
+                <Text style={styles.confirmationValue}>{maxPlayers} players</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Entry Fee:</Text>
+                <Text style={styles.confirmationValue}>{fee.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Prize Pool:</Text>
+                <Text style={styles.confirmationValue}>{prizePool.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationDivider} />
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Your Balance:</Text>
+                <Text style={styles.confirmationValue}>{totalBalance.toFixed(2)} MXI</Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>After Creation:</Text>
+                <Text style={styles.confirmationValue}>{(totalBalance - fee).toFixed(2)} MXI</Text>
+              </View>
+
+              <Text style={styles.warningText}>
+                ⚠️ The entry fee will be deducted immediately from your Challenge Winnings and/or Commission Balance
+              </Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  console.log('⬅️ Back to create modal');
+                  setShowConfirmModal(false);
+                  setShowCreateModal(true);
+                }}
+                disabled={isCreating}
+              >
+                <Text style={styles.modalButtonText}>← Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleConfirmCreate}
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <ActivityIndicator size="small" color={colors.light} />
+                ) : (
+                  <Text style={styles.modalButtonText}>✓ Create Battle</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
