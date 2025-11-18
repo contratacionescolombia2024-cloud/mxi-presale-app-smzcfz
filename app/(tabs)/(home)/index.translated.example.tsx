@@ -4,7 +4,10 @@
 // 1. Import useLanguage hook
 // 2. Replace hardcoded strings with t() function calls
 
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { IconSymbol } from '@/components/IconSymbol';
 
 // In the component:
 export default function HomeScreen() {
@@ -80,7 +83,7 @@ export default function HomeScreen() {
           style={[styles.actionCard, styles.actionCardPurchase]}
           onPress={() => router.push('/purchase')}
         >
-          <IconSymbol name={ICONS.SHOPPING_CART} size={32} color={colors.accent} />
+          <IconSymbol ios_icon_name="cart.fill" android_material_icon_name="shopping_cart" size={32} color={colors.accent} />
           <Text style={styles.actionLabel}>{t('purchaseMXI')}</Text>
         </TouchableOpacity>
 
@@ -88,7 +91,7 @@ export default function HomeScreen() {
           style={[styles.actionCard, styles.actionCardVesting]}
           onPress={() => router.push('/vesting')}
         >
-          <IconSymbol name={ICONS.TRENDING_UP} size={32} color={colors.success} />
+          <IconSymbol ios_icon_name="chart.line.uptrend.xyaxis" android_material_icon_name="trending_up" size={32} color={colors.success} />
           <Text style={styles.actionLabel}>{t('vesting')}</Text>
         </TouchableOpacity>
 
@@ -96,7 +99,7 @@ export default function HomeScreen() {
           style={[styles.actionCard, styles.actionCardReferrals]}
           onPress={() => router.push('/referrals')}
         >
-          <IconSymbol name={ICONS.PEOPLE} size={32} color={colors.highlight} />
+          <IconSymbol ios_icon_name="person.3.fill" android_material_icon_name="people" size={32} color={colors.highlight} />
           <Text style={styles.actionLabel}>{t('referrals')}</Text>
         </TouchableOpacity>
 
@@ -104,7 +107,7 @@ export default function HomeScreen() {
           style={[styles.actionCard, styles.actionCardKYC]}
           onPress={() => router.push('/kyc')}
         >
-          <IconSymbol name={ICONS.VERIFIED_USER} size={32} color="#14B8A6" />
+          <IconSymbol ios_icon_name="checkmark.shield.fill" android_material_icon_name="verified_user" size={32} color="#14B8A6" />
           <Text style={styles.actionLabel}>{t('kycVerification')}</Text>
         </TouchableOpacity>
       </View>

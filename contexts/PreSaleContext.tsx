@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { PreSaleStage, Purchase, VestingData, ReferralStats } from '@/types';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -48,134 +48,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('🔄 PreSaleContext - Loading data, auth state:', { isAuthenticated, userId: user?.id });
-    loadCurrentStage();
-    if (isAuthenticated && user) {
-      loadUserPurchases();
-      loadVestingData();
-      loadReferralStats();
-    } else {
-      setUserPurchases([]);
-      setVestingData(null);
-      setReferralStats(null);
-      setIsLoading(false);
-    }
-  }, [user, isAuthenticated]);
-
-  // Real-time subscription for referrals
-  useEffect(() => {
-    if (!isAuthenticated || !user?.id) {
-      return;
-    }
-
-    console.log('🔔 Setting up real-time subscription for referrals and vesting');
-
-    // Subscribe to changes in the referrals table
-    const referralsSubscription = supabase
-      .channel('referrals-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'referrals',
-          filter: `referrer_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('🔔 Referral change detected:', payload);
-          loadReferralStats();
-          loadVestingData(); // Reload vesting data when referrals change
-        }
-      )
-      .subscribe();
-
-    // Subscribe to changes in vesting table
-    const vestingSubscription = supabase
-      .channel('vesting-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'vesting',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('🔔 Vesting change detected:', payload);
-          loadVestingData();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to changes in users_profiles (for referral linking)
-    const profilesSubscription = supabase
-      .channel('profiles-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'users_profiles',
-          filter: `id=eq.${user.id}`,
-        },
-        (payload) => {
-          console.log('🔔 Profile change detected:', payload);
-          loadReferralStats();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('🛑 Cleaning up real-time subscriptions');
-      referralsSubscription.unsubscribe();
-      vestingSubscription.unsubscribe();
-      profilesSubscription.unsubscribe();
-    };
-  }, [user?.id, isAuthenticated]);
-
-  // Real-time vesting updates - NOW ONLY ON PURCHASED MXI
-  useEffect(() => {
-    if (!isAuthenticated || !user || !vestingData?.purchasedMXI) {
-      return;
-    }
-
-    console.log('⏱️ Starting real-time vesting updates for user:', user.id);
-    console.log('💰 Vesting calculated ONLY on purchased MXI:', vestingData.purchasedMXI);
-
-    const interval = setInterval(() => {
-      setVestingData((prev) => {
-        if (!prev) return null;
-
-        const monthlyRate = prev.monthlyRate || 0.03;
-        const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
-        
-        // IMPORTANT: Calculate rewards ONLY on purchased_mxi, NOT total_mxi
-        const increment = prev.purchasedMXI * secondlyRate;
-
-        const newRewards = (prev.currentRewards || 0) + increment;
-
-        return {
-          ...prev,
-          currentRewards: newRewards,
-          lastUpdate: new Date().toISOString(),
-          projections: {
-            // Projections also based ONLY on purchased_mxi
-            days7: prev.purchasedMXI * monthlyRate * (7 / 30),
-            days15: prev.purchasedMXI * monthlyRate * (15 / 30),
-            days30: prev.purchasedMXI * monthlyRate,
-          },
-        };
-      });
-    }, 1000);
-
-    return () => {
-      console.log('🛑 Stopping real-time vesting updates');
-      clearInterval(interval);
-    };
-  }, [user, isAuthenticated, vestingData?.purchasedMXI]);
-
-  const loadCurrentStage = async () => {
+  const loadCurrentStage = useCallback(async () => {
     try {
       console.log('📊 Loading current presale stage...');
       const { data, error } = await supabase
@@ -209,9 +82,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.error('❌ Failed to load current stage:', error);
       setCurrentStage(null);
     }
-  };
+  }, []);
 
-  const loadUserPurchases = async () => {
+  const loadUserPurchases = useCallback(async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping purchases load');
       return;
@@ -236,9 +109,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.error('❌ Failed to load purchases:', error);
       setUserPurchases([]);
     }
-  };
+  }, [user?.id]);
 
-  const loadVestingData = async () => {
+  const loadVestingData = useCallback(async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping vesting data load');
       return;
@@ -318,9 +191,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const loadReferralStats = async () => {
+  const loadReferralStats = useCallback(async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping referral stats load');
       return;
@@ -439,15 +312,15 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.log('⚠️ Setting empty referral stats due to error');
       setReferralStats(emptyStats);
     }
-  };
+  }, [user?.id]);
 
-  const forceReloadReferrals = async () => {
+  const forceReloadReferrals = useCallback(async () => {
     console.log('🔥 FORCE RELOAD REFERRALS TRIGGERED');
     await loadReferralStats();
     await loadVestingData();
-  };
+  }, [loadReferralStats, loadVestingData]);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     console.log('🔄 Refreshing all presale data...');
     setIsLoading(true);
     try {
@@ -465,7 +338,134 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, user, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
+
+  useEffect(() => {
+    console.log('🔄 PreSaleContext - Loading data, auth state:', { isAuthenticated, userId: user?.id });
+    loadCurrentStage();
+    if (isAuthenticated && user) {
+      loadUserPurchases();
+      loadVestingData();
+      loadReferralStats();
+    } else {
+      setUserPurchases([]);
+      setVestingData(null);
+      setReferralStats(null);
+      setIsLoading(false);
+    }
+  }, [user, isAuthenticated, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
+
+  // Real-time subscription for referrals
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) {
+      return;
+    }
+
+    console.log('🔔 Setting up real-time subscription for referrals and vesting');
+
+    // Subscribe to changes in the referrals table
+    const referralsSubscription = supabase
+      .channel('referrals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'referrals',
+          filter: `referrer_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Referral change detected:', payload);
+          loadReferralStats();
+          loadVestingData(); // Reload vesting data when referrals change
+        }
+      )
+      .subscribe();
+
+    // Subscribe to changes in vesting table
+    const vestingSubscription = supabase
+      .channel('vesting-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vesting',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Vesting change detected:', payload);
+          loadVestingData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to changes in users_profiles (for referral linking)
+    const profilesSubscription = supabase
+      .channel('profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users_profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('🔔 Profile change detected:', payload);
+          loadReferralStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🛑 Cleaning up real-time subscriptions');
+      referralsSubscription.unsubscribe();
+      vestingSubscription.unsubscribe();
+      profilesSubscription.unsubscribe();
+    };
+  }, [user?.id, isAuthenticated, loadReferralStats, loadVestingData]);
+
+  // Real-time vesting updates - NOW ONLY ON PURCHASED MXI
+  useEffect(() => {
+    if (!isAuthenticated || !user || !vestingData?.purchasedMXI) {
+      return;
+    }
+
+    console.log('⏱️ Starting real-time vesting updates for user:', user.id);
+    console.log('💰 Vesting calculated ONLY on purchased MXI:', vestingData.purchasedMXI);
+
+    const interval = setInterval(() => {
+      setVestingData((prev) => {
+        if (!prev) return null;
+
+        const monthlyRate = prev.monthlyRate || 0.03;
+        const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
+        
+        // IMPORTANT: Calculate rewards ONLY on purchased_mxi, NOT total_mxi
+        const increment = prev.purchasedMXI * secondlyRate;
+
+        const newRewards = (prev.currentRewards || 0) + increment;
+
+        return {
+          ...prev,
+          currentRewards: newRewards,
+          lastUpdate: new Date().toISOString(),
+          projections: {
+            // Projections also based ONLY on purchased_mxi
+            days7: prev.purchasedMXI * monthlyRate * (7 / 30),
+            days15: prev.purchasedMXI * monthlyRate * (15 / 30),
+            days30: prev.purchasedMXI * monthlyRate,
+          },
+        };
+      });
+    }, 1000);
+
+    return () => {
+      console.log('🛑 Stopping real-time vesting updates');
+      clearInterval(interval);
+    };
+  }, [user, isAuthenticated, vestingData?.purchasedMXI]);
 
   const purchaseMXI = async (amount: number, paymentMethod: 'paypal' | 'binance') => {
     if (!user?.id) {

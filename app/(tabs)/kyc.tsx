@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -34,11 +34,7 @@ export default function KYCScreen() {
   const [residenceCountry, setResidenceCountry] = useState('');
   const [residencePostalCode, setResidencePostalCode] = useState('');
 
-  useEffect(() => {
-    loadUserData();
-  }, [user]);
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!user?.id) return;
 
     try {
@@ -59,7 +55,11 @@ export default function KYCScreen() {
     } catch (error) {
       console.error('Failed to load user data:', error);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadUserData();
+  }, [loadUserData]);
 
   const pickDocument = async (type: keyof KYCDocuments) => {
     const result = await ImagePicker.launchImageLibraryAsync({

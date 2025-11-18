@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { IconSymbol } from '@/components/IconSymbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreSale } from '@/contexts/PreSaleContext';
@@ -391,7 +391,7 @@ export default function HomeScreen() {
   });
 
   // Load global metrics
-  const loadGlobalMetrics = async () => {
+  const loadGlobalMetrics = useCallback(async () => {
     try {
       console.log('🌍 Loading global metrics...');
       
@@ -434,7 +434,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('❌ Failed to load global metrics:', error);
     }
-  };
+  }, []);
 
   // Real-time subscription for global metrics
   useEffect(() => {
@@ -478,7 +478,7 @@ export default function HomeScreen() {
       vestingSubscription.unsubscribe();
       stageSubscription.unsubscribe();
     };
-  }, []);
+  }, [loadGlobalMetrics, refreshData]);
 
   // Real-time update for global vesting rewards (every second)
   useEffect(() => {
@@ -580,13 +580,13 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [currentStage?.endDate]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     console.log('🔄 Home Screen - Manual refresh triggered');
     setRefreshing(true);
     await refreshData();
     await loadGlobalMetrics();
     setRefreshing(false);
-  };
+  }, [refreshData, loadGlobalMetrics]);
 
   if (isLoading && !currentStage) {
     return (

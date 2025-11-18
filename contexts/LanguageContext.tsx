@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { I18n } from 'i18n-js';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -78,9 +78,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadLanguage();
-  }, []);
+  }, [i18n]);
 
-  const setLocale = async (newLocale: SupportedLanguage) => {
+  const setLocale = useCallback(async (newLocale: SupportedLanguage) => {
     try {
       console.log('🔄 Changing language to:', newLocale);
       setLocaleState(newLocale);
@@ -90,11 +90,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Error saving language:', error);
     }
-  };
+  }, [i18n]);
 
-  const t = (key: string, options?: any): string => {
+  const t = useCallback((key: string, options?: any): string => {
     return i18n.t(key, options);
-  };
+  }, [i18n]);
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t, isLoading }}>

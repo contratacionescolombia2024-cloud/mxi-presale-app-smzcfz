@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -529,7 +529,7 @@ export default function HomeScreen() {
   });
 
   // Load global metrics
-  const loadGlobalMetrics = async () => {
+  const loadGlobalMetrics = useCallback(async () => {
     try {
       const { data: vestingRecords, error: vestingError } = await supabase
         .from('vesting')
@@ -561,7 +561,7 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Failed to load global metrics:', error);
     }
-  };
+  }, []);
 
   // Real-time subscription for global metrics
   useEffect(() => {
@@ -601,7 +601,7 @@ export default function HomeScreen() {
       vestingSubscription.unsubscribe();
       stageSubscription.unsubscribe();
     };
-  }, []);
+  }, [loadGlobalMetrics, refreshData]);
 
   // Real-time update for global vesting rewards (every second)
   useEffect(() => {
@@ -679,12 +679,12 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [currentStage?.endDate]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshData();
     await loadGlobalMetrics();
     setRefreshing(false);
-  };
+  }, [refreshData, loadGlobalMetrics]);
 
   if (isLoading && !currentStage) {
     return (
