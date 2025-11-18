@@ -463,6 +463,12 @@ export default function HomeScreen() {
     minutes: 0,
     seconds: 0,
   });
+  const [phaseCountdown, setPhaseCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   // Load global metrics
   const loadGlobalMetrics = async () => {
@@ -600,7 +606,7 @@ export default function HomeScreen() {
     console.log('🏠 ========================================');
   }, [referralStats, vestingData]);
 
-  // Countdown to February 20, 2026
+  // Countdown to February 20, 2026 (Token Launch)
   useEffect(() => {
     const targetDate = new Date('2026-02-20T00:00:00').getTime();
 
@@ -625,6 +631,34 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Countdown to current phase end
+  useEffect(() => {
+    if (!currentStage?.endDate) return;
+
+    const targetDate = new Date(currentStage.endDate).getTime();
+
+    const updatePhaseCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance > 0) {
+        setPhaseCountdown({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      } else {
+        setPhaseCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    updatePhaseCountdown();
+    const interval = setInterval(updatePhaseCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentStage?.endDate]);
 
   const onRefresh = async () => {
     console.log('🔄 Home Screen - Manual refresh triggered');
@@ -663,7 +697,10 @@ export default function HomeScreen() {
     'Calculation check': `${purchasedMXI} + ${referralMXI} = ${purchasedMXI + referralMXI} (should equal ${totalMXI})`,
   });
   
-  const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
+  // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
+  const totalMXIAvailable = 25000000; // Total MXI available for presale
+  const totalDistributed = globalMetrics?.totalMXIInDistribution || 0;
+  const progress = (totalDistributed / totalMXIAvailable) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -844,50 +881,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Global Vesting Display - NEW */}
-        {globalMetrics && (
-          <View style={styles.globalVestingCard}>
-            <View style={styles.globalVestingHeader}>
-              <Text style={styles.globalVestingTitle}>🌍 Global Vesting Overview</Text>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveBadgeText}>LIVE</Text>
-              </View>
-            </View>
-
-            <View style={styles.globalMetricsGrid}>
-              <View style={styles.globalMetricRow}>
-                <Text style={styles.globalMetricLabel}>Total MXI in Distribution</Text>
-                <Text style={styles.globalMetricValue}>
-                  {globalMetrics.totalMXIInDistribution.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </Text>
-              </View>
-
-              <View style={styles.globalMetricRow}>
-                <Text style={styles.globalMetricLabel}>Users Earning Vesting</Text>
-                <Text style={styles.globalMetricValue}>
-                  {globalMetrics.totalUsersEarning}
-                </Text>
-              </View>
-
-              <View style={styles.globalMetricRow}>
-                <Text style={styles.globalMetricLabel}>Global Vesting Rewards</Text>
-                <Text style={styles.globalMetricValue}>
-                  {globalMetrics.globalVestingRewards.toFixed(4)} MXI
-                </Text>
-              </View>
-
-              <View style={styles.globalMetricRow}>
-                <Text style={styles.globalMetricLabel}>Total Purchased MXI</Text>
-                <Text style={styles.globalMetricValue}>
-                  {globalMetrics.totalPurchasedMXI.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Phase Counter - Single counter for current phase */}
+        {/* UNIFIED: Current Phase Status with Global Data */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -898,29 +892,49 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.salesMetrics}>
+              {/* UNIFIED: Show total MXI in distribution from all users */}
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Total MXI in Distribution</Text>
+                <Text style={styles.metricValue}>
+                  {(globalMetrics?.totalMXIInDistribution || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} MXI
+                </Text>
+              </View>
+
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Global Vesting Rewards</Text>
+                <Text style={styles.metricValue}>
+                  {(globalMetrics?.globalVestingRewards || 0).toFixed(4)} MXI
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
               <View style={styles.metricRow}>
                 <Text style={styles.metricLabel}>Current Phase Price</Text>
                 <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
               </View>
               
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Phase Progress</Text>
+                <Text style={styles.metricLabel}>Overall Progress</Text>
                 <Text style={styles.metricValue}>
-                  {currentStage?.soldMXI.toLocaleString() || '0'} / {currentStage?.totalMXI.toLocaleString() || '0'} MXI
+                  {totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 0 })} / {totalMXIAvailable.toLocaleString()} MXI
                 </Text>
               </View>
               
               <View style={styles.progressBarContainer}>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${progress}%` }]} />
+                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
+                <Text style={styles.progressText}>{progress.toFixed(2)}% Complete</Text>
               </View>
 
+              <View style={styles.divider} />
+
+              {/* Phase End Countdown */}
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Start Date</Text>
+                <Text style={styles.metricLabel}>Phase Ends In</Text>
                 <Text style={styles.metricValue}>
-                  {currentStage ? new Date(currentStage.startDate).toLocaleDateString() : 'N/A'}
+                  {phaseCountdown.days}d {phaseCountdown.hours}h {phaseCountdown.minutes}m {phaseCountdown.seconds}s
                 </Text>
               </View>
 

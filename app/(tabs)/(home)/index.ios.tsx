@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import AppFooter from '@/components/AppFooter';
+import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
   container: {
@@ -363,17 +364,143 @@ const styles = StyleSheet.create({
   },
 });
 
+interface GlobalMetrics {
+  totalMXIInDistribution: number;
+  totalUsersEarning: number;
+  globalVestingRewards: number;
+  totalPurchasedMXI: number;
+}
+
 export default function HomeScreen() {
   const { currentStage, vestingData, referralStats, isLoading, refreshData } = usePreSale();
   const { user } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [globalMetrics, setGlobalMetrics] = useState<GlobalMetrics | null>(null);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
+  const [phaseCountdown, setPhaseCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  // Load global metrics
+  const loadGlobalMetrics = async () => {
+    try {
+      console.log('🌍 Loading global metrics...');
+      
+      // Get all vesting data
+      const { data: vestingRecords, error: vestingError } = await supabase
+        .from('vesting')
+        .select('total_mxi, purchased_mxi, current_rewards');
+
+      if (vestingError) {
+        console.error('❌ Error loading global vesting:', vestingError);
+        return;
+      }
+
+      // Calculate totals
+      const totalMXIInDistribution = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.total_mxi?.toString() || '0')), 0) || 0;
+      
+      const totalPurchasedMXI = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.purchased_mxi?.toString() || '0')), 0) || 0;
+      
+      const globalVestingRewards = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.current_rewards?.toString() || '0')), 0) || 0;
+
+      const totalUsersEarning = vestingRecords?.filter(record => 
+        parseFloat(record.purchased_mxi?.toString() || '0') > 0).length || 0;
+
+      console.log('✅ Global metrics loaded:', {
+        totalMXIInDistribution,
+        totalPurchasedMXI,
+        globalVestingRewards,
+        totalUsersEarning,
+      });
+
+      setGlobalMetrics({
+        totalMXIInDistribution,
+        totalUsersEarning,
+        globalVestingRewards,
+        totalPurchasedMXI,
+      });
+    } catch (error) {
+      console.error('❌ Failed to load global metrics:', error);
+    }
+  };
+
+  // Real-time subscription for global metrics
+  useEffect(() => {
+    loadGlobalMetrics();
+
+    // Subscribe to vesting changes
+    const vestingSubscription = supabase
+      .channel('global-vesting-changes-ios')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vesting',
+        },
+        () => {
+          console.log('🔔 Global vesting change detected, reloading metrics');
+          loadGlobalMetrics();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to presale stage changes
+    const stageSubscription = supabase
+      .channel('presale-stage-changes-ios')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'presale_stages',
+        },
+        () => {
+          console.log('🔔 Presale stage change detected, reloading data');
+          refreshData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      vestingSubscription.unsubscribe();
+      stageSubscription.unsubscribe();
+    };
+  }, []);
+
+  // Real-time update for global vesting rewards (every second)
+  useEffect(() => {
+    if (!globalMetrics?.totalPurchasedMXI) return;
+
+    const interval = setInterval(() => {
+      setGlobalMetrics((prev) => {
+        if (!prev) return null;
+
+        const monthlyRate = 0.03;
+        const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
+        const increment = prev.totalPurchasedMXI * secondlyRate;
+
+        return {
+          ...prev,
+          globalVestingRewards: prev.globalVestingRewards + increment,
+        };
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [globalMetrics?.totalPurchasedMXI]);
 
   // Debug logging for referral stats
   useEffect(() => {
@@ -399,7 +526,7 @@ export default function HomeScreen() {
     console.log('🏠 ========================================');
   }, [referralStats, vestingData]);
 
-  // Countdown to February 20, 2026
+  // Countdown to February 20, 2026 (Token Launch)
   useEffect(() => {
     const targetDate = new Date('2026-02-20T00:00:00').getTime();
 
@@ -425,10 +552,39 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Countdown to current phase end
+  useEffect(() => {
+    if (!currentStage?.endDate) return;
+
+    const targetDate = new Date(currentStage.endDate).getTime();
+
+    const updatePhaseCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance > 0) {
+        setPhaseCountdown({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      } else {
+        setPhaseCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    updatePhaseCountdown();
+    const interval = setInterval(updatePhaseCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentStage?.endDate]);
+
   const onRefresh = async () => {
     console.log('🔄 Home Screen - Manual refresh triggered');
     setRefreshing(true);
     await refreshData();
+    await loadGlobalMetrics();
     setRefreshing(false);
   };
 
@@ -448,16 +604,23 @@ export default function HomeScreen() {
   const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
+  const tournamentsBalance = vestingData?.tournamentsBalance || 0;
+  const commissionBalance = vestingData?.commissionBalance || 0;
   
   console.log('🏠 Display Values:', {
     totalMXI,
     purchasedMXI,
     referralMXI,
     vestingRewards,
+    tournamentsBalance,
+    commissionBalance,
     'Calculation check': `${purchasedMXI} + ${referralMXI} = ${purchasedMXI + referralMXI} (should equal ${totalMXI})`,
   });
   
-  const progress = currentStage ? (currentStage.soldMXI / currentStage.totalMXI) * 100 : 0;
+  // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
+  const totalMXIAvailable = 25000000; // Total MXI available for presale
+  const totalDistributed = globalMetrics?.totalMXIInDistribution || 0;
+  const progress = (totalDistributed / totalMXIAvailable) * 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -555,6 +718,20 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
+            {/* NEW: Challenge Winnings Balance */}
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>🏆 Challenge Winnings</Text>
+              <Text style={styles.balanceRowValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
+            </View>
+
+            {/* Commission Balance */}
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceRowLabel}>💼 Commission Balance</Text>
+              <Text style={styles.balanceRowValue}>{commissionBalance.toFixed(2)} MXI</Text>
+            </View>
+
+            <View style={styles.divider} />
+
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
               <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)} MXI</Text>
@@ -624,7 +801,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Phase Counter - Single counter for current phase */}
+        {/* UNIFIED: Current Phase Status with Global Data */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -635,29 +812,49 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.salesMetrics}>
+              {/* UNIFIED: Show total MXI in distribution from all users */}
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Total MXI in Distribution</Text>
+                <Text style={styles.metricValue}>
+                  {(globalMetrics?.totalMXIInDistribution || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} MXI
+                </Text>
+              </View>
+
+              <View style={styles.metricRow}>
+                <Text style={styles.metricLabel}>Global Vesting Rewards</Text>
+                <Text style={styles.metricValue}>
+                  {(globalMetrics?.globalVestingRewards || 0).toFixed(4)} MXI
+                </Text>
+              </View>
+
+              <View style={styles.divider} />
+
               <View style={styles.metricRow}>
                 <Text style={styles.metricLabel}>Current Phase Price</Text>
                 <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
               </View>
               
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Phase Progress</Text>
+                <Text style={styles.metricLabel}>Overall Progress</Text>
                 <Text style={styles.metricValue}>
-                  {currentStage?.soldMXI.toLocaleString() || '0'} / {currentStage?.totalMXI.toLocaleString() || '0'} MXI
+                  {totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 0 })} / {totalMXIAvailable.toLocaleString()} MXI
                 </Text>
               </View>
               
               <View style={styles.progressBarContainer}>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${progress}%` }]} />
+                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{progress.toFixed(1)}% Complete</Text>
+                <Text style={styles.progressText}>{progress.toFixed(2)}% Complete</Text>
               </View>
 
+              <View style={styles.divider} />
+
+              {/* Phase End Countdown */}
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Start Date</Text>
+                <Text style={styles.metricLabel}>Phase Ends In</Text>
                 <Text style={styles.metricValue}>
-                  {currentStage ? new Date(currentStage.startDate).toLocaleDateString() : 'N/A'}
+                  {phaseCountdown.days}d {phaseCountdown.hours}h {phaseCountdown.minutes}m {phaseCountdown.seconds}s
                 </Text>
               </View>
 

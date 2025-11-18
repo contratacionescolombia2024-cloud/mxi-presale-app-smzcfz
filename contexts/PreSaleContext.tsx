@@ -263,12 +263,16 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         const totalMXI = safeNumeric(data.total_mxi);
         const purchasedMXI = safeNumeric(data.purchased_mxi);
         const currentRewards = safeNumeric(data.current_rewards);
+        const tournamentsBalance = safeNumeric(data.tournaments_balance);
+        const commissionBalance = safeNumeric(data.commission_balance);
         
         console.log('💰 Vesting breakdown:', {
           totalMXI,
           purchasedMXI,
           commissionMXI: totalMXI - purchasedMXI,
           currentRewards,
+          tournamentsBalance,
+          commissionBalance,
           note: 'Vesting rewards calculated ONLY on purchasedMXI'
         });
         
@@ -280,6 +284,8 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           currentRewards: currentRewards,
           monthlyRate: monthlyRate,
           lastUpdate: data.last_update || new Date().toISOString(),
+          tournamentsBalance: tournamentsBalance,
+          commissionBalance: commissionBalance,
           projections: {
             // Projections based ONLY on purchased_mxi
             days7: purchasedMXI * monthlyRate * (7 / 30),
@@ -297,6 +303,8 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           currentRewards: 0,
           monthlyRate: 0.03,
           lastUpdate: new Date().toISOString(),
+          tournamentsBalance: 0,
+          commissionBalance: 0,
           projections: {
             days7: 0,
             days15: 0,

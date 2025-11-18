@@ -44,6 +44,8 @@ export interface VestingData {
   currentRewards: number;
   monthlyRate: number;
   lastUpdate: string;
+  tournamentsBalance?: number;
+  commissionBalance?: number;
   projections: {
     days7: number;
     days15: number;
