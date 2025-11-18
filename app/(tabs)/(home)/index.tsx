@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
+import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
   container: {
@@ -339,6 +340,66 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: 'right',
   },
+  globalVestingCard: {
+    backgroundColor: colors.sectionPink,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(236, 72, 153, 0.4)',
+  },
+  globalVestingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  globalVestingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(236, 72, 153, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4ade80',
+  },
+  liveBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  globalMetricsGrid: {
+    gap: 12,
+  },
+  globalMetricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+    padding: 16,
+    borderRadius: 12,
+  },
+  globalMetricLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  globalMetricValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.highlight,
+  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -383,18 +444,137 @@ const styles = StyleSheet.create({
   },
 });
 
+interface GlobalMetrics {
+  totalMXIInDistribution: number;
+  totalUsersEarning: number;
+  globalVestingRewards: number;
+  totalPurchasedMXI: number;
+}
+
 export default function HomeScreen() {
   const { currentStage, vestingData, referralStats, isLoading, refreshData } = usePreSale();
   const { user } = useAuth();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
-  const [challengeWinnings, setChallengeWinnings] = useState(0);
+  const [globalMetrics, setGlobalMetrics] = useState<GlobalMetrics | null>(null);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0,
   });
+
+  // Load global metrics
+  const loadGlobalMetrics = async () => {
+    try {
+      console.log('🌍 Loading global metrics...');
+      
+      // Get all vesting data
+      const { data: vestingRecords, error: vestingError } = await supabase
+        .from('vesting')
+        .select('total_mxi, purchased_mxi, current_rewards');
+
+      if (vestingError) {
+        console.error('❌ Error loading global vesting:', vestingError);
+        return;
+      }
+
+      // Calculate totals
+      const totalMXIInDistribution = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.total_mxi?.toString() || '0')), 0) || 0;
+      
+      const totalPurchasedMXI = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.purchased_mxi?.toString() || '0')), 0) || 0;
+      
+      const globalVestingRewards = vestingRecords?.reduce((sum, record) => 
+        sum + (parseFloat(record.current_rewards?.toString() || '0')), 0) || 0;
+
+      const totalUsersEarning = vestingRecords?.filter(record => 
+        parseFloat(record.purchased_mxi?.toString() || '0') > 0).length || 0;
+
+      console.log('✅ Global metrics loaded:', {
+        totalMXIInDistribution,
+        totalPurchasedMXI,
+        globalVestingRewards,
+        totalUsersEarning,
+      });
+
+      setGlobalMetrics({
+        totalMXIInDistribution,
+        totalUsersEarning,
+        globalVestingRewards,
+        totalPurchasedMXI,
+      });
+    } catch (error) {
+      console.error('❌ Failed to load global metrics:', error);
+    }
+  };
+
+  // Real-time subscription for global metrics
+  useEffect(() => {
+    loadGlobalMetrics();
+
+    // Subscribe to vesting changes
+    const vestingSubscription = supabase
+      .channel('global-vesting-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'vesting',
+        },
+        () => {
+          console.log('🔔 Global vesting change detected, reloading metrics');
+          loadGlobalMetrics();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to presale stage changes
+    const stageSubscription = supabase
+      .channel('presale-stage-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'presale_stages',
+        },
+        () => {
+          console.log('🔔 Presale stage change detected, reloading data');
+          refreshData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      vestingSubscription.unsubscribe();
+      stageSubscription.unsubscribe();
+    };
+  }, []);
+
+  // Real-time update for global vesting rewards (every second)
+  useEffect(() => {
+    if (!globalMetrics?.totalPurchasedMXI) return;
+
+    const interval = setInterval(() => {
+      setGlobalMetrics((prev) => {
+        if (!prev) return null;
+
+        const monthlyRate = 0.03;
+        const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
+        const increment = prev.totalPurchasedMXI * secondlyRate;
+
+        return {
+          ...prev,
+          globalVestingRewards: prev.globalVestingRewards + increment,
+        };
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [globalMetrics?.totalPurchasedMXI]);
 
   // Debug logging for referral stats
   useEffect(() => {
@@ -450,6 +630,7 @@ export default function HomeScreen() {
     console.log('🔄 Home Screen - Manual refresh triggered');
     setRefreshing(true);
     await refreshData();
+    await loadGlobalMetrics();
     setRefreshing(false);
   };
 
@@ -662,6 +843,49 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
+
+        {/* Global Vesting Display - NEW */}
+        {globalMetrics && (
+          <View style={styles.globalVestingCard}>
+            <View style={styles.globalVestingHeader}>
+              <Text style={styles.globalVestingTitle}>🌍 Global Vesting Overview</Text>
+              <View style={styles.liveBadge}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveBadgeText}>LIVE</Text>
+              </View>
+            </View>
+
+            <View style={styles.globalMetricsGrid}>
+              <View style={styles.globalMetricRow}>
+                <Text style={styles.globalMetricLabel}>Total MXI in Distribution</Text>
+                <Text style={styles.globalMetricValue}>
+                  {globalMetrics.totalMXIInDistribution.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </Text>
+              </View>
+
+              <View style={styles.globalMetricRow}>
+                <Text style={styles.globalMetricLabel}>Users Earning Vesting</Text>
+                <Text style={styles.globalMetricValue}>
+                  {globalMetrics.totalUsersEarning}
+                </Text>
+              </View>
+
+              <View style={styles.globalMetricRow}>
+                <Text style={styles.globalMetricLabel}>Global Vesting Rewards</Text>
+                <Text style={styles.globalMetricValue}>
+                  {globalMetrics.globalVestingRewards.toFixed(4)} MXI
+                </Text>
+              </View>
+
+              <View style={styles.globalMetricRow}>
+                <Text style={styles.globalMetricLabel}>Total Purchased MXI</Text>
+                <Text style={styles.globalMetricValue}>
+                  {globalMetrics.totalPurchasedMXI.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Phase Counter - Single counter for current phase */}
         <View style={styles.phaseCountersContainer}>
