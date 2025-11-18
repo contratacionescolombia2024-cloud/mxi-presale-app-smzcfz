@@ -20,6 +20,7 @@ import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,76 +55,104 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   countdownCard: {
-    backgroundColor: colors.sectionOrangeStrong,
+    backgroundColor: colors.card,
     marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 24,
+    padding: 28,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(217, 119, 6, 0.5)',
+    borderWidth: 3,
+    borderColor: '#D97706',
     shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+    overflow: 'hidden',
+  },
+  countdownGradientBg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.15,
+  },
+  countdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  rocketIcon: {
+    fontSize: 32,
   },
   countdownTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: colors.text,
-    marginBottom: 6,
     textAlign: 'center',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   countdownSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 24,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   countdownContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 20,
+    width: '100%',
   },
   countdownItem: {
     alignItems: 'center',
-    backgroundColor: 'rgba(217, 119, 6, 0.2)',
-    borderRadius: 12,
-    padding: 12,
-    minWidth: 70,
-    borderWidth: 1.5,
-    borderColor: 'rgba(217, 119, 6, 0.4)',
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: 16,
+    flex: 1,
+    maxWidth: 85,
+    borderWidth: 2,
+    borderColor: '#D97706',
     shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   countdownNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#D97706',
+    marginBottom: 6,
     textShadowColor: 'rgba(217, 119, 6, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   countdownLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
     textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 0.8,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  launchDateContainer: {
+    backgroundColor: 'rgba(217, 119, 6, 0.15)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   launchDate: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#D97706',
     textAlign: 'center',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   balanceCard: {
     backgroundColor: colors.sectionGreen,
@@ -339,6 +368,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 6,
     textAlign: 'right',
+  },
+  phaseCountdownContainer: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  phaseCountdownTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  phaseCountdownGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 8,
+  },
+  phaseCountdownItem: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 12,
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
+  },
+  phaseCountdownNumber: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: colors.info,
+    marginBottom: 4,
+  },
+  phaseCountdownLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   globalVestingCard: {
     backgroundColor: colors.sectionPink,
@@ -723,9 +795,12 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Premium Redesign */}
+        {/* PROFESSIONAL COUNTDOWN TIMER - REDESIGNED */}
         <View style={styles.countdownCard}>
-          <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
+          <View style={styles.countdownHeader}>
+            <Text style={styles.rocketIcon}>🚀</Text>
+            <Text style={styles.countdownTitle}>MXI Token Launch</Text>
+          </View>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
           
           <View style={styles.countdownContainer}>
@@ -747,7 +822,9 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <Text style={styles.launchDate}>February 20, 2026</Text>
+          <View style={styles.launchDateContainer}>
+            <Text style={styles.launchDate}>📅 February 20, 2026</Text>
+          </View>
         </View>
 
         {/* Balance Card - WITH CHALLENGE WINNINGS */}
@@ -881,7 +958,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* UNIFIED: Current Phase Status with Global Data */}
+        {/* UNIFIED: Current Phase Status with Global Data + PROFESSIONAL COUNTDOWN */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -930,12 +1007,27 @@ export default function HomeScreen() {
 
               <View style={styles.divider} />
 
-              {/* Phase End Countdown */}
-              <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Phase Ends In</Text>
-                <Text style={styles.metricValue}>
-                  {phaseCountdown.days}d {phaseCountdown.hours}h {phaseCountdown.minutes}m {phaseCountdown.seconds}s
-                </Text>
+              {/* PROFESSIONAL PHASE END COUNTDOWN */}
+              <View style={styles.phaseCountdownContainer}>
+                <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
+                <View style={styles.phaseCountdownGrid}>
+                  <View style={styles.phaseCountdownItem}>
+                    <Text style={styles.phaseCountdownNumber}>{phaseCountdown.days}</Text>
+                    <Text style={styles.phaseCountdownLabel}>Days</Text>
+                  </View>
+                  <View style={styles.phaseCountdownItem}>
+                    <Text style={styles.phaseCountdownNumber}>{phaseCountdown.hours}</Text>
+                    <Text style={styles.phaseCountdownLabel}>Hours</Text>
+                  </View>
+                  <View style={styles.phaseCountdownItem}>
+                    <Text style={styles.phaseCountdownNumber}>{phaseCountdown.minutes}</Text>
+                    <Text style={styles.phaseCountdownLabel}>Min</Text>
+                  </View>
+                  <View style={styles.phaseCountdownItem}>
+                    <Text style={styles.phaseCountdownNumber}>{phaseCountdown.seconds}</Text>
+                    <Text style={styles.phaseCountdownLabel}>Sec</Text>
+                  </View>
+                </View>
               </View>
 
               <View style={styles.metricRow}>
