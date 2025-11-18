@@ -336,6 +336,7 @@ export default function MiniBattlesScreen() {
         console.error('❌ Error loading tournaments balance:', vestingError);
       } else {
         setTournamentsBalance(vestingData?.tournaments_balance || 0);
+        console.log('💰 Tournaments balance:', vestingData?.tournaments_balance || 0);
       }
 
       const { data: battlesData, error: battlesError } = await supabase
@@ -348,6 +349,7 @@ export default function MiniBattlesScreen() {
         console.error('❌ Error loading mini battles:', battlesError);
       } else {
         setMiniBattles(battlesData || []);
+        console.log('✅ Mini battles loaded:', battlesData?.length || 0);
       }
 
       console.log('✅ Mini battles data loaded');
@@ -365,18 +367,30 @@ export default function MiniBattlesScreen() {
   };
 
   const handleCreateMiniBattle = async () => {
+    console.log('🎮 ========================================');
+    console.log('🎮 CREATE MINI BATTLE - START');
+    console.log('🎮 ========================================');
+    
     if (!user?.id) {
+      console.error('❌ No user ID');
       Alert.alert('Error', 'You must be logged in to create a mini battle.');
       return;
     }
 
     const fee = parseFloat(entryFee);
+    console.log('💰 Entry fee:', fee);
+    console.log('💰 Tournaments balance:', tournamentsBalance);
+    console.log('👥 Max players:', maxPlayers);
+    console.log('🎮 Game type:', selectedGame);
+
     if (isNaN(fee) || fee < MINI_BATTLE_MIN_ENTRY || fee > MINI_BATTLE_MAX_ENTRY) {
+      console.error('❌ Invalid entry fee:', fee);
       Alert.alert('Invalid Entry Fee', `Entry fee must be between ${MINI_BATTLE_MIN_ENTRY} and ${MINI_BATTLE_MAX_ENTRY} MXI`);
       return;
     }
 
     if (tournamentsBalance < fee) {
+      console.error('❌ Insufficient balance:', tournamentsBalance, '<', fee);
       Alert.alert('Insufficient Balance', 'You do not have enough tournaments balance to create this mini battle.');
       return;
     }
@@ -384,7 +398,13 @@ export default function MiniBattlesScreen() {
     setIsCreating(true);
 
     try {
-      console.log('🎮 Creating mini battle:', { game: selectedGame, entryFee: fee, maxPlayers });
+      console.log('📡 Calling create_mini_battle RPC...');
+      console.log('📡 Parameters:', {
+        p_user_id: user.id,
+        p_game_type: selectedGame,
+        p_entry_fee: fee,
+        p_max_players: maxPlayers,
+      });
 
       const { data, error } = await supabase.rpc('create_mini_battle', {
         p_user_id: user.id,
@@ -393,19 +413,48 @@ export default function MiniBattlesScreen() {
         p_max_players: maxPlayers,
       });
 
-      if (error) throw error;
+      console.log('📡 RPC Response:', { data, error });
+
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ No data returned from RPC');
+        Alert.alert('Error', 'Failed to create mini battle. No response from server.');
+        return;
+      }
 
       if (!data.success) {
+        console.error('❌ RPC returned failure:', data.message);
         Alert.alert('Error', data.message || 'Failed to create mini battle');
         return;
       }
 
+      console.log('✅ Mini battle created successfully!');
+      console.log('✅ Mini battle ID:', data.mini_battle_id);
+      
       setShowCreateModal(false);
       Alert.alert('Success! 🎉', 'Mini battle created! Waiting for players to join.');
       await loadData();
-    } catch (error) {
+      
+      console.log('🎮 ========================================');
+      console.log('🎮 CREATE MINI BATTLE - SUCCESS');
+      console.log('🎮 ========================================');
+    } catch (error: any) {
       console.error('❌ Failed to create mini battle:', error);
-      Alert.alert('Error', 'Failed to create mini battle. Please try again.');
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      Alert.alert('Error', `Failed to create mini battle: ${error.message || 'Unknown error'}. Please try again.`);
+      
+      console.log('🎮 ========================================');
+      console.log('🎮 CREATE MINI BATTLE - FAILED');
+      console.log('🎮 ========================================');
     } finally {
       setIsCreating(false);
     }
@@ -413,11 +462,13 @@ export default function MiniBattlesScreen() {
 
   const handleJoinMiniBattle = async (miniBattleId: string) => {
     if (!user?.id) {
-      Alert.alert('Error', 'You must be logged in to join a mini battle.');
+      console.log('⚠️ No user ID');
       return;
     }
 
     try {
+      console.log('🎮 Joining mini battle:', miniBattleId);
+
       const { data, error } = await supabase.rpc('join_mini_battle', {
         p_mini_battle_id: miniBattleId,
         p_user_id: user.id,

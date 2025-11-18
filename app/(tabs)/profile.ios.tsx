@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
+import AppFooter from '@/components/AppFooter';
 
 export default function ProfileScreen() {
   const { user, logout, isAdmin } = useAuth();
@@ -203,6 +204,8 @@ export default function ProfileScreen() {
         >
           <Text style={buttonStyles.textOutline}>Logout</Text>
         </TouchableOpacity>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );
@@ -307,5 +310,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     marginTop: 20,
+    marginBottom: 20,
   },
 });

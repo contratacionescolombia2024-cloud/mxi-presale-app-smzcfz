@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   footerText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
@@ -25,9 +25,9 @@ export default function AppFooter() {
     <View style={styles.footer}>
       <Text style={styles.footerText}>© 2025 MXI Strategic Holdings Ltd.</Text>
       <Text style={styles.footerText}>
-        MAXCOIN (MXI) is a registered trademark of MXI Strategic Holdings Ltd., Cayman Islands.
+        MAXCOIN (MXI) es una marca registrada de MXI Strategic Holdings Ltd., Islas Caimán.
       </Text>
-      <Text style={styles.footerText}>App operated by MXI Technologies Inc. (Panamá).</Text>
+      <Text style={styles.footerText}>Aplicación operada por MXI Technologies Inc. (Panamá).</Text>
     </View>
   );
 }

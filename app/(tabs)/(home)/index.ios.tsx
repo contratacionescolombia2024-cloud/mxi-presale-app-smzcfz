@@ -16,6 +16,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { useAuth } from '@/contexts/AuthContext';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -724,6 +725,8 @@ export default function HomeScreen() {
             <Text style={styles.actionLabel}>KYC Verification</Text>
           </TouchableOpacity>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );

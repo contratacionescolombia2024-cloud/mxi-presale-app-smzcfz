@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -365,6 +366,8 @@ export default function RegisterScreen() {
             <Text style={styles.loginLink}>Sign In</Text>
           </TouchableOpacity>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );

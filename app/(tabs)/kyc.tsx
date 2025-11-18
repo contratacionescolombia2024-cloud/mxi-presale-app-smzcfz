@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,19 +8,60 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '@/app/integrations/supabase/client';
+import AppFooter from '@/components/AppFooter';
+
+interface KYCDocuments {
+  idFront?: string;
+  idBack?: string;
+  selfie?: string;
+  proofOfResidence?: string;
+}
 
 export default function KYCScreen() {
   const { user } = useAuth();
-  const [documents, setDocuments] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<KYCDocuments>({});
   const [loading, setLoading] = useState(false);
+  const [residenceAddress, setResidenceAddress] = useState('');
+  const [residenceCity, setResidenceCity] = useState('');
+  const [residenceCountry, setResidenceCountry] = useState('');
+  const [residencePostalCode, setResidencePostalCode] = useState('');
 
-  const pickDocument = async () => {
+  useEffect(() => {
+    loadUserData();
+  }, [user]);
+
+  const loadUserData = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('users_profiles')
+        .select('address')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading user data:', error);
+        return;
+      }
+
+      if (data?.address) {
+        setResidenceAddress(data.address);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    }
+  };
+
+  const pickDocument = async (type: keyof KYCDocuments) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -28,22 +69,60 @@ export default function KYCScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      setDocuments([...documents, result.assets[0].uri]);
+      setDocuments({ ...documents, [type]: result.assets[0].uri });
     }
   };
 
   const handleSubmit = async () => {
-    if (documents.length === 0) {
-      Alert.alert('Error', 'Please upload at least one document');
+    // Validate all required documents
+    if (!documents.idFront || !documents.idBack || !documents.selfie || !documents.proofOfResidence) {
+      Alert.alert('Error', 'Please upload all required documents:\n- ID Front\n- ID Back\n- Selfie with ID\n- Proof of Residence');
+      return;
+    }
+
+    // Validate residence information
+    if (!residenceAddress || !residenceCity || !residenceCountry || !residencePostalCode) {
+      Alert.alert('Error', 'Please fill in all residence information fields');
       return;
     }
 
     setLoading(true);
-    // Simulate upload
-    setTimeout(() => {
+
+    try {
+      // In a real implementation, you would upload the documents to Supabase Storage
+      // For now, we'll just update the user profile with the residence information
+      const fullAddress = `${residenceAddress}, ${residenceCity}, ${residencePostalCode}, ${residenceCountry}`;
+
+      const { error } = await supabase
+        .from('users_profiles')
+        .update({
+          address: fullAddress,
+          kyc_status: 'pending',
+          kyc_documents: [
+            'id_front_uploaded',
+            'id_back_uploaded',
+            'selfie_uploaded',
+            'proof_of_residence_uploaded'
+          ]
+        })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+
+      Alert.alert('Success', 'KYC documents submitted for review. You will be notified once the review is complete.');
+      
+      // Clear the form
+      setDocuments({});
+      setResidenceAddress('');
+      setResidenceCity('');
+      setResidenceCountry('');
+      setResidencePostalCode('');
+    } catch (error) {
+      console.error('Error submitting KYC:', error);
+      Alert.alert('Error', 'Failed to submit KYC documents. Please try again.');
+    } finally {
       setLoading(false);
-      Alert.alert('Success', 'KYC documents submitted for review');
-    }, 2000);
+    }
   };
 
   const getStatusInfo = () => {
@@ -52,7 +131,7 @@ export default function KYCScreen() {
         return {
           icon: 'verified_user',
           color: colors.success || '#4CAF50',
-          title: 'KYC Verified',
+          title: 'KYC Verified ✓',
           message: 'Your identity has been verified successfully.',
         };
       case 'rejected':
@@ -105,7 +184,7 @@ export default function KYCScreen() {
         {(user?.kycStatus === 'rejected' || !user?.kycStatus || user?.kycStatus === 'pending') && (
           <>
             <View style={commonStyles.card}>
-              <Text style={styles.cardTitle}>Required Documents</Text>
+              <Text style={styles.cardTitle}>📋 Required Documents</Text>
               <Text style={styles.cardText}>
                 Please upload clear photos of the following:
               </Text>
@@ -127,7 +206,7 @@ export default function KYCScreen() {
                     size={20} 
                     color={colors.success || '#4CAF50'} 
                   />
-                  <Text style={styles.requirementText}>Proof of address (utility bill, bank statement)</Text>
+                  <Text style={styles.requirementText}>Selfie holding your ID</Text>
                 </View>
                 <View style={styles.requirementItem}>
                   <IconSymbol 
@@ -136,52 +215,211 @@ export default function KYCScreen() {
                     size={20} 
                     color={colors.success || '#4CAF50'} 
                   />
-                  <Text style={styles.requirementText}>Selfie holding your ID</Text>
+                  <Text style={styles.requirementText}>Proof of residence (utility bill, bank statement)</Text>
                 </View>
               </View>
             </View>
 
             <View style={commonStyles.card}>
-              <Text style={styles.cardTitle}>Upload Documents</Text>
+              <Text style={styles.cardTitle}>📄 Upload Documents</Text>
               
-              {documents.map((doc, index) => (
-                <View key={index} style={styles.documentItem}>
-                  <IconSymbol 
-                    ios_icon_name="doc.fill" 
-                    android_material_icon_name="description" 
-                    size={24} 
-                    color={colors.primary} 
-                  />
-                  <Text style={styles.documentText}>Document {index + 1}</Text>
-                  <TouchableOpacity onPress={() => setDocuments(documents.filter((_, i) => i !== index))}>
+              {/* ID Front */}
+              <View style={styles.documentSection}>
+                <Text style={styles.documentLabel}>ID Front</Text>
+                {documents.idFront ? (
+                  <View style={styles.documentItem}>
                     <IconSymbol 
-                      ios_icon_name="trash.fill" 
-                      android_material_icon_name="delete" 
-                      size={20} 
-                      color={colors.error || '#F44336'} 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success || '#4CAF50'} 
                     />
+                    <Text style={styles.documentText}>ID Front Uploaded</Text>
+                    <TouchableOpacity onPress={() => setDocuments({ ...documents, idFront: undefined })}>
+                      <IconSymbol 
+                        ios_icon_name="trash.fill" 
+                        android_material_icon_name="delete" 
+                        size={20} 
+                        color={colors.error || '#F44336'} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[buttonStyles.outline, styles.uploadButton]}
+                    onPress={() => pickDocument('idFront')}
+                  >
+                    <IconSymbol 
+                      ios_icon_name="plus.circle.fill" 
+                      android_material_icon_name="add_circle" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    <Text style={[buttonStyles.textOutline, { marginLeft: 8 }]}>Upload ID Front</Text>
                   </TouchableOpacity>
-                </View>
-              ))}
+                )}
+              </View>
 
-              <TouchableOpacity 
-                style={[buttonStyles.outline, styles.uploadButton]}
-                onPress={pickDocument}
-              >
-                <IconSymbol 
-                  ios_icon_name="plus.circle.fill" 
-                  android_material_icon_name="add_circle" 
-                  size={20} 
-                  color={colors.primary} 
-                />
-                <Text style={[buttonStyles.textOutline, { marginLeft: 8 }]}>Add Document</Text>
-              </TouchableOpacity>
+              {/* ID Back */}
+              <View style={styles.documentSection}>
+                <Text style={styles.documentLabel}>ID Back</Text>
+                {documents.idBack ? (
+                  <View style={styles.documentItem}>
+                    <IconSymbol 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success || '#4CAF50'} 
+                    />
+                    <Text style={styles.documentText}>ID Back Uploaded</Text>
+                    <TouchableOpacity onPress={() => setDocuments({ ...documents, idBack: undefined })}>
+                      <IconSymbol 
+                        ios_icon_name="trash.fill" 
+                        android_material_icon_name="delete" 
+                        size={20} 
+                        color={colors.error || '#F44336'} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[buttonStyles.outline, styles.uploadButton]}
+                    onPress={() => pickDocument('idBack')}
+                  >
+                    <IconSymbol 
+                      ios_icon_name="plus.circle.fill" 
+                      android_material_icon_name="add_circle" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    <Text style={[buttonStyles.textOutline, { marginLeft: 8 }]}>Upload ID Back</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Selfie */}
+              <View style={styles.documentSection}>
+                <Text style={styles.documentLabel}>Selfie with ID</Text>
+                {documents.selfie ? (
+                  <View style={styles.documentItem}>
+                    <IconSymbol 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success || '#4CAF50'} 
+                    />
+                    <Text style={styles.documentText}>Selfie Uploaded</Text>
+                    <TouchableOpacity onPress={() => setDocuments({ ...documents, selfie: undefined })}>
+                      <IconSymbol 
+                        ios_icon_name="trash.fill" 
+                        android_material_icon_name="delete" 
+                        size={20} 
+                        color={colors.error || '#F44336'} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[buttonStyles.outline, styles.uploadButton]}
+                    onPress={() => pickDocument('selfie')}
+                  >
+                    <IconSymbol 
+                      ios_icon_name="plus.circle.fill" 
+                      android_material_icon_name="add_circle" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    <Text style={[buttonStyles.textOutline, { marginLeft: 8 }]}>Upload Selfie</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Proof of Residence */}
+              <View style={styles.documentSection}>
+                <Text style={styles.documentLabel}>Proof of Residence</Text>
+                {documents.proofOfResidence ? (
+                  <View style={styles.documentItem}>
+                    <IconSymbol 
+                      ios_icon_name="checkmark.circle.fill" 
+                      android_material_icon_name="check_circle" 
+                      size={24} 
+                      color={colors.success || '#4CAF50'} 
+                    />
+                    <Text style={styles.documentText}>Proof of Residence Uploaded</Text>
+                    <TouchableOpacity onPress={() => setDocuments({ ...documents, proofOfResidence: undefined })}>
+                      <IconSymbol 
+                        ios_icon_name="trash.fill" 
+                        android_material_icon_name="delete" 
+                        size={20} 
+                        color={colors.error || '#F44336'} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={[buttonStyles.outline, styles.uploadButton]}
+                    onPress={() => pickDocument('proofOfResidence')}
+                  >
+                    <IconSymbol 
+                      ios_icon_name="plus.circle.fill" 
+                      android_material_icon_name="add_circle" 
+                      size={20} 
+                      color={colors.primary} 
+                    />
+                    <Text style={[buttonStyles.textOutline, { marginLeft: 8 }]}>Upload Proof of Residence</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {/* Residence Information */}
+            <View style={commonStyles.card}>
+              <Text style={styles.cardTitle}>🏠 Residence Information</Text>
+              <Text style={styles.cardText}>
+                Please provide your current residence details:
+              </Text>
+
+              <Text style={styles.inputLabel}>Street Address</Text>
+              <TextInput
+                style={styles.input}
+                value={residenceAddress}
+                onChangeText={setResidenceAddress}
+                placeholder="123 Main Street, Apt 4B"
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <Text style={styles.inputLabel}>City</Text>
+              <TextInput
+                style={styles.input}
+                value={residenceCity}
+                onChangeText={setResidenceCity}
+                placeholder="New York"
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <Text style={styles.inputLabel}>Postal Code</Text>
+              <TextInput
+                style={styles.input}
+                value={residencePostalCode}
+                onChangeText={setResidencePostalCode}
+                placeholder="10001"
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <Text style={styles.inputLabel}>Country</Text>
+              <TextInput
+                style={styles.input}
+                value={residenceCountry}
+                onChangeText={setResidenceCountry}
+                placeholder="United States"
+                placeholderTextColor={colors.textSecondary}
+              />
             </View>
 
             <TouchableOpacity
               style={[buttonStyles.primary, styles.submitButton]}
               onPress={handleSubmit}
-              disabled={loading || documents.length === 0}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color={colors.card} />
@@ -205,6 +443,8 @@ export default function KYCScreen() {
             </Text>
           </View>
         )}
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );
@@ -278,13 +518,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
   },
+  documentSection: {
+    marginBottom: 16,
+  },
+  documentLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
   documentItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     backgroundColor: colors.background,
     borderRadius: 8,
-    marginBottom: 8,
     gap: 12,
   },
   documentText: {
@@ -296,7 +544,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
     marginTop: 8,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   submitButton: {
     marginTop: 8,

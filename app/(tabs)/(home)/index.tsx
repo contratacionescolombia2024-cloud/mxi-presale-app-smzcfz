@@ -18,6 +18,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AppFooter from '@/components/AppFooter';
 
 const styles = StyleSheet.create({
   container: {
@@ -723,6 +724,8 @@ export default function HomeScreen() {
             <Text style={styles.actionLabel}>KYC Verification</Text>
           </TouchableOpacity>
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );
