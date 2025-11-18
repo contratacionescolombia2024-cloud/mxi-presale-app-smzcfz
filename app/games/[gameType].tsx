@@ -256,6 +256,43 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
   },
+  balanceSourceSelector: {
+    marginBottom: 20,
+  },
+  balanceSourceOptions: {
+    gap: 12,
+  },
+  balanceSourceOption: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  balanceSourceOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionBlue,
+  },
+  balanceSourceOptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  balanceSourceOptionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  balanceSourceOptionBalance: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  balanceSourceOptionDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
 });
 
 // REMOVED: floor_is_lava and reflex_bomb
@@ -270,7 +307,12 @@ export default function GameScreen() {
   const [activeTournament, setActiveTournament] = useState<Tournament | null>(null);
   const [isInGame, setIsInGame] = useState(false);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
+  const [showBalanceSourceModal, setShowBalanceSourceModal] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<25 | 50>(50);
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
+  const [balanceSource, setBalanceSource] = useState<'tournaments' | 'commissions'>('tournaments');
+  const [tournamentsBalance, setTournamentsBalance] = useState(0);
+  const [commissionBalance, setCommissionBalance] = useState(0);
   const [totalActiveTournaments, setTotalActiveTournaments] = useState(0);
   const [maxActiveTournaments, setMaxActiveTournaments] = useState(MAX_ACTIVE_TOURNAMENTS);
   const channelRef = useRef<any>(null);
@@ -279,6 +321,7 @@ export default function GameScreen() {
 
   useEffect(() => {
     loadTournaments();
+    loadBalances();
     setupRealtimeSubscription();
 
     return () => {
@@ -315,6 +358,27 @@ export default function GameScreen() {
         loadTournaments();
       })
       .subscribe();
+  };
+
+  const loadBalances = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('vesting')
+        .select('tournaments_balance, commission_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Error loading balances:', error);
+      } else {
+        setTournamentsBalance(data?.tournaments_balance || 0);
+        setCommissionBalance(data?.commission_balance || 0);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load balances:', error);
+    }
   };
 
   const loadTournaments = async () => {
@@ -429,18 +493,27 @@ export default function GameScreen() {
     }
   };
 
-  const handleJoinTournament = async (tournamentId: string) => {
-    if (!user?.id) {
-      console.log('⚠️ No user ID');
+  const handleJoinTournamentPress = (tournamentId: string) => {
+    setSelectedTournamentId(tournamentId);
+    setBalanceSource('tournaments'); // Reset to default
+    setShowBalanceSourceModal(true);
+  };
+
+  const handleJoinTournament = async () => {
+    if (!user?.id || !selectedTournamentId) {
+      console.log('⚠️ No user ID or tournament ID');
       return;
     }
 
+    setShowBalanceSourceModal(false);
+
     try {
-      console.log('🎮 Joining tournament:', tournamentId);
+      console.log('🎮 Joining tournament:', selectedTournamentId, 'with balance source:', balanceSource);
 
       const { data, error } = await supabase.rpc('join_tournament', {
-        p_tournament_id: tournamentId,
+        p_tournament_id: selectedTournamentId,
         p_user_id: user.id,
+        p_balance_source: balanceSource,
       });
 
       if (error) {
@@ -456,11 +529,13 @@ export default function GameScreen() {
       console.log('✅ Joined tournament successfully');
       Alert.alert('Success', 'You have joined the tournament! Good luck!');
 
-      const tournament = tournaments.find((t) => t.id === tournamentId);
+      const tournament = tournaments.find((t) => t.id === selectedTournamentId);
       if (tournament) {
         setActiveTournament(tournament);
         setIsInGame(true);
       }
+      
+      await loadBalances();
     } catch (error) {
       console.error('❌ Failed to join tournament:', error);
       Alert.alert('Error', 'Failed to join tournament. Please try again.');
@@ -665,7 +740,7 @@ export default function GameScreen() {
                       tournament.status !== 'waiting') &&
                       styles.joinButtonDisabled,
                   ]}
-                  onPress={() => handleJoinTournament(tournament.id)}
+                  onPress={() => handleJoinTournamentPress(tournament.id)}
                   disabled={
                     tournament.current_players >= tournament.max_players ||
                     tournament.status !== 'waiting'
@@ -694,6 +769,7 @@ export default function GameScreen() {
         )}
       </ScrollView>
 
+      {/* PARTICIPANT SELECTION MODAL */}
       {!isViralZone && (
         <Modal
           visible={showParticipantModal}
@@ -742,6 +818,74 @@ export default function GameScreen() {
           </View>
         </Modal>
       )}
+
+      {/* BALANCE SOURCE SELECTION MODAL */}
+      <Modal
+        visible={showBalanceSourceModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBalanceSourceModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>💰 Select Balance Source</Text>
+            <Text style={styles.modalSubtitle}>
+              Choose which balance to use for the entry fee
+            </Text>
+
+            <View style={styles.balanceSourceSelector}>
+              <View style={styles.balanceSourceOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.balanceSourceOption,
+                    balanceSource === 'tournaments' && styles.balanceSourceOptionSelected,
+                  ]}
+                  onPress={() => setBalanceSource('tournaments')}
+                >
+                  <View style={styles.balanceSourceOptionHeader}>
+                    <Text style={styles.balanceSourceOptionTitle}>🏆 Tournaments Balance</Text>
+                    <Text style={styles.balanceSourceOptionBalance}>{tournamentsBalance.toFixed(2)} MXI</Text>
+                  </View>
+                  <Text style={styles.balanceSourceOptionDescription}>
+                    Use your tournament winnings and challenge rewards
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.balanceSourceOption,
+                    balanceSource === 'commissions' && styles.balanceSourceOptionSelected,
+                  ]}
+                  onPress={() => setBalanceSource('commissions')}
+                >
+                  <View style={styles.balanceSourceOptionHeader}>
+                    <Text style={styles.balanceSourceOptionTitle}>💼 Commission Balance</Text>
+                    <Text style={styles.balanceSourceOptionBalance}>{commissionBalance.toFixed(2)} MXI</Text>
+                  </View>
+                  <Text style={styles.balanceSourceOptionDescription}>
+                    Use your referral commissions
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowBalanceSourceModal(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handleJoinTournament}
+              >
+                <Text style={styles.modalButtonText}>Join Tournament</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

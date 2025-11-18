@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Fragment } from 'react';
 import {
   View,
   Text,
@@ -474,6 +474,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
   },
+  balanceSourceSelector: {
+    marginBottom: 20,
+  },
+  balanceSourceOptions: {
+    gap: 12,
+  },
+  balanceSourceOption: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  balanceSourceOptionSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.sectionBlue,
+  },
+  balanceSourceOptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  balanceSourceOptionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  balanceSourceOptionBalance: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  balanceSourceOptionDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
 });
 
 export default function TournamentsScreen() {
@@ -494,6 +531,7 @@ export default function TournamentsScreen() {
   const [selectedGame, setSelectedGame] = useState<string>('beat_bounce');
   const [entryFee, setEntryFee] = useState('50');
   const [maxPlayers, setMaxPlayers] = useState(4);
+  const [balanceSource, setBalanceSource] = useState<'tournaments' | 'commissions'>('tournaments');
   const [isCreating, setIsCreating] = useState(false);
 
   const participantOptions = [2, 4];
@@ -597,6 +635,7 @@ export default function TournamentsScreen() {
   const handleOpenCreateModal = (gameType: string) => {
     console.log('🎮 Opening create modal for game:', gameType);
     setSelectedGame(gameType);
+    setBalanceSource('tournaments'); // Reset to default
     setShowCreateModal(true);
   };
 
@@ -604,10 +643,11 @@ export default function TournamentsScreen() {
     console.log('🎮 Proceeding to confirmation');
     
     const fee = parseFloat(entryFee);
-    const totalBalance = tournamentsBalance + commissionBalance;
+    const selectedBalance = balanceSource === 'tournaments' ? tournamentsBalance : commissionBalance;
     
     console.log('💰 Entry fee:', fee);
-    console.log('💰 Total available balance:', totalBalance);
+    console.log('💰 Selected balance source:', balanceSource);
+    console.log('💰 Available in selected source:', selectedBalance);
     console.log('👥 Max players:', maxPlayers);
     console.log('🎮 Game type:', selectedGame);
 
@@ -617,9 +657,12 @@ export default function TournamentsScreen() {
       return;
     }
 
-    if (totalBalance < fee) {
-      console.error('❌ Insufficient balance:', totalBalance, '<', fee);
-      Alert.alert('Insufficient Balance', 'You do not have enough balance to create this mini battle.');
+    if (selectedBalance < fee) {
+      console.error('❌ Insufficient balance in selected source:', selectedBalance, '<', fee);
+      Alert.alert(
+        'Insufficient Balance', 
+        `You do not have enough balance in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'}. Please select a different balance source or add funds.`
+      );
       return;
     }
 
@@ -638,10 +681,11 @@ export default function TournamentsScreen() {
     }
 
     const fee = parseFloat(entryFee);
-    const totalBalance = tournamentsBalance + commissionBalance;
+    const selectedBalance = balanceSource === 'tournaments' ? tournamentsBalance : commissionBalance;
     
     console.log('💰 Entry fee:', fee);
-    console.log('💰 Total available balance:', totalBalance);
+    console.log('💰 Balance source:', balanceSource);
+    console.log('💰 Available in selected source:', selectedBalance);
     console.log('👥 Max players:', maxPlayers);
     console.log('🎮 Game type:', selectedGame);
     console.log('👤 User ID:', user.id);
@@ -664,9 +708,9 @@ export default function TournamentsScreen() {
       return;
     }
 
-    if (totalBalance < fee) {
-      console.error('❌ Insufficient balance', { totalBalance, fee });
-      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${totalBalance.toFixed(2)} MXI available.`);
+    if (selectedBalance < fee) {
+      console.error('❌ Insufficient balance', { selectedBalance, fee });
+      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${selectedBalance.toFixed(2)} MXI in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'} balance.`);
       return;
     }
 
@@ -679,6 +723,7 @@ export default function TournamentsScreen() {
         p_game_type: selectedGame,
         p_entry_fee: fee,
         p_max_players: maxPlayers,
+        p_balance_source: balanceSource,
       });
 
       const { data, error } = await supabase.rpc('create_mini_battle', {
@@ -686,6 +731,7 @@ export default function TournamentsScreen() {
         p_game_type: selectedGame,
         p_entry_fee: fee,
         p_max_players: maxPlayers,
+        p_balance_source: balanceSource,
       });
 
       console.log('📡 RPC response:', { data, error });
@@ -727,12 +773,35 @@ export default function TournamentsScreen() {
       return;
     }
 
+    // Show balance selection modal before joining
+    Alert.alert(
+      'Select Balance Source',
+      'Choose which balance to use for the entry fee:',
+      [
+        {
+          text: `Tournaments (${tournamentsBalance.toFixed(2)} MXI)`,
+          onPress: () => performJoinMiniBattle(miniBattleId, 'tournaments'),
+        },
+        {
+          text: `Commissions (${commissionBalance.toFixed(2)} MXI)`,
+          onPress: () => performJoinMiniBattle(miniBattleId, 'commissions'),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  const performJoinMiniBattle = async (miniBattleId: string, source: 'tournaments' | 'commissions') => {
     try {
-      console.log('🎮 Joining mini battle:', miniBattleId);
+      console.log('🎮 Joining mini battle:', miniBattleId, 'with balance source:', source);
 
       const { data, error } = await supabase.rpc('join_mini_battle', {
         p_mini_battle_id: miniBattleId,
-        p_user_id: user.id,
+        p_user_id: user!.id,
+        p_balance_source: source,
       });
 
       if (error) throw error;
@@ -800,9 +869,7 @@ export default function TournamentsScreen() {
   const totalBalance = tournamentsBalance + commissionBalance;
   const fee = parseFloat(entryFee) || 0;
   const prizePool = fee * maxPlayers;
-
-  const myBattles = miniBattles.filter((mb) => mb.creator_id === user?.id);
-  const availableBattles = miniBattles.filter((mb) => mb.creator_id !== user?.id && mb.status === 'waiting');
+  const selectedBalance = balanceSource === 'tournaments' ? tournamentsBalance : commissionBalance;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1107,6 +1174,43 @@ export default function TournamentsScreen() {
                 {MINI_BATTLE_GAME_NAMES[selectedGame as keyof typeof MINI_BATTLE_GAME_NAMES]}
               </Text>
 
+              <View style={styles.balanceSourceSelector}>
+                <Text style={styles.inputLabel}>💰 Select Balance Source</Text>
+                <View style={styles.balanceSourceOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.balanceSourceOption,
+                      balanceSource === 'tournaments' && styles.balanceSourceOptionSelected,
+                    ]}
+                    onPress={() => setBalanceSource('tournaments')}
+                  >
+                    <View style={styles.balanceSourceOptionHeader}>
+                      <Text style={styles.balanceSourceOptionTitle}>🏆 Tournaments Balance</Text>
+                      <Text style={styles.balanceSourceOptionBalance}>{tournamentsBalance.toFixed(2)} MXI</Text>
+                    </View>
+                    <Text style={styles.balanceSourceOptionDescription}>
+                      Use your tournament winnings and challenge rewards
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.balanceSourceOption,
+                      balanceSource === 'commissions' && styles.balanceSourceOptionSelected,
+                    ]}
+                    onPress={() => setBalanceSource('commissions')}
+                  >
+                    <View style={styles.balanceSourceOptionHeader}>
+                      <Text style={styles.balanceSourceOptionTitle}>💼 Commission Balance</Text>
+                      <Text style={styles.balanceSourceOptionBalance}>{commissionBalance.toFixed(2)} MXI</Text>
+                    </View>
+                    <Text style={styles.balanceSourceOptionDescription}>
+                      Use your referral commissions
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               <View style={styles.participantSelector}>
                 <Text style={styles.inputLabel}>Number of Players (including you)</Text>
                 <View style={styles.participantOptions}>
@@ -1206,17 +1310,24 @@ export default function TournamentsScreen() {
               <View style={styles.confirmationDivider} />
 
               <View style={styles.confirmationRow}>
-                <Text style={styles.confirmationLabel}>Your Balance:</Text>
-                <Text style={styles.confirmationValue}>{totalBalance.toFixed(2)} MXI</Text>
+                <Text style={styles.confirmationLabel}>Balance Source:</Text>
+                <Text style={styles.confirmationValue}>
+                  {balanceSource === 'tournaments' ? '🏆 Tournaments' : '💼 Commissions'}
+                </Text>
+              </View>
+
+              <View style={styles.confirmationRow}>
+                <Text style={styles.confirmationLabel}>Current Balance:</Text>
+                <Text style={styles.confirmationValue}>{selectedBalance.toFixed(2)} MXI</Text>
               </View>
 
               <View style={styles.confirmationRow}>
                 <Text style={styles.confirmationLabel}>After Creation:</Text>
-                <Text style={styles.confirmationValue}>{(totalBalance - fee).toFixed(2)} MXI</Text>
+                <Text style={styles.confirmationValue}>{(selectedBalance - fee).toFixed(2)} MXI</Text>
               </View>
 
               <Text style={styles.warningText}>
-                ⚠️ The entry fee will be deducted immediately from your Challenge Winnings and/or Commission Balance
+                ⚠️ The entry fee will be deducted immediately from your selected balance source
               </Text>
             </View>
 
