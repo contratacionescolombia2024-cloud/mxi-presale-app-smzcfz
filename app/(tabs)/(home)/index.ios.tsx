@@ -728,11 +728,6 @@ export default function HomeScreen() {
               <Text style={styles.balanceRowValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
             </View>
 
-            <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>{t('commissionsAvailable')}</Text>
-              <Text style={styles.balanceRowValue}>{commissionBalance.toFixed(2)} MXI</Text>
-            </View>
-
             <View style={styles.divider} />
 
             <View style={styles.balanceRow}>

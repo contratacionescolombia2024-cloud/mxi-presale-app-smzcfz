@@ -863,15 +863,6 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            <View style={styles.balanceRow}>
-              <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                {t('commissionsAvailable')}
-              </Text>
-              <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 15 }]}>
-                {commissionBalance.toFixed(2)} MXI
-              </Text>
-            </View>
-
             <View style={styles.divider} />
 
             <View style={styles.balanceRow}>

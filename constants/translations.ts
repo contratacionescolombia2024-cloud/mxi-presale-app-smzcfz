@@ -62,8 +62,7 @@ export const translations = {
     totalReferrals: 'Total Referrals',
     level: 'Level',
     refs: 'refs',
-    tournamentWinnings: '🏆 Tournament Winnings (Available)',
-    commissionsAvailable: '💼 Commissions (Available for Challenges)',
+    tournamentWinnings: '🏆 MXI Tournaments',
     vestingRewards: 'Vesting Rewards',
     
     // Vesting
@@ -311,8 +310,7 @@ export const translations = {
     totalReferrals: 'Total de Referidos',
     level: 'Nivel',
     refs: 'refs',
-    tournamentWinnings: '🏆 Ganancias de Torneos (Disponibles)',
-    commissionsAvailable: '💼 Comisiones (Disponibles para Desafíos)',
+    tournamentWinnings: '🏆 MXI Torneos',
     vestingRewards: 'Recompensas de Vesting',
     
     // Vesting
@@ -560,8 +558,7 @@ export const translations = {
     totalReferrals: 'Total de Indicações',
     level: 'Nível',
     refs: 'refs',
-    tournamentWinnings: '🏆 Ganhos de Torneios (Disponíveis)',
-    commissionsAvailable: '💼 Comissões (Disponíveis para Desafios)',
+    tournamentWinnings: '🏆 MXI Torneios',
     vestingRewards: 'Recompensas de Vesting',
     
     // Vesting

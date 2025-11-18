@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "Mxi Presale",
-    "slug": "Mxi Presale",
+    "name": "mxi-presale-app-smzcfz",
+    "slug": "mxi-presale-app-smzcfz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
@@ -26,7 +25,7 @@
         "backgroundColor": "#1a1a1a"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.mxistrategicholdngs.mxistrategic"
     },
     "web": {
       "favicon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
