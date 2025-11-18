@@ -16,6 +16,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
@@ -31,14 +32,38 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 48 : 16,
     paddingBottom: 100,
   },
-  logoContainer: {
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: 'center',
   },
   logo: {
     width: 120,
     height: 48,
     resizeMode: 'contain',
+  },
+  languageButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  languageButtonText: {
+    fontSize: 20,
   },
   header: {
     marginBottom: 16,
@@ -509,9 +534,16 @@ interface GlobalMetrics {
   totalPurchasedMXI: number;
 }
 
+const languageFlags: Record<string, string> = {
+  en: '🇺🇸',
+  es: '🇪🇸',
+  pt: '🇧🇷',
+};
+
 export default function HomeScreen() {
   const { currentStage, vestingData, referralStats, isLoading, refreshData } = usePreSale();
   const { user } = useAuth();
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [globalMetrics, setGlobalMetrics] = useState<GlobalMetrics | null>(null);
@@ -691,7 +723,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ color: colors.textSecondary, marginTop: 16 }}>Loading...</Text>
+          <Text style={{ color: colors.textSecondary, marginTop: 16 }}>{t('loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -718,42 +750,51 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
-            style={styles.logo}
-          />
+        <View style={styles.topBar}>
+          <View style={{ width: 44 }} />
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
+              style={styles.logo}
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.languageButton}
+            onPress={() => router.push('/language-settings')}
+          >
+            <Text style={styles.languageButtonText}>{languageFlags[locale]}</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.header}>
-          <Text style={styles.greeting}>Welcome, {user?.name || 'User'}!</Text>
-          <Text style={styles.subtitle}>Your MXI Dashboard</Text>
+          <Text style={styles.greeting}>{t('welcome')}, {user?.name || 'User'}!</Text>
+          <Text style={styles.subtitle}>{t('yourMXIDashboard')}</Text>
         </View>
 
         {/* Token Launch Countdown */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
-            <Text style={styles.countdownTitle}>MXI Token Launch</Text>
+            <Text style={styles.countdownTitle}>{t('mxiTokenLaunch')}</Text>
           </View>
-          <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
+          <Text style={styles.countdownSubtitle}>{t('countdownToLaunch')}</Text>
           
           <View style={styles.countdownContainer}>
             <View style={styles.countdownItem}>
               <Text style={styles.countdownNumber}>{countdown.days}</Text>
-              <Text style={styles.countdownLabel}>Days</Text>
+              <Text style={styles.countdownLabel}>{t('days')}</Text>
             </View>
             <View style={styles.countdownItem}>
               <Text style={styles.countdownNumber}>{countdown.hours}</Text>
-              <Text style={styles.countdownLabel}>Hours</Text>
+              <Text style={styles.countdownLabel}>{t('hours')}</Text>
             </View>
             <View style={styles.countdownItem}>
               <Text style={styles.countdownNumber}>{countdown.minutes}</Text>
-              <Text style={styles.countdownLabel}>Min</Text>
+              <Text style={styles.countdownLabel}>{t('minutes')}</Text>
             </View>
             <View style={styles.countdownItem}>
               <Text style={styles.countdownNumber}>{countdown.seconds}</Text>
-              <Text style={styles.countdownLabel}>Sec</Text>
+              <Text style={styles.countdownLabel}>{t('seconds')}</Text>
             </View>
           </View>
 
@@ -764,43 +805,43 @@ export default function HomeScreen() {
 
         {/* Balance Card */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
+          <Text style={styles.balanceLabel}>{t('totalMXIBalance')}</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>💎 MXI Purchased</Text>
+              <Text style={styles.balanceRowLabel}>{t('mxiPurchased')}</Text>
               <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
             
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>🎁 Referral Commissions</Text>
+              <Text style={styles.balanceRowLabel}>{t('referralCommissions')}</Text>
               <Text style={styles.balanceRowValue}>{referralMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.divider} />
             
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Total Referrals</Text>
+              <Text style={styles.balanceRowLabel}>{t('totalReferrals')}</Text>
               <Text style={styles.balanceRowValue}>{referralStats?.totalReferrals || 0}</Text>
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 1 ({referralStats?.level1Count || 0} refs)</Text>
+              <Text style={styles.balanceRowLabel}>• {t('level')} 1 ({referralStats?.level1Count || 0} {t('refs')})</Text>
               <Text style={styles.balanceRowValue}>
                 {(referralStats?.level1MXI || 0).toFixed(2)} MXI
               </Text>
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 2 ({referralStats?.level2Count || 0} refs)</Text>
+              <Text style={styles.balanceRowLabel}>• {t('level')} 2 ({referralStats?.level2Count || 0} {t('refs')})</Text>
               <Text style={styles.balanceRowValue}>
                 {(referralStats?.level2MXI || 0).toFixed(2)} MXI
               </Text>
             </View>
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>• Level 3 ({referralStats?.level3Count || 0} refs)</Text>
+              <Text style={styles.balanceRowLabel}>• {t('level')} 3 ({referralStats?.level3Count || 0} {t('refs')})</Text>
               <Text style={styles.balanceRowValue}>
                 {(referralStats?.level3MXI || 0).toFixed(2)} MXI
               </Text>
@@ -810,7 +851,7 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                🏆 Tournament Winnings (Available)
+                {t('tournamentWinnings')}
               </Text>
               <Text style={[styles.balanceRowValue, { color: colors.accent, fontSize: 15 }]}>
                 {tournamentsBalance.toFixed(2)} MXI
@@ -819,7 +860,7 @@ export default function HomeScreen() {
 
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
-                💼 Commissions (Available for Challenges)
+                {t('commissionsAvailable')}
               </Text>
               <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 15 }]}>
                 {commissionBalance.toFixed(2)} MXI
@@ -829,7 +870,7 @@ export default function HomeScreen() {
             <View style={styles.divider} />
 
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>Vesting Rewards</Text>
+              <Text style={styles.balanceRowLabel}>{t('vestingRewards')}</Text>
               <Text style={styles.balanceRowValue}>{vestingRewards.toFixed(4)} MXI</Text>
             </View>
           </View>
@@ -838,55 +879,55 @@ export default function HomeScreen() {
         {/* Vesting Display */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
-            <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
+            <Text style={styles.vestingTitle}>{t('vestingRewardsTitle')}</Text>
             <View style={styles.vestingBadge}>
-              <Text style={styles.vestingBadgeText}>Live</Text>
+              <Text style={styles.vestingBadgeText}>{t('live')}</Text>
             </View>
           </View>
           
           <View style={styles.vestingMetrics}>
             <View style={styles.vestingRewardsContainer}>
-              <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
+              <Text style={styles.vestingRewardsLabel}>{t('currentRewards')}</Text>
               <Text style={styles.vestingRewardsAmount}>
                 {vestingRewards.toFixed(6)} MXI
               </Text>
               <Text style={styles.vestingRewardsUpdate}>
-                ⚡ Updating every second
+                {t('updatingEverySecond')}
               </Text>
               <Text style={styles.vestingNote}>
-                💡 Calculated only on purchased MXI
+                {t('calculatedOnPurchased')}
               </Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Purchased MXI (Vesting Base)</Text>
+              <Text style={styles.metricLabel}>{t('purchasedMXIBase')}</Text>
               <Text style={styles.metricValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
 
             <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Monthly Rate</Text>
+              <Text style={styles.metricLabel}>{t('monthlyRate')}</Text>
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
             <View style={styles.projectionsContainer}>
-              <Text style={[styles.metricLabel, { marginBottom: 6 }]}>Projected Earnings (on Purchased MXI)</Text>
+              <Text style={[styles.metricLabel, { marginBottom: 6 }]}>{t('projectedEarnings')}</Text>
               
               <View style={styles.projectionRow}>
-                <Text style={styles.projectionLabel}>7 Days</Text>
+                <Text style={styles.projectionLabel}>{t('sevenDays')}</Text>
                 <Text style={styles.projectionValue}>
                   +{(vestingData?.projections?.days7 || 0).toFixed(4)} MXI
                 </Text>
               </View>
 
               <View style={styles.projectionRow}>
-                <Text style={styles.projectionLabel}>15 Days</Text>
+                <Text style={styles.projectionLabel}>{t('fifteenDays')}</Text>
                 <Text style={styles.projectionValue}>
                   +{(vestingData?.projections?.days15 || 0).toFixed(4)} MXI
                 </Text>
               </View>
 
               <View style={styles.projectionRow}>
-                <Text style={styles.projectionLabel}>30 Days</Text>
+                <Text style={styles.projectionLabel}>{t('thirtyDays')}</Text>
                 <Text style={styles.projectionValue}>
                   +{(vestingData?.projections?.days30 || 0).toFixed(4)} MXI
                 </Text>
@@ -899,22 +940,22 @@ export default function HomeScreen() {
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
-              <Text style={styles.salesStatusTitle}>📊 Current Phase Status</Text>
+              <Text style={styles.salesStatusTitle}>{t('currentPhaseStatus')}</Text>
               <View style={styles.phaseBadge}>
-                <Text style={styles.phaseBadgeText}>Phase {currentStage?.stage || 1}</Text>
+                <Text style={styles.phaseBadgeText}>{t('phase')} {currentStage?.stage || 1}</Text>
               </View>
             </View>
             
             <View style={styles.salesMetrics}>
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Total MXI in Distribution</Text>
+                <Text style={styles.metricLabel}>{t('totalMXIInDistribution')}</Text>
                 <Text style={styles.metricValue}>
                   {(globalMetrics?.totalMXIInDistribution || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} MXI
                 </Text>
               </View>
 
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Global Vesting Rewards</Text>
+                <Text style={styles.metricLabel}>{t('globalVestingRewards')}</Text>
                 <Text style={styles.metricValue}>
                   {(globalMetrics?.globalVestingRewards || 0).toFixed(4)} MXI
                 </Text>
@@ -923,12 +964,12 @@ export default function HomeScreen() {
               <View style={styles.divider} />
 
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Current Phase Price</Text>
+                <Text style={styles.metricLabel}>{t('currentPhasePrice')}</Text>
                 <Text style={styles.metricValue}>${currentStage?.price.toFixed(2) || '0.00'} USDT</Text>
               </View>
               
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>Overall Progress</Text>
+                <Text style={styles.metricLabel}>{t('overallProgress')}</Text>
                 <Text style={styles.metricValue}>
                   {totalDistributed.toLocaleString(undefined, { maximumFractionDigits: 0 })} / {totalMXIAvailable.toLocaleString()} MXI
                 </Text>
@@ -938,35 +979,35 @@ export default function HomeScreen() {
                 <View style={styles.progressBar}>
                   <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%` }]} />
                 </View>
-                <Text style={styles.progressText}>{progress.toFixed(2)}% Complete</Text>
+                <Text style={styles.progressText}>{progress.toFixed(2)}% {t('complete')}</Text>
               </View>
 
               <View style={styles.divider} />
 
               <View style={styles.phaseCountdownContainer}>
-                <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
+                <Text style={styles.phaseCountdownTitle}>{t('phaseEndsIn')}</Text>
                 <View style={styles.phaseCountdownGrid}>
                   <View style={styles.phaseCountdownItem}>
                     <Text style={styles.phaseCountdownNumber}>{phaseCountdown.days}</Text>
-                    <Text style={styles.phaseCountdownLabel}>Days</Text>
+                    <Text style={styles.phaseCountdownLabel}>{t('days')}</Text>
                   </View>
                   <View style={styles.phaseCountdownItem}>
                     <Text style={styles.phaseCountdownNumber}>{phaseCountdown.hours}</Text>
-                    <Text style={styles.phaseCountdownLabel}>Hours</Text>
+                    <Text style={styles.phaseCountdownLabel}>{t('hours')}</Text>
                   </View>
                   <View style={styles.phaseCountdownItem}>
                     <Text style={styles.phaseCountdownNumber}>{phaseCountdown.minutes}</Text>
-                    <Text style={styles.phaseCountdownLabel}>Min</Text>
+                    <Text style={styles.phaseCountdownLabel}>{t('minutes')}</Text>
                   </View>
                   <View style={styles.phaseCountdownItem}>
                     <Text style={styles.phaseCountdownNumber}>{phaseCountdown.seconds}</Text>
-                    <Text style={styles.phaseCountdownLabel}>Sec</Text>
+                    <Text style={styles.phaseCountdownLabel}>{t('seconds')}</Text>
                   </View>
                 </View>
               </View>
 
               <View style={styles.metricRow}>
-                <Text style={styles.metricLabel}>End Date</Text>
+                <Text style={styles.metricLabel}>{t('endDate')}</Text>
                 <Text style={styles.metricValue}>
                   {currentStage ? new Date(currentStage.endDate).toLocaleDateString() : 'N/A'}
                 </Text>
@@ -986,7 +1027,7 @@ export default function HomeScreen() {
               size={32} 
               color={colors.accent}
             />
-            <Text style={styles.actionLabel}>Purchase MXI</Text>
+            <Text style={styles.actionLabel}>{t('purchaseMXI')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -998,7 +1039,7 @@ export default function HomeScreen() {
               size={32} 
               color={colors.success}
             />
-            <Text style={styles.actionLabel}>Vesting</Text>
+            <Text style={styles.actionLabel}>{t('vesting')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -1010,7 +1051,7 @@ export default function HomeScreen() {
               size={32} 
               color={colors.highlight}
             />
-            <Text style={styles.actionLabel}>Referrals</Text>
+            <Text style={styles.actionLabel}>{t('referrals')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -1022,7 +1063,7 @@ export default function HomeScreen() {
               size={32} 
               color="#14B8A6"
             />
-            <Text style={styles.actionLabel}>KYC Verification</Text>
+            <Text style={styles.actionLabel}>{t('kycVerification')}</Text>
           </TouchableOpacity>
         </View>
 

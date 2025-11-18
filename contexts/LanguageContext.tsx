@@ -27,6 +27,8 @@ export function useLanguage() {
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<SupportedLanguage>('en');
   const [isLoading, setIsLoading] = useState(true);
+  const [, forceUpdate] = useState(0); // Force re-render trigger
+  
   const [i18n] = useState(() => {
     const i18nInstance = new I18n(translations);
     i18nInstance.enableFallback = true;
@@ -86,15 +88,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setLocaleState(newLocale);
       i18n.locale = newLocale;
       await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, newLocale);
-      console.log('✅ Language changed successfully');
+      // Force re-render of all components using this context
+      forceUpdate(prev => prev + 1);
+      console.log('✅ Language changed successfully to:', newLocale);
     } catch (error) {
       console.error('❌ Error saving language:', error);
     }
   }, [i18n]);
 
   const t = useCallback((key: string, options?: any): string => {
-    return i18n.t(key, options);
-  }, [i18n]);
+    return i18n.t(key, { ...options, locale });
+  }, [i18n, locale]);
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t, isLoading }}>
