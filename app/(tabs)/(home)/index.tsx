@@ -34,13 +34,12 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
     position: 'relative',
   },
   logoContainer: {
-    flex: 1,
     alignItems: 'center',
   },
   logo: {
