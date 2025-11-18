@@ -32,6 +32,8 @@ interface VestingData {
   total_mxi: number;
   purchased_mxi: number;
   current_rewards: number;
+  tournaments_balance: number;
+  commission_balance: number;
 }
 
 interface BalanceOperation {
@@ -39,7 +41,8 @@ interface BalanceOperation {
   timestamp: string;
   user_name: string;
   user_email: string;
-  operation: 'add_no_commission' | 'add_with_commission' | 'remove';
+  balance_type: 'main' | 'challenge';
+  operation: 'add_no_commission' | 'add_with_commission' | 'remove' | 'add_challenge' | 'remove_challenge';
   amount: number;
   old_balance: number;
   new_balance: number;
@@ -61,7 +64,8 @@ export default function BalanceManagementScreen() {
   const [amount, setAmount] = useState('');
   const [operationHistory, setOperationHistory] = useState<BalanceOperation[]>([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingOperation, setPendingOperation] = useState<'add_no_commission' | 'add_with_commission' | 'remove' | null>(null);
+  const [pendingOperation, setPendingOperation] = useState<'add_no_commission' | 'add_with_commission' | 'remove' | 'add_challenge' | 'remove_challenge' | null>(null);
+  const [activeBalanceType, setActiveBalanceType] = useState<'main' | 'challenge'>('main');
 
   const loadUsers = useCallback(async () => {
     try {
@@ -225,6 +229,62 @@ export default function BalanceManagementScreen() {
     setShowConfirmDialog(true);
   };
 
+  const handleAddChallengeBalanceClick = () => {
+    console.log('🔥🔥🔥 ADD CHALLENGE BALANCE BUTTON CLICKED 🔥🔥🔥');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+    
+    if (!selectedUser || !amount) {
+      console.log('❌ Validation failed: missing user or amount');
+      Alert.alert('Error', 'Please select a user and enter an amount');
+      return;
+    }
+
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      console.log('❌ Validation failed: invalid amount');
+      Alert.alert('Error', 'Please enter a valid positive number');
+      return;
+    }
+
+    console.log('✅ Validation passed, showing confirmation');
+    setPendingOperation('add_challenge');
+    setShowConfirmDialog(true);
+  };
+
+  const handleRemoveChallengeBalanceClick = () => {
+    console.log('🔥🔥🔥 REMOVE CHALLENGE BALANCE BUTTON CLICKED 🔥🔥🔥');
+    console.log('   Selected User:', selectedUser?.email);
+    console.log('   Amount:', amount);
+    
+    if (!selectedUser || !amount) {
+      console.log('❌ Validation failed: missing user or amount');
+      Alert.alert('Error', 'Please select a user and enter an amount');
+      return;
+    }
+
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      console.log('❌ Validation failed: invalid amount');
+      Alert.alert('Error', 'Please enter a valid positive number');
+      return;
+    }
+
+    const currentBalance = vestingData?.tournaments_balance || 0;
+    if (currentBalance < amountNum) {
+      console.log('❌ Insufficient challenge balance');
+      Alert.alert(
+        'Insufficient Balance',
+        `User only has ${currentBalance.toFixed(2)} MXI in challenge balance. Cannot remove ${amountNum} MXI.`
+      );
+      return;
+    }
+
+    console.log('✅ Validation passed, showing confirmation');
+    setPendingOperation('remove_challenge');
+    setShowConfirmDialog(true);
+  };
+
   // ============================================================================
   // ACTUAL OPERATION EXECUTION
   // ============================================================================
@@ -239,7 +299,9 @@ export default function BalanceManagementScreen() {
     }
 
     const amountNum = parseFloat(amount);
-    const oldBalance = vestingData?.total_mxi || 0;
+    const oldBalance = activeBalanceType === 'challenge' 
+      ? (vestingData?.tournaments_balance || 0)
+      : (vestingData?.total_mxi || 0);
 
     setLoading(true);
 
@@ -274,6 +336,18 @@ export default function BalanceManagementScreen() {
         };
       } else if (pendingOperation === 'remove') {
         rpcFunction = 'admin_remove_balance';
+        rpcParams = {
+          p_user_id: selectedUser.id,
+          p_amount: amountNum,
+        };
+      } else if (pendingOperation === 'add_challenge') {
+        rpcFunction = 'admin_add_challenge_balance';
+        rpcParams = {
+          p_user_id: selectedUser.id,
+          p_amount: amountNum,
+        };
+      } else if (pendingOperation === 'remove_challenge') {
+        rpcFunction = 'admin_remove_challenge_balance';
         rpcParams = {
           p_user_id: selectedUser.id,
           p_amount: amountNum,
@@ -314,10 +388,13 @@ export default function BalanceManagementScreen() {
         const historyEntry: Omit<BalanceOperation, 'id' | 'timestamp'> = {
           user_name: selectedUser.name,
           user_email: selectedUser.email,
+          balance_type: activeBalanceType,
           operation: pendingOperation,
           amount: amountNum,
           old_balance: oldBalance,
-          new_balance: responseData.new_total_mxi,
+          new_balance: pendingOperation.includes('challenge') 
+            ? responseData.new_challenge_balance 
+            : responseData.new_total_mxi,
           status: 'success',
         };
 
@@ -330,7 +407,7 @@ export default function BalanceManagementScreen() {
 
         let successMessage = '';
         if (pendingOperation === 'add_no_commission') {
-          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s balance\n\n` +
+          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s main balance\n\n` +
             `📊 Updated Balance:\n` +
             `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
             `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
@@ -338,12 +415,20 @@ export default function BalanceManagementScreen() {
           const commissionsMsg = responseData.total_commissions 
             ? `\n\n💰 Commissions Distributed:\n${responseData.total_commissions.toFixed(2)} MXI to ${responseData.referrers_paid || 0} referrer(s)`
             : '\n\n(No referrers to pay commissions to)';
-          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s balance${commissionsMsg}`;
+          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s main balance${commissionsMsg}`;
         } else if (pendingOperation === 'remove') {
-          successMessage = `Removed ${amountNum} MXI from ${selectedUser.name}'s balance\n\n` +
+          successMessage = `Removed ${amountNum} MXI from ${selectedUser.name}'s main balance\n\n` +
             `📊 Updated Balance:\n` +
             `• Total MXI: ${responseData.new_total_mxi.toFixed(2)}\n` +
             `• Purchased MXI: ${responseData.new_purchased_mxi.toFixed(2)}`;
+        } else if (pendingOperation === 'add_challenge') {
+          successMessage = `Added ${amountNum} MXI to ${selectedUser.name}'s challenge balance\n\n` +
+            `📊 Updated Challenge Balance:\n` +
+            `• ${responseData.new_challenge_balance.toFixed(2)} MXI`;
+        } else if (pendingOperation === 'remove_challenge') {
+          successMessage = `Removed ${amountNum} MXI from ${selectedUser.name}'s challenge balance\n\n` +
+            `📊 Updated Challenge Balance:\n` +
+            `• ${responseData.new_challenge_balance.toFixed(2)} MXI`;
         }
 
         Alert.alert('Success! ✅', successMessage, [
@@ -368,6 +453,7 @@ export default function BalanceManagementScreen() {
       addToHistory({
         user_name: selectedUser.name,
         user_email: selectedUser.email,
+        balance_type: activeBalanceType,
         operation: pendingOperation,
         amount: amountNum,
         old_balance: oldBalance,
@@ -406,6 +492,10 @@ export default function BalanceManagementScreen() {
         return { ios: 'plus.circle.fill', android: 'add_circle', color: colors.secondary };
       case 'remove':
         return { ios: 'minus.circle.fill', android: 'remove_circle', color: colors.error };
+      case 'add_challenge':
+        return { ios: 'plus.app.fill', android: 'add_box', color: colors.accent };
+      case 'remove_challenge':
+        return { ios: 'minus.square.fill', android: 'indeterminate_check_box', color: colors.warning };
       default:
         return { ios: 'circle', android: 'circle', color: colors.text };
     }
@@ -414,11 +504,15 @@ export default function BalanceManagementScreen() {
   const getOperationLabel = (operation: string) => {
     switch (operation) {
       case 'add_no_commission':
-        return 'Add (No Commission)';
+        return 'Add Main Balance (No Commission)';
       case 'add_with_commission':
-        return 'Add (With Commission)';
+        return 'Add Main Balance (With Commission)';
       case 'remove':
-        return 'Remove Balance';
+        return 'Remove Main Balance';
+      case 'add_challenge':
+        return 'Add Challenge Balance';
+      case 'remove_challenge':
+        return 'Remove Challenge Balance';
       default:
         return operation;
     }
@@ -430,11 +524,15 @@ export default function BalanceManagementScreen() {
     const amountNum = parseFloat(amount);
     
     if (pendingOperation === 'add_no_commission') {
-      return `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n⚠️ This will NOT generate referral commissions.`;
+      return `Add ${amountNum} MXI to ${selectedUser.name}'s main balance?\n\n⚠️ This will NOT generate referral commissions.`;
     } else if (pendingOperation === 'add_with_commission') {
-      return `Add ${amountNum} MXI to ${selectedUser.name}'s balance?\n\n✅ This WILL generate referral commissions for their upline.`;
+      return `Add ${amountNum} MXI to ${selectedUser.name}'s main balance?\n\n✅ This WILL generate referral commissions for their upline.`;
     } else if (pendingOperation === 'remove') {
-      return `Remove ${amountNum} MXI from ${selectedUser.name}'s balance?\n\n⚠️ This action cannot be undone.`;
+      return `Remove ${amountNum} MXI from ${selectedUser.name}'s main balance?\n\n⚠️ This action cannot be undone.`;
+    } else if (pendingOperation === 'add_challenge') {
+      return `Add ${amountNum} MXI to ${selectedUser.name}'s challenge balance?\n\n💰 This balance can be used for tournaments and challenges.`;
+    } else if (pendingOperation === 'remove_challenge') {
+      return `Remove ${amountNum} MXI from ${selectedUser.name}'s challenge balance?\n\n⚠️ This action cannot be undone.`;
     }
     
     return '';
@@ -563,7 +661,7 @@ export default function BalanceManagementScreen() {
                 size={20} 
                 color={colors.secondary} 
               />
-              {' '}Current Balance
+              {' '}Current Balances
             </Text>
             <View style={styles.balanceGrid}>
               <View style={styles.balanceBox}>
@@ -578,11 +676,21 @@ export default function BalanceManagementScreen() {
                 <Text style={styles.balanceLabel}>Vesting Rewards</Text>
                 <Text style={styles.balanceValue}>{vestingData.current_rewards.toFixed(2)}</Text>
               </View>
+              <View style={[styles.balanceBox, styles.balanceBoxHighlight]}>
+                <Text style={styles.balanceLabel}>Challenge Balance</Text>
+                <Text style={[styles.balanceValue, styles.balanceValueHighlight]}>
+                  {vestingData.tournaments_balance.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.balanceBox}>
+                <Text style={styles.balanceLabel}>Commission Balance</Text>
+                <Text style={styles.balanceValue}>{vestingData.commission_balance.toFixed(2)}</Text>
+              </View>
             </View>
           </View>
         )}
 
-        {/* Balance Operations */}
+        {/* Balance Type Selector */}
         {selectedUser && (
           <View style={commonStyles.card}>
             <Text style={styles.sectionTitle}>
@@ -592,7 +700,58 @@ export default function BalanceManagementScreen() {
                 size={20} 
                 color={colors.accent} 
               />
-              {' '}Balance Operations
+              {' '}Select Balance Type
+            </Text>
+            <View style={styles.balanceTypeSelector}>
+              <TouchableOpacity 
+                style={[
+                  styles.balanceTypeButton,
+                  activeBalanceType === 'main' && styles.balanceTypeButtonActive
+                ]}
+                onPress={() => setActiveBalanceType('main')}
+              >
+                <IconSymbol 
+                  ios_icon_name="bitcoinsign.circle.fill" 
+                  android_material_icon_name="currency_bitcoin" 
+                  size={24} 
+                  color={activeBalanceType === 'main' ? colors.card : colors.text} 
+                />
+                <Text style={[
+                  styles.balanceTypeButtonText,
+                  activeBalanceType === 'main' && styles.balanceTypeButtonTextActive
+                ]}>
+                  Main Balance
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.balanceTypeButton,
+                  activeBalanceType === 'challenge' && styles.balanceTypeButtonActive
+                ]}
+                onPress={() => setActiveBalanceType('challenge')}
+              >
+                <IconSymbol 
+                  ios_icon_name="trophy.fill" 
+                  android_material_icon_name="emoji_events" 
+                  size={24} 
+                  color={activeBalanceType === 'challenge' ? colors.card : colors.text} 
+                />
+                <Text style={[
+                  styles.balanceTypeButtonText,
+                  activeBalanceType === 'challenge' && styles.balanceTypeButtonTextActive
+                ]}>
+                  Challenge Balance
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Balance Operations */}
+        {selectedUser && (
+          <View style={commonStyles.card}>
+            <Text style={styles.sectionTitle}>
+              {activeBalanceType === 'main' ? '💰 Main Balance Operations' : '🏆 Challenge Balance Operations'}
             </Text>
             
             <Text style={styles.inputLabel}>Amount (MXI)</Text>
@@ -606,106 +765,185 @@ export default function BalanceManagementScreen() {
               editable={!loading}
             />
 
-            <View style={styles.operationButtons}>
-              <TouchableOpacity 
-                style={[
-                  styles.operationButton, 
-                  styles.operationButtonNoCommission,
-                  (loading || !amount) && styles.operationButtonDisabled
-                ]}
-                onPress={handleAddBalanceNoCommissionClick}
-                disabled={loading || !amount}
-                activeOpacity={0.7}
-              >
-                {loading && pendingOperation === 'add_no_commission' ? (
-                  <ActivityIndicator color={colors.card} size="small" />
-                ) : (
-                  <React.Fragment>
-                    <IconSymbol 
-                      ios_icon_name="plus.circle" 
-                      android_material_icon_name="add_circle_outline" 
-                      size={24} 
-                      color={colors.card} 
-                    />
-                    <View style={styles.operationButtonTextContainer}>
-                      <Text style={styles.operationButtonTitle}>Add Balance</Text>
-                      <Text style={styles.operationButtonSubtitle}>No Commission</Text>
-                    </View>
-                  </React.Fragment>
-                )}
-              </TouchableOpacity>
+            {activeBalanceType === 'main' ? (
+              <React.Fragment>
+                <View style={styles.operationButtons}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.operationButton, 
+                      styles.operationButtonNoCommission,
+                      (loading || !amount) && styles.operationButtonDisabled
+                    ]}
+                    onPress={handleAddBalanceNoCommissionClick}
+                    disabled={loading || !amount}
+                    activeOpacity={0.7}
+                  >
+                    {loading && pendingOperation === 'add_no_commission' ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name="plus.circle" 
+                          android_material_icon_name="add_circle_outline" 
+                          size={24} 
+                          color={colors.card} 
+                        />
+                        <View style={styles.operationButtonTextContainer}>
+                          <Text style={styles.operationButtonTitle}>Add Balance</Text>
+                          <Text style={styles.operationButtonSubtitle}>No Commission</Text>
+                        </View>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[
-                  styles.operationButton, 
-                  styles.operationButtonWithCommission,
-                  (loading || !amount) && styles.operationButtonDisabled
-                ]}
-                onPress={handleAddBalanceWithCommissionClick}
-                disabled={loading || !amount}
-                activeOpacity={0.7}
-              >
-                {loading && pendingOperation === 'add_with_commission' ? (
-                  <ActivityIndicator color={colors.card} size="small" />
-                ) : (
-                  <React.Fragment>
-                    <IconSymbol 
-                      ios_icon_name="plus.circle.fill" 
-                      android_material_icon_name="add_circle" 
-                      size={24} 
-                      color={colors.card} 
-                    />
-                    <View style={styles.operationButtonTextContainer}>
-                      <Text style={styles.operationButtonTitle}>Add Balance</Text>
-                      <Text style={styles.operationButtonSubtitle}>With Commission</Text>
-                    </View>
-                  </React.Fragment>
-                )}
-              </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[
+                      styles.operationButton, 
+                      styles.operationButtonWithCommission,
+                      (loading || !amount) && styles.operationButtonDisabled
+                    ]}
+                    onPress={handleAddBalanceWithCommissionClick}
+                    disabled={loading || !amount}
+                    activeOpacity={0.7}
+                  >
+                    {loading && pendingOperation === 'add_with_commission' ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name="plus.circle.fill" 
+                          android_material_icon_name="add_circle" 
+                          size={24} 
+                          color={colors.card} 
+                        />
+                        <View style={styles.operationButtonTextContainer}>
+                          <Text style={styles.operationButtonTitle}>Add Balance</Text>
+                          <Text style={styles.operationButtonSubtitle}>With Commission</Text>
+                        </View>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={[
-                  styles.operationButton, 
-                  styles.operationButtonRemove,
-                  (loading || !amount) && styles.operationButtonDisabled
-                ]}
-                onPress={handleRemoveBalanceClick}
-                disabled={loading || !amount}
-                activeOpacity={0.7}
-              >
-                {loading && pendingOperation === 'remove' ? (
-                  <ActivityIndicator color={colors.card} size="small" />
-                ) : (
-                  <React.Fragment>
-                    <IconSymbol 
-                      ios_icon_name="minus.circle.fill" 
-                      android_material_icon_name="remove_circle" 
-                      size={24} 
-                      color={colors.card} 
-                    />
-                    <View style={styles.operationButtonTextContainer}>
-                      <Text style={styles.operationButtonTitle}>Remove Balance</Text>
-                      <Text style={styles.operationButtonSubtitle}>Deduct from total</Text>
-                    </View>
-                  </React.Fragment>
-                )}
-              </TouchableOpacity>
-            </View>
+                  <TouchableOpacity 
+                    style={[
+                      styles.operationButton, 
+                      styles.operationButtonRemove,
+                      (loading || !amount) && styles.operationButtonDisabled
+                    ]}
+                    onPress={handleRemoveBalanceClick}
+                    disabled={loading || !amount}
+                    activeOpacity={0.7}
+                  >
+                    {loading && pendingOperation === 'remove' ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name="minus.circle.fill" 
+                          android_material_icon_name="remove_circle" 
+                          size={24} 
+                          color={colors.card} 
+                        />
+                        <View style={styles.operationButtonTextContainer}>
+                          <Text style={styles.operationButtonTitle}>Remove Balance</Text>
+                          <Text style={styles.operationButtonSubtitle}>Deduct from total</Text>
+                        </View>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.infoBox}>
-              <IconSymbol 
-                ios_icon_name="info.circle.fill" 
-                android_material_icon_name="info" 
-                size={20} 
-                color={colors.primary} 
-              />
-              <View style={styles.infoBoxContent}>
-                <Text style={styles.infoBoxTitle}>Commission Rates:</Text>
-                <Text style={styles.infoBoxText}>- Level 1: 5%</Text>
-                <Text style={styles.infoBoxText}>- Level 2: 2%</Text>
-                <Text style={styles.infoBoxText}>- Level 3: 1%</Text>
-              </View>
-            </View>
+                <View style={styles.infoBox}>
+                  <IconSymbol 
+                    ios_icon_name="info.circle.fill" 
+                    android_material_icon_name="info" 
+                    size={20} 
+                    color={colors.primary} 
+                  />
+                  <View style={styles.infoBoxContent}>
+                    <Text style={styles.infoBoxTitle}>Commission Rates:</Text>
+                    <Text style={styles.infoBoxText}>- Level 1: 5%</Text>
+                    <Text style={styles.infoBoxText}>- Level 2: 2%</Text>
+                    <Text style={styles.infoBoxText}>- Level 3: 1%</Text>
+                  </View>
+                </View>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <View style={styles.operationButtons}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.operationButton, 
+                      styles.operationButtonChallenge,
+                      (loading || !amount) && styles.operationButtonDisabled
+                    ]}
+                    onPress={handleAddChallengeBalanceClick}
+                    disabled={loading || !amount}
+                    activeOpacity={0.7}
+                  >
+                    {loading && pendingOperation === 'add_challenge' ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name="plus.app.fill" 
+                          android_material_icon_name="add_box" 
+                          size={24} 
+                          color={colors.card} 
+                        />
+                        <View style={styles.operationButtonTextContainer}>
+                          <Text style={styles.operationButtonTitle}>Add Challenge Balance</Text>
+                          <Text style={styles.operationButtonSubtitle}>For tournaments & challenges</Text>
+                        </View>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[
+                      styles.operationButton, 
+                      styles.operationButtonRemoveChallenge,
+                      (loading || !amount) && styles.operationButtonDisabled
+                    ]}
+                    onPress={handleRemoveChallengeBalanceClick}
+                    disabled={loading || !amount}
+                    activeOpacity={0.7}
+                  >
+                    {loading && pendingOperation === 'remove_challenge' ? (
+                      <ActivityIndicator color={colors.card} size="small" />
+                    ) : (
+                      <React.Fragment>
+                        <IconSymbol 
+                          ios_icon_name="minus.square.fill" 
+                          android_material_icon_name="indeterminate_check_box" 
+                          size={24} 
+                          color={colors.card} 
+                        />
+                        <View style={styles.operationButtonTextContainer}>
+                          <Text style={styles.operationButtonTitle}>Remove Challenge Balance</Text>
+                          <Text style={styles.operationButtonSubtitle}>Deduct from challenge funds</Text>
+                        </View>
+                      </React.Fragment>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.infoBox}>
+                  <IconSymbol 
+                    ios_icon_name="info.circle.fill" 
+                    android_material_icon_name="info" 
+                    size={20} 
+                    color={colors.accent} 
+                  />
+                  <View style={styles.infoBoxContent}>
+                    <Text style={styles.infoBoxTitle}>Challenge Balance Info:</Text>
+                    <Text style={styles.infoBoxText}>- Used for tournament entry fees</Text>
+                    <Text style={styles.infoBoxText}>- Used for challenge entry fees</Text>
+                    <Text style={styles.infoBoxText}>- Separate from main MXI balance</Text>
+                  </View>
+                </View>
+              </React.Fragment>
+            )}
           </View>
         )}
 
@@ -801,7 +1039,7 @@ export default function BalanceManagementScreen() {
                 onPress={executeOperation}
               >
                 <Text style={[styles.dialogButtonText, styles.dialogButtonTextConfirm]}>
-                  {pendingOperation === 'remove' ? 'Remove' : 'Confirm'}
+                  {pendingOperation?.includes('remove') ? 'Remove' : 'Confirm'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -936,6 +1174,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  balanceBoxHighlight: {
+    backgroundColor: `${colors.accent}15`,
+    borderWidth: 2,
+    borderColor: colors.accent,
+  },
   balanceLabel: {
     fontSize: 12,
     color: colors.textSecondary,
@@ -946,6 +1189,37 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+  },
+  balanceValueHighlight: {
+    color: colors.accent,
+  },
+  balanceTypeSelector: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  balanceTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  balanceTypeButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  balanceTypeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  balanceTypeButtonTextActive: {
+    color: colors.card,
   },
   inputLabel: {
     fontSize: 14,
@@ -985,6 +1259,12 @@ const styles = StyleSheet.create({
   },
   operationButtonRemove: {
     backgroundColor: colors.error,
+  },
+  operationButtonChallenge: {
+    backgroundColor: colors.accent,
+  },
+  operationButtonRemoveChallenge: {
+    backgroundColor: colors.warning,
   },
   operationButtonTextContainer: {
     flex: 1,
