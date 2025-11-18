@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   countdownNumber: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: '#D97706',
     marginBottom: 6,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   countdownLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '700',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(59, 130, 246, 0.4)',
   },
   phaseCountdownNumber: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '900',
     color: colors.info,
     marginBottom: 4,
@@ -663,6 +663,8 @@ export default function HomeScreen() {
       totalMXI: vestingData?.totalMXI,
       purchasedMXI: vestingData?.purchasedMXI,
       currentRewards: vestingData?.currentRewards,
+      tournamentsBalance: vestingData?.tournamentsBalance,
+      commissionBalance: vestingData?.commissionBalance,
       note: 'Vesting rewards calculated ONLY on purchasedMXI'
     });
     console.log('🏠 Referral Stats:', {
@@ -795,7 +797,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* PROFESSIONAL COUNTDOWN TIMER - REDESIGNED */}
+        {/* PROFESSIONAL COUNTDOWN TIMER - SMALLER FONT SIZE */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
@@ -827,7 +829,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card - WITH CHALLENGE WINNINGS */}
+        {/* Balance Card - UNIFIED DISPLAY WITH ALL BALANCES */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -875,16 +877,23 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
-            {/* NEW: Challenge Winnings Balance */}
+            {/* GAME BALANCES - HIGHLIGHTED */}
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>🏆 Challenge Winnings</Text>
-              <Text style={styles.balanceRowValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
+              <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
+                🏆 Tournament Winnings
+              </Text>
+              <Text style={[styles.balanceRowValue, { color: colors.accent, fontSize: 18 }]}>
+                {tournamentsBalance.toFixed(2)} MXI
+              </Text>
             </View>
 
-            {/* Commission Balance */}
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceRowLabel}>💼 Commission Balance</Text>
-              <Text style={styles.balanceRowValue}>{commissionBalance.toFixed(2)} MXI</Text>
+              <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
+                💼 Commission Balance
+              </Text>
+              <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 18 }]}>
+                {commissionBalance.toFixed(2)} MXI
+              </Text>
             </View>
 
             <View style={styles.divider} />
@@ -1007,7 +1016,7 @@ export default function HomeScreen() {
 
               <View style={styles.divider} />
 
-              {/* PROFESSIONAL PHASE END COUNTDOWN */}
+              {/* PROFESSIONAL PHASE END COUNTDOWN - SMALLER FONT */}
               <View style={styles.phaseCountdownContainer}>
                 <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
                 <View style={styles.phaseCountdownGrid}>
