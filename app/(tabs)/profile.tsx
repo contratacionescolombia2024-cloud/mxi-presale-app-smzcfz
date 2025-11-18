@@ -12,22 +12,24 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import AppFooter from '@/components/AppFooter';
 
 export default function ProfileScreen() {
   const { user, logout, isAdmin } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('logout'),
+      t('logoutConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         { 
-          text: 'Logout', 
+          text: t('logout'), 
           style: 'destructive',
           onPress: () => {
             logout();
@@ -48,9 +50,9 @@ export default function ProfileScreen() {
 
   const getKYCStatusText = () => {
     switch (user?.kycStatus) {
-      case 'approved': return 'Verified';
-      case 'rejected': return 'Rejected';
-      default: return 'Pending';
+      case 'approved': return t('verified');
+      case 'rejected': return t('rejected');
+      default: return t('pending');
     }
   };
 
@@ -76,37 +78,37 @@ export default function ProfileScreen() {
               size={16} 
               color={colors.card} 
             />
-            <Text style={styles.kycBadgeText}>KYC: {getKYCStatusText()}</Text>
+            <Text style={styles.kycBadgeText}>{t('kycStatus')}: {getKYCStatusText()}</Text>
           </View>
         </View>
 
         <View style={commonStyles.card}>
-          <Text style={styles.cardTitle}>Account Information</Text>
+          <Text style={styles.cardTitle}>{t('accountInformation')}</Text>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Referral Code</Text>
+            <Text style={styles.infoLabel}>{t('referralCode')}</Text>
             <Text style={styles.infoValue}>{user?.referralCode}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Identification</Text>
-            <Text style={styles.infoValue}>{user?.identification || 'Not set'}</Text>
+            <Text style={styles.infoLabel}>{t('identification')}</Text>
+            <Text style={styles.infoValue}>{user?.identification || t('notSet')}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Address</Text>
-            <Text style={styles.infoValue}>{user?.address || 'Not set'}</Text>
+            <Text style={styles.infoLabel}>{t('address')}</Text>
+            <Text style={styles.infoValue}>{user?.address || t('notSet')}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Member Since</Text>
+            <Text style={styles.infoLabel}>{t('memberSince')}</Text>
             <Text style={styles.infoValue}>
               {new Date(user?.createdAt || '').toLocaleDateString()}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email Verified</Text>
+            <Text style={styles.infoLabel}>{t('emailVerified')}</Text>
             <View style={styles.verifiedBadge}>
               <IconSymbol 
                 ios_icon_name={user?.emailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'} 
@@ -115,7 +117,7 @@ export default function ProfileScreen() {
                 color={user?.emailVerified ? colors.success : colors.error} 
               />
               <Text style={[styles.verifiedText, { color: user?.emailVerified ? colors.success : colors.error }]}>
-                {user?.emailVerified ? 'Verified' : 'Not Verified'}
+                {user?.emailVerified ? t('verified') : t('notVerified')}
               </Text>
             </View>
           </View>
@@ -131,7 +133,7 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.primary} 
           />
-          <Text style={styles.menuItemText}>Edit Profile</Text>
+          <Text style={styles.menuItemText}>{t('editProfile')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -150,7 +152,26 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.secondary} 
           />
-          <Text style={styles.menuItemText}>KYC Verification</Text>
+          <Text style={styles.menuItemText}>{t('kycVerification')}</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.textSecondary} 
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/(tabs)/language-settings')}
+        >
+          <IconSymbol 
+            ios_icon_name="globe" 
+            android_material_icon_name="language" 
+            size={24} 
+            color={colors.info} 
+          />
+          <Text style={styles.menuItemText}>{t('language')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -169,7 +190,7 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.accent} 
           />
-          <Text style={styles.menuItemText}>Messages</Text>
+          <Text style={styles.menuItemText}>{t('messages')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -189,7 +210,7 @@ export default function ProfileScreen() {
               size={24} 
               color={colors.error} 
             />
-            <Text style={styles.menuItemText}>Admin Panel</Text>
+            <Text style={styles.menuItemText}>{t('adminPanel')}</Text>
             <IconSymbol 
               ios_icon_name="chevron.right" 
               android_material_icon_name="chevron_right" 
@@ -203,7 +224,7 @@ export default function ProfileScreen() {
           style={[buttonStyles.outline, styles.logoutButton]}
           onPress={handleLogout}
         >
-          <Text style={buttonStyles.textOutline}>Logout</Text>
+          <Text style={buttonStyles.textOutline}>{t('logout')}</Text>
         </TouchableOpacity>
 
         <AppFooter />

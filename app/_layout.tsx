@@ -8,6 +8,7 @@ import { SystemBars } from "react-native-edge-to-edge";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PreSaleProvider } from "@/contexts/PreSaleContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import "react-native-reanimated";
 import {
   DarkTheme,
@@ -106,18 +107,20 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <PreSaleProvider>
-          <ThemeProvider value={colorScheme === "dark" ? customDarkTheme : customLightTheme}>
-            <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
-            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-          </ThemeProvider>
-        </PreSaleProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <PreSaleProvider>
+            <ThemeProvider value={colorScheme === "dark" ? customDarkTheme : customLightTheme}>
+              <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
+              <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </ThemeProvider>
+          </PreSaleProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </GestureHandlerRootView>
   );
 }
