@@ -128,6 +128,13 @@ const topics: EcosystemTopic[] = [
     color: colors.highlight,
   },
   {
+    id: 'expansion',
+    title: 'Expansión',
+    description: 'Crecimiento por etapas y expansión global',
+    icon: 'rocket-launch',
+    color: '#FF6B35',
+  },
+  {
     id: 'not-ponzi',
     title: '¿Porque MXI no es un esquema Ponzi?',
     description: 'Understanding our transparent business model',
