@@ -754,6 +754,7 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* Top Bar with Logo and Language Selector */}
         <View style={styles.topBar}>
           <View style={styles.logoContainer}>
             <Image
@@ -761,6 +762,7 @@ export default function HomeScreen() {
               style={styles.logo}
             />
           </View>
+          {/* ONLY ONE LANGUAGE BUTTON - Flag Icon */}
           <TouchableOpacity 
             style={styles.languageButton}
             onPress={() => router.push('/language-settings')}
