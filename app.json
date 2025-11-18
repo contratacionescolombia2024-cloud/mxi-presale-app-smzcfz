@@ -1,16 +1,17 @@
+
 {
   "expo": {
     "name": "Mxi Presale",
     "slug": "Mxi Presale",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#1a1a1a"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,14 +22,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#000000"
+        "foregroundImage": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
+        "backgroundColor": "#1a1a1a"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Natively"
     },
     "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
+      "favicon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
       "bundler": "metro"
     },
     "plugins": [
