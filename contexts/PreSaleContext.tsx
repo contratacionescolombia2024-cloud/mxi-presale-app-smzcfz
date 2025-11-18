@@ -331,7 +331,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.log('👥 LOADING REFERRAL STATS FOR USER:', user.id);
       console.log('👥 ========================================');
       
-      // DRASTIC APPROACH: Direct query with explicit logging
+      // FIXED: Use commission_mxi field consistently
       const { data: rawReferrals, error: referralsError } = await supabase
         .from('referrals')
         .select('*')
@@ -367,7 +367,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ REFERRALS FOUND:', rawReferrals.length);
 
-      // Process each referral explicitly
+      // FIXED: Process each referral using commission_mxi field
       let level1MXI = 0;
       let level2MXI = 0;
       let level3MXI = 0;
@@ -377,37 +377,32 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       rawReferrals.forEach((referral, index) => {
         const level = referral.level;
+        // FIXED: Use commission_mxi as the primary source
         const commissionMXI = safeNumeric(referral.commission_mxi);
-        const mxiEarned = safeNumeric(referral.mxi_earned);
-        
-        // Use commission_mxi if available, otherwise use mxi_earned
-        const actualCommission = commissionMXI > 0 ? commissionMXI : mxiEarned;
 
         console.log(`👥 Referral ${index + 1}:`, {
           id: referral.id,
           level: level,
           commission_mxi: commissionMXI,
-          mxi_earned: mxiEarned,
-          actualCommission: actualCommission,
           referred_id: referral.referred_id,
         });
 
         if (level === 1) {
           level1Count++;
-          level1MXI += actualCommission;
+          level1MXI += commissionMXI;
         } else if (level === 2) {
           level2Count++;
-          level2MXI += actualCommission;
+          level2MXI += commissionMXI;
         } else if (level === 3) {
           level3Count++;
-          level3MXI += actualCommission;
+          level3MXI += commissionMXI;
         }
       });
 
       const totalEarned = level1MXI + level2MXI + level3MXI;
 
       console.log('👥 ========================================');
-      console.log('👥 CALCULATED REFERRAL STATS:');
+      console.log('👥 CALCULATED REFERRAL STATS (USING commission_mxi):');
       console.log('👥 Level 1:', { count: level1Count, mxi: level1MXI });
       console.log('👥 Level 2:', { count: level2Count, mxi: level2MXI });
       console.log('👥 Level 3:', { count: level3Count, mxi: level3MXI });

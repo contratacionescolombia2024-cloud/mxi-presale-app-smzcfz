@@ -28,45 +28,45 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 20,
-    paddingTop: Platform.OS === 'android' ? 48 : 20,
+    padding: 16,
+    paddingTop: Platform.OS === 'android' ? 48 : 16,
     paddingBottom: 100,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   logo: {
-    width: 150,
-    height: 60,
+    width: 120,
+    height: 48,
     resizeMode: 'contain',
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   countdownCard: {
     backgroundColor: colors.card,
-    marginBottom: 24,
-    borderRadius: 24,
-    padding: 28,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 20,
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#D97706',
     shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
     overflow: 'hidden',
   },
   countdownGradientBg: {
@@ -80,23 +80,23 @@ const styles = StyleSheet.create({
   countdownHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: 8,
+    gap: 8,
   },
   rocketIcon: {
-    fontSize: 32,
+    fontSize: 24,
   },
   countdownTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
     letterSpacing: 0.5,
   },
   countdownSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 24,
+    marginBottom: 16,
     textAlign: 'center',
     fontWeight: '600',
     letterSpacing: 0.3,
@@ -104,51 +104,51 @@ const styles = StyleSheet.create({
   countdownContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: 20,
+    gap: 10,
+    marginBottom: 14,
     width: '100%',
   },
   countdownItem: {
     alignItems: 'center',
     backgroundColor: colors.background,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 10,
     flex: 1,
-    maxWidth: 85,
+    maxWidth: 70,
     borderWidth: 2,
     borderColor: '#D97706',
     shadowColor: '#D97706',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 5,
   },
   countdownNumber: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '900',
     color: '#D97706',
-    marginBottom: 6,
+    marginBottom: 4,
     textShadowColor: 'rgba(217, 119, 6, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   countdownLabel: {
-    fontSize: 11,
+    fontSize: 9,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   launchDateContainer: {
     backgroundColor: 'rgba(217, 119, 6, 0.15)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   launchDate: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '700',
     color: '#D97706',
     textAlign: 'center',
@@ -156,26 +156,26 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     backgroundColor: colors.sectionGreen,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'rgba(16, 185, 129, 0.4)',
   },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '500',
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.secondary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   balanceBreakdown: {
-    gap: 12,
+    gap: 8,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -183,30 +183,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   balanceRowLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   balanceRowValue: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
   },
   balanceRowHighlight: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
   },
   divider: {
     height: 1,
     backgroundColor: 'rgba(16, 185, 129, 0.3)',
-    marginVertical: 8,
+    marginVertical: 6,
   },
   vestingCard: {
     backgroundColor: colors.sectionPurple,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'rgba(139, 92, 246, 0.4)',
   },
@@ -214,58 +214,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   vestingTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.text,
   },
   vestingBadge: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
   vestingBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#fff',
   },
   vestingMetrics: {
-    gap: 16,
+    gap: 12,
   },
   vestingRewardsContainer: {
     backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(139, 92, 246, 0.3)',
   },
   vestingRewardsLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '500',
   },
   vestingRewardsAmount: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.primary,
     marginBottom: 4,
   },
   vestingRewardsUpdate: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
   vestingNote: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.primary,
     fontStyle: 'italic',
     marginTop: 4,
@@ -276,46 +276,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
   },
   metricValue: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.text,
   },
   projectionsContainer: {
-    marginTop: 8,
-    gap: 8,
+    marginTop: 6,
+    gap: 6,
   },
   projectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   projectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
   },
   projectionValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
   },
   phaseCountersContainer: {
-    marginBottom: 24,
-    gap: 16,
+    marginBottom: 16,
+    gap: 12,
   },
   salesStatusCard: {
     backgroundColor: colors.sectionBlue,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 16,
+    padding: 18,
     borderWidth: 2,
     borderColor: 'rgba(59, 130, 246, 0.4)',
   },
@@ -323,90 +323,90 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   salesStatusTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.text,
   },
   phaseBadge: {
     backgroundColor: colors.info,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     shadowColor: colors.info,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
   phaseBadgeText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#fff',
   },
   salesMetrics: {
-    gap: 16,
+    gap: 12,
   },
   progressBarContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   progressBar: {
-    height: 10,
+    height: 8,
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderRadius: 5,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.info,
-    borderRadius: 5,
+    borderRadius: 4,
   },
   progressText: {
-    fontSize: 13,
+    fontSize: 11,
     color: colors.info,
     fontWeight: '600',
-    marginTop: 6,
+    marginTop: 4,
     textAlign: 'right',
   },
   phaseCountdownContainer: {
     backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 8,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 6,
     borderWidth: 1.5,
     borderColor: 'rgba(59, 130, 246, 0.3)',
   },
   phaseCountdownTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
     letterSpacing: 0.3,
   },
   phaseCountdownGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    gap: 8,
+    gap: 6,
   },
   phaseCountdownItem: {
     alignItems: 'center',
     backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 10,
+    padding: 8,
     flex: 1,
     borderWidth: 1.5,
     borderColor: 'rgba(59, 130, 246, 0.4)',
   },
   phaseCountdownNumber: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
     color: colors.info,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   phaseCountdownLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '700',
@@ -414,9 +414,9 @@ const styles = StyleSheet.create({
   },
   globalVestingCard: {
     backgroundColor: colors.sectionPink,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'rgba(236, 72, 153, 0.4)',
   },
@@ -424,67 +424,67 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   globalVestingTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.text,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: 'rgba(236, 72, 153, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: '#4ade80',
   },
   liveBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.text,
   },
   globalMetricsGrid: {
-    gap: 12,
+    gap: 10,
   },
   globalMetricRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: 'rgba(236, 72, 153, 0.1)',
-    padding: 16,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 10,
   },
   globalMetricLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   globalMetricValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.highlight,
   },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 16,
   },
   actionCard: {
     flex: 1,
     minWidth: '47%',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     borderWidth: 2,
   },
   actionCardPurchase: {
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(20, 184, 166, 0.4)',
   },
   actionLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
@@ -797,7 +797,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* PROFESSIONAL COUNTDOWN TIMER */}
+        {/* PROFESSIONAL COUNTDOWN TIMER - SMALLER */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
@@ -829,7 +829,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card - SIMPLIFIED WITHOUT REDUNDANT LINE */}
+        {/* Balance Card - SMALLER */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -882,7 +882,7 @@ export default function HomeScreen() {
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
                 🏆 Tournament Winnings (Available)
               </Text>
-              <Text style={[styles.balanceRowValue, { color: colors.accent, fontSize: 18 }]}>
+              <Text style={[styles.balanceRowValue, { color: colors.accent, fontSize: 15 }]}>
                 {tournamentsBalance.toFixed(2)} MXI
               </Text>
             </View>
@@ -891,7 +891,7 @@ export default function HomeScreen() {
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
                 💼 Commissions (Available for Challenges)
               </Text>
-              <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 18 }]}>
+              <Text style={[styles.balanceRowValue, { color: colors.secondary, fontSize: 15 }]}>
                 {commissionBalance.toFixed(2)} MXI
               </Text>
             </View>
@@ -905,7 +905,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates - ONLY ON PURCHASED MXI */}
+        {/* Vesting Display with Real-Time Updates - SMALLER */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -941,7 +941,7 @@ export default function HomeScreen() {
 
             {/* Projections - Based ONLY on purchased MXI */}
             <View style={styles.projectionsContainer}>
-              <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings (on Purchased MXI)</Text>
+              <Text style={[styles.metricLabel, { marginBottom: 6 }]}>Projected Earnings (on Purchased MXI)</Text>
               
               <View style={styles.projectionRow}>
                 <Text style={styles.projectionLabel}>7 Days</Text>
@@ -967,7 +967,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* UNIFIED: Current Phase Status with Global Data + PROFESSIONAL COUNTDOWN */}
+        {/* UNIFIED: Current Phase Status with Global Data - SMALLER */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -1016,7 +1016,7 @@ export default function HomeScreen() {
 
               <View style={styles.divider} />
 
-              {/* PROFESSIONAL PHASE END COUNTDOWN */}
+              {/* PROFESSIONAL PHASE END COUNTDOWN - SMALLER */}
               <View style={styles.phaseCountdownContainer}>
                 <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
                 <View style={styles.phaseCountdownGrid}>
@@ -1049,7 +1049,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Action Cards */}
+        {/* Action Cards - SMALLER */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardPurchase]}
@@ -1057,7 +1057,7 @@ export default function HomeScreen() {
           >
             <IconSymbol 
               name={ICONS.SHOPPING_CART}
-              size={40} 
+              size={32} 
               color={colors.accent}
             />
             <Text style={styles.actionLabel}>Purchase MXI</Text>
@@ -1069,7 +1069,7 @@ export default function HomeScreen() {
           >
             <IconSymbol 
               name={ICONS.TRENDING_UP}
-              size={40} 
+              size={32} 
               color={colors.success}
             />
             <Text style={styles.actionLabel}>Vesting</Text>
@@ -1081,7 +1081,7 @@ export default function HomeScreen() {
           >
             <IconSymbol 
               name={ICONS.PEOPLE}
-              size={40} 
+              size={32} 
               color={colors.highlight}
             />
             <Text style={styles.actionLabel}>Referrals</Text>
@@ -1093,7 +1093,7 @@ export default function HomeScreen() {
           >
             <IconSymbol 
               name={ICONS.VERIFIED_USER}
-              size={40} 
+              size={32} 
               color="#14B8A6"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>

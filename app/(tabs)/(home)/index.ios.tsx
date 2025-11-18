@@ -25,108 +25,108 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 100,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   logo: {
-    width: 150,
-    height: 60,
+    width: 120,
+    height: 48,
     resizeMode: 'contain',
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 16,
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   countdownCard: {
     backgroundColor: colors.sectionOrangeStrong,
-    marginBottom: 24,
-    borderRadius: 20,
-    padding: 24,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(217, 119, 6, 0.4)',
   },
   countdownTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   countdownSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 14,
     textAlign: 'center',
   },
   countdownContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 12,
   },
   countdownItem: {
     alignItems: 'center',
     backgroundColor: 'rgba(217, 119, 6, 0.15)',
-    borderRadius: 12,
-    padding: 12,
-    minWidth: 70,
+    borderRadius: 10,
+    padding: 8,
+    minWidth: 60,
     borderWidth: 1,
     borderColor: 'rgba(217, 119, 6, 0.3)',
   },
   countdownNumber: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   countdownLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     fontWeight: '600',
   },
   launchDate: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
     color: '#D97706',
     textAlign: 'center',
   },
   balanceCard: {
     backgroundColor: colors.sectionGreen,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'rgba(16, 185, 129, 0.4)',
   },
   balanceLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '500',
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold',
     color: colors.secondary,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   balanceBreakdown: {
-    gap: 12,
+    gap: 8,
   },
   balanceRow: {
     flexDirection: 'row',
@@ -134,30 +134,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   balanceRowLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '600',
   },
   balanceRowValue: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
   },
   balanceRowHighlight: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
     color: colors.text,
   },
   divider: {
     height: 1,
     backgroundColor: 'rgba(16, 185, 129, 0.3)',
-    marginVertical: 8,
+    marginVertical: 6,
   },
   vestingCard: {
     backgroundColor: colors.sectionPurple,
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'rgba(139, 92, 246, 0.4)',
   },
@@ -165,58 +165,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   vestingTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.text,
   },
   vestingBadge: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
   vestingBadgeText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#fff',
   },
   vestingMetrics: {
-    gap: 16,
+    gap: 12,
   },
   vestingRewardsContainer: {
     backgroundColor: 'rgba(139, 92, 246, 0.15)',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(139, 92, 246, 0.3)',
   },
   vestingRewardsLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 6,
     fontWeight: '500',
   },
   vestingRewardsAmount: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.primary,
     marginBottom: 4,
   },
   vestingRewardsUpdate: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
   vestingNote: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.primary,
     fontStyle: 'italic',
     marginTop: 4,
@@ -227,46 +227,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
     fontWeight: '500',
   },
   metricValue: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.text,
   },
   projectionsContainer: {
-    marginTop: 8,
-    gap: 8,
+    marginTop: 6,
+    gap: 6,
   },
   projectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    borderRadius: 8,
+    borderRadius: 6,
   },
   projectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
     fontWeight: '500',
   },
   projectionValue: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.primary,
   },
   phaseCountersContainer: {
-    marginBottom: 24,
-    gap: 16,
+    marginBottom: 16,
+    gap: 12,
   },
   salesStatusCard: {
     backgroundColor: colors.sectionBlue,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 16,
+    padding: 18,
     borderWidth: 2,
     borderColor: 'rgba(59, 130, 246, 0.4)',
   },
@@ -274,65 +274,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   salesStatusTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: colors.text,
   },
   phaseBadge: {
     backgroundColor: colors.info,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     shadowColor: colors.info,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
   phaseBadgeText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#fff',
   },
   salesMetrics: {
-    gap: 16,
+    gap: 12,
   },
   progressBarContainer: {
-    marginTop: 8,
+    marginTop: 6,
   },
   progressBar: {
-    height: 10,
+    height: 8,
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderRadius: 5,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: colors.info,
-    borderRadius: 5,
+    borderRadius: 4,
   },
   progressText: {
-    fontSize: 13,
+    fontSize: 11,
     color: colors.info,
     fontWeight: '600',
-    marginTop: 6,
+    marginTop: 4,
     textAlign: 'right',
   },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 16,
   },
   actionCard: {
     flex: 1,
     minWidth: '47%',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 14,
+    padding: 16,
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     borderWidth: 2,
   },
   actionCardPurchase: {
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(20, 184, 166, 0.4)',
   },
   actionLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
@@ -643,7 +643,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* Countdown Timer - Translucent Orange */}
+        {/* Countdown Timer - SMALLER */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 MXI Token Launch</Text>
           <Text style={styles.countdownSubtitle}>Countdown to Launch</Text>
@@ -670,19 +670,19 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
-        {/* Balance Card - STANDARDIZED FORMAT AND COLORS */}
+        {/* Balance Card - SMALLER */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
-            {/* STANDARDIZED: MXI Purchased */}
+            {/* MXI Purchased */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>💎 MXI Purchased</Text>
               <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
             
-            {/* STANDARDIZED: Referral Commission - Same format and color */}
+            {/* Referral Commission - Same format and color */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>🎁 Referral Commission</Text>
               <Text style={styles.balanceRowValue}>{referralMXI.toFixed(2)} MXI</Text>
@@ -718,7 +718,7 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
-            {/* NEW: Challenge Winnings Balance */}
+            {/* Challenge Winnings Balance */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>🏆 Challenge Winnings</Text>
               <Text style={styles.balanceRowValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
@@ -739,7 +739,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates - ONLY ON PURCHASED MXI */}
+        {/* Vesting Display with Real-Time Updates - SMALLER */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -775,7 +775,7 @@ export default function HomeScreen() {
 
             {/* Projections - Based ONLY on purchased MXI */}
             <View style={styles.projectionsContainer}>
-              <Text style={[styles.metricLabel, { marginBottom: 8 }]}>Projected Earnings (on Purchased MXI)</Text>
+              <Text style={[styles.metricLabel, { marginBottom: 6 }]}>Projected Earnings (on Purchased MXI)</Text>
               
               <View style={styles.projectionRow}>
                 <Text style={styles.projectionLabel}>7 Days</Text>
@@ -801,7 +801,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* UNIFIED: Current Phase Status with Global Data */}
+        {/* UNIFIED: Current Phase Status with Global Data - SMALLER */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -868,7 +868,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Action Cards */}
+        {/* Action Cards - SMALLER */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardPurchase]}
@@ -877,7 +877,7 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="cart.fill"
               android_material_icon_name="shopping_cart"
-              size={40} 
+              size={32} 
               color={colors.accent}
             />
             <Text style={styles.actionLabel}>Purchase MXI</Text>
@@ -890,7 +890,7 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="chart.line.uptrend.xyaxis"
               android_material_icon_name="trending_up"
-              size={40} 
+              size={32} 
               color={colors.success}
             />
             <Text style={styles.actionLabel}>Vesting</Text>
@@ -903,7 +903,7 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="person.3.fill"
               android_material_icon_name="people"
-              size={40} 
+              size={32} 
               color={colors.highlight}
             />
             <Text style={styles.actionLabel}>Referrals</Text>
@@ -916,7 +916,7 @@ export default function HomeScreen() {
             <IconSymbol 
               ios_icon_name="checkmark.shield.fill"
               android_material_icon_name="verified_user"
-              size={40} 
+              size={32} 
               color="#14B8A6"
             />
             <Text style={styles.actionLabel}>KYC Verification</Text>
