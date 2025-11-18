@@ -34,6 +34,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    position: 'relative',
   },
   logoContainer: {
     flex: 1,
@@ -45,9 +46,12 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   languageButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
@@ -58,9 +62,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+    zIndex: 1000,
   },
   languageButtonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   header: {
     marginBottom: 16,
@@ -625,7 +630,6 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.topBar}>
-          <View style={{ width: 44 }} />
           <View style={styles.logoContainer}>
             <Image
               source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
