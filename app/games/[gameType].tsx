@@ -66,6 +66,43 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
+  balanceCard: {
+    backgroundColor: colors.sectionBlue,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  balanceValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  balanceDivider: {
+    height: 1,
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+    marginVertical: 8,
+  },
+  balanceTotal: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  balanceTotalValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
   tournamentCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -364,6 +401,8 @@ export default function GameScreen() {
     if (!user?.id) return;
 
     try {
+      console.log('💰 Loading balances for user:', user.id);
+      
       const { data, error } = await supabase
         .from('vesting')
         .select('tournaments_balance, commission_balance')
@@ -373,8 +412,17 @@ export default function GameScreen() {
       if (error) {
         console.error('❌ Error loading balances:', error);
       } else {
-        setTournamentsBalance(data?.tournaments_balance || 0);
-        setCommissionBalance(data?.commission_balance || 0);
+        const tournamentsBalanceValue = data?.tournaments_balance || 0;
+        const commissionBalanceValue = data?.commission_balance || 0;
+        
+        console.log('💰 Balances loaded:', {
+          tournaments: tournamentsBalanceValue,
+          commission: commissionBalanceValue,
+          total: tournamentsBalanceValue + commissionBalanceValue,
+        });
+        
+        setTournamentsBalance(tournamentsBalanceValue);
+        setCommissionBalance(commissionBalanceValue);
       }
     } catch (error) {
       console.error('❌ Failed to load balances:', error);
@@ -587,6 +635,7 @@ export default function GameScreen() {
       setIsInGame(false);
       setActiveTournament(null);
       await loadTournaments();
+      await loadBalances();
     } catch (error) {
       console.error('❌ Failed to submit score:', error);
       Alert.alert('Error', 'Failed to submit score. Please try again.');
@@ -656,6 +705,7 @@ export default function GameScreen() {
     ? VIRAL_ZONE_GAME_DESCRIPTIONS[gameType as keyof typeof VIRAL_ZONE_GAME_DESCRIPTIONS]
     : GAME_DESCRIPTIONS[gameType as keyof typeof GAME_DESCRIPTIONS] || '';
   const isAtLimit = totalActiveTournaments >= maxActiveTournaments;
+  const totalBalance = tournamentsBalance + commissionBalance;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -667,6 +717,22 @@ export default function GameScreen() {
           <View style={styles.headerInfo}>
             <Text style={styles.title}>{gameName}</Text>
             <Text style={styles.subtitle}>{gameDescription}</Text>
+          </View>
+        </View>
+
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceLabel}>🏆 Tournaments Balance</Text>
+            <Text style={styles.balanceValue}>{tournamentsBalance.toFixed(2)} MXI</Text>
+          </View>
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceLabel}>💼 Commission Balance</Text>
+            <Text style={styles.balanceValue}>{commissionBalance.toFixed(2)} MXI</Text>
+          </View>
+          <View style={styles.balanceDivider} />
+          <View style={styles.balanceRow}>
+            <Text style={styles.balanceTotal}>💰 Total Available</Text>
+            <Text style={styles.balanceTotalValue}>{totalBalance.toFixed(2)} MXI</Text>
           </View>
         </View>
 

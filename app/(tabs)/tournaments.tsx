@@ -74,12 +74,49 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     color: colors.accent,
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  balanceBreakdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  balanceBreakdownItem: {
+    flex: 1,
+  },
+  balanceBreakdownLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  balanceBreakdownValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   balanceNote: {
     fontSize: 12,
     color: colors.textSecondary,
     fontStyle: 'italic',
+    marginTop: 8,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  refreshButtonText: {
+    color: colors.light,
+    fontSize: 14,
+    fontWeight: '600',
   },
   categorySection: {
     marginBottom: 32,
@@ -511,6 +548,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
   },
+  balanceLoadingIndicator: {
+    marginLeft: 8,
+  },
 });
 
 export default function TournamentsScreen() {
@@ -518,6 +558,7 @@ export default function TournamentsScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [tournamentsBalance, setTournamentsBalance] = useState(0);
   const [commissionBalance, setCommissionBalance] = useState(0);
   const [activeTournaments, setActiveTournaments] = useState<Record<string, number>>({});
@@ -536,6 +577,46 @@ export default function TournamentsScreen() {
 
   const participantOptions = [2, 4];
 
+  const loadBalances = useCallback(async () => {
+    if (!user?.id) {
+      console.log('⚠️ No user ID, skipping balance load');
+      return;
+    }
+
+    setIsLoadingBalances(true);
+    try {
+      console.log('💰 Loading balances for user:', user.id);
+
+      const { data: vestingData, error: vestingError } = await supabase
+        .from('vesting')
+        .select('tournaments_balance, commission_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (vestingError) {
+        console.error('❌ Error loading balances:', vestingError);
+        Alert.alert('Error', 'Failed to load balances. Please try again.');
+      } else {
+        const tournamentsBalanceValue = vestingData?.tournaments_balance || 0;
+        const commissionBalanceValue = vestingData?.commission_balance || 0;
+        
+        console.log('💰 Balances loaded:', {
+          tournaments: tournamentsBalanceValue,
+          commission: commissionBalanceValue,
+          total: tournamentsBalanceValue + commissionBalanceValue,
+        });
+        
+        setTournamentsBalance(tournamentsBalanceValue);
+        setCommissionBalance(commissionBalanceValue);
+      }
+    } catch (error) {
+      console.error('❌ Failed to load balances:', error);
+      Alert.alert('Error', 'Failed to load balances. Please try again.');
+    } finally {
+      setIsLoadingBalances(false);
+    }
+  }, [user?.id]);
+
   const loadData = useCallback(async () => {
     if (!user?.id) {
       console.log('⚠️ No user ID, skipping tournaments data load');
@@ -546,18 +627,7 @@ export default function TournamentsScreen() {
     try {
       console.log('🎮 Loading tournaments data for user:', user.id);
 
-      const { data: vestingData, error: vestingError } = await supabase
-        .from('vesting')
-        .select('tournaments_balance, commission_balance')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (vestingError) {
-        console.error('❌ Error loading balances:', vestingError);
-      } else {
-        setTournamentsBalance(vestingData?.tournaments_balance || 0);
-        setCommissionBalance(vestingData?.commission_balance || 0);
-      }
+      await loadBalances();
 
       const { data: tournaments, error: tournamentsError } = await supabase
         .from('tournaments')
@@ -615,7 +685,7 @@ export default function TournamentsScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, loadBalances]);
 
   useEffect(() => {
     loadData();
@@ -625,6 +695,10 @@ export default function TournamentsScreen() {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
+  };
+
+  const handleRefreshBalances = async () => {
+    await loadBalances();
   };
 
   const handlePlayGame = (gameType: string) => {
@@ -661,7 +735,7 @@ export default function TournamentsScreen() {
       console.error('❌ Insufficient balance in selected source:', selectedBalance, '<', fee);
       Alert.alert(
         'Insufficient Balance', 
-        `You do not have enough balance in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'}. Please select a different balance source or add funds.`
+        `You do not have enough balance in ${balanceSource === 'tournaments' ? 'Tournaments' : 'Commissions'}.\n\nRequired: ${fee} MXI\nAvailable: ${selectedBalance.toFixed(2)} MXI\n\nPlease select a different balance source or add funds.`
       );
       return;
     }
@@ -885,11 +959,39 @@ export default function TournamentsScreen() {
         </View>
 
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>💰 Available Balance for Games</Text>
-          <Text style={styles.balanceAmount}>{(tournamentsBalance + commissionBalance).toFixed(2)} MXI</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.balanceLabel}>💰 Total Available Balance</Text>
+            {isLoadingBalances && (
+              <ActivityIndicator size="small" color={colors.accent} style={styles.balanceLoadingIndicator} />
+            )}
+          </View>
+          <Text style={styles.balanceAmount}>{totalBalance.toFixed(2)} MXI</Text>
+          
+          <View style={styles.balanceBreakdown}>
+            <View style={styles.balanceBreakdownItem}>
+              <Text style={styles.balanceBreakdownLabel}>🏆 Tournaments</Text>
+              <Text style={styles.balanceBreakdownValue}>{tournamentsBalance.toFixed(2)}</Text>
+            </View>
+            <View style={styles.balanceBreakdownItem}>
+              <Text style={styles.balanceBreakdownLabel}>💼 Commissions</Text>
+              <Text style={styles.balanceBreakdownValue}>{commissionBalance.toFixed(2)}</Text>
+            </View>
+          </View>
+          
           <Text style={styles.balanceNote}>
-            Challenge Winnings: {tournamentsBalance.toFixed(2)} MXI • Commission: {commissionBalance.toFixed(2)} MXI
+            💡 You can use either balance source to join games and tournaments
           </Text>
+          
+          <TouchableOpacity 
+            style={styles.refreshButton} 
+            onPress={handleRefreshBalances}
+            disabled={isLoadingBalances}
+          >
+            <IconSymbol name="refresh" size={16} color={colors.light} />
+            <Text style={styles.refreshButtonText}>
+              {isLoadingBalances ? 'Refreshing...' : 'Refresh Balances'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.limitCard}>
