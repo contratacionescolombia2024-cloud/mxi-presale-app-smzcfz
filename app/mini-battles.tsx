@@ -450,7 +450,14 @@ export default function MiniBattlesScreen() {
   };
 
   const handleOpenCreateModal = () => {
-    console.log('🎮 Opening create modal');
+    console.log('🎮 ========================================');
+    console.log('🎮 OPENING CREATE MODAL');
+    console.log('🎮 ========================================');
+    console.log('💰 Current balances:', {
+      tournaments: tournamentsBalance,
+      commission: commissionBalance,
+      total: tournamentsBalance + commissionBalance,
+    });
     setShowCreateModal(true);
   };
 
@@ -505,11 +512,39 @@ export default function MiniBattlesScreen() {
     console.log('💰 Commission balance:', commissionBalance);
     console.log('👥 Max players:', maxPlayers);
     console.log('🎮 Game type:', selectedGame);
+    console.log('👤 User ID:', user.id);
+
+    // AGGRESSIVE VALIDATION
+    if (!selectedGame) {
+      console.error('❌ CRITICAL: No game type selected!');
+      Alert.alert('Error', 'Please select a game type.');
+      return;
+    }
+
+    if (isNaN(fee) || fee <= 0) {
+      console.error('❌ CRITICAL: Invalid entry fee!', fee);
+      Alert.alert('Error', 'Invalid entry fee. Please enter a valid number.');
+      return;
+    }
+
+    if (maxPlayers !== 2 && maxPlayers !== 4) {
+      console.error('❌ CRITICAL: Invalid max players!', maxPlayers);
+      Alert.alert('Error', 'Max players must be 2 or 4.');
+      return;
+    }
+
+    if (totalBalance < fee) {
+      console.error('❌ CRITICAL: Insufficient balance!', { totalBalance, fee });
+      Alert.alert('Insufficient Balance', `You need ${fee} MXI but only have ${totalBalance.toFixed(2)} MXI available.`);
+      return;
+    }
 
     setIsCreating(true);
 
     try {
-      console.log('📡 Calling create_mini_battle RPC...');
+      console.log('📡 ========================================');
+      console.log('📡 CALLING RPC: create_mini_battle');
+      console.log('📡 ========================================');
       console.log('📡 Parameters:', {
         p_user_id: user.id,
         p_game_type: selectedGame,
@@ -524,47 +559,78 @@ export default function MiniBattlesScreen() {
         p_max_players: maxPlayers,
       });
 
-      console.log('📡 RPC Response:', { data, error });
+      console.log('📡 ========================================');
+      console.log('📡 RPC RESPONSE RECEIVED');
+      console.log('📡 ========================================');
+      console.log('📡 Data:', JSON.stringify(data, null, 2));
+      console.log('📡 Error:', JSON.stringify(error, null, 2));
 
       if (error) {
-        console.error('❌ RPC Error:', error);
+        console.error('❌ ========================================');
+        console.error('❌ RPC ERROR');
+        console.error('❌ ========================================');
+        console.error('❌ Error object:', error);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error code:', error.code);
+        console.error('❌ Error details:', error.details);
+        console.error('❌ Error hint:', error.hint);
         throw error;
       }
 
       if (!data) {
-        console.error('❌ No data returned from RPC');
+        console.error('❌ ========================================');
+        console.error('❌ NO DATA RETURNED');
+        console.error('❌ ========================================');
         Alert.alert('Error', 'Failed to create mini battle. No response from server.');
         return;
       }
 
+      console.log('✅ ========================================');
+      console.log('✅ DATA RECEIVED');
+      console.log('✅ ========================================');
+      console.log('✅ Data type:', typeof data);
+      console.log('✅ Data success:', data.success);
+      console.log('✅ Data message:', data.message);
+      console.log('✅ Data mini_battle_id:', data.mini_battle_id);
+
       if (!data.success) {
-        console.error('❌ RPC returned failure:', data.message);
+        console.error('❌ ========================================');
+        console.error('❌ RPC RETURNED FAILURE');
+        console.error('❌ ========================================');
+        console.error('❌ Message:', data.message);
         Alert.alert('Error', data.message || 'Failed to create mini battle');
         return;
       }
 
-      console.log('✅ Mini battle created successfully!');
+      console.log('✅ ========================================');
+      console.log('✅ MINI BATTLE CREATED SUCCESSFULLY!');
+      console.log('✅ ========================================');
       console.log('✅ Mini battle ID:', data.mini_battle_id);
       
       setShowConfirmModal(false);
       Alert.alert('Success! 🎉', 'Mini battle created! Waiting for players to join.');
+      
+      // Reload data to show the new mini battle
       await loadData();
       
       console.log('🎮 ========================================');
-      console.log('🎮 CREATE MINI BATTLE - SUCCESS');
+      console.log('🎮 CREATE MINI BATTLE - SUCCESS - END');
       console.log('🎮 ========================================');
     } catch (error: any) {
-      console.error('❌ Failed to create mini battle:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
-      Alert.alert('Error', `Failed to create mini battle: ${error.message || 'Unknown error'}. Please try again.`);
+      console.error('❌ ========================================');
+      console.error('❌ EXCEPTION CAUGHT');
+      console.error('❌ ========================================');
+      console.error('❌ Error:', error);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error code:', error?.code);
+      console.error('❌ Error details:', error?.details);
+      console.error('❌ Error hint:', error?.hint);
+      console.error('❌ Error stack:', error?.stack);
+      
+      Alert.alert('Error', `Failed to create mini battle: ${error?.message || 'Unknown error'}. Please try again.`);
       
       console.log('🎮 ========================================');
-      console.log('🎮 CREATE MINI BATTLE - FAILED');
+      console.log('🎮 CREATE MINI BATTLE - FAILED - END');
       console.log('🎮 ========================================');
     } finally {
       setIsCreating(false);
@@ -781,7 +847,10 @@ export default function MiniBattlesScreen() {
                         styles.gameOption,
                         selectedGame === key && styles.gameOptionSelected,
                       ]}
-                      onPress={() => setSelectedGame(key)}
+                      onPress={() => {
+                        console.log('🎮 Game selected:', key);
+                        setSelectedGame(key);
+                      }}
                     >
                       <Text style={styles.gameOptionTitle}>{name}</Text>
                       <Text style={styles.gameOptionDescription}>
@@ -802,7 +871,10 @@ export default function MiniBattlesScreen() {
                         styles.participantOption,
                         maxPlayers === num && styles.participantOptionSelected,
                       ]}
-                      onPress={() => setMaxPlayers(num)}
+                      onPress={() => {
+                        console.log('👥 Max players selected:', num);
+                        setMaxPlayers(num);
+                      }}
                     >
                       <Text style={styles.participantOptionText}>{num}</Text>
                       <Text style={styles.participantOptionLabel}>players</Text>
@@ -815,7 +887,10 @@ export default function MiniBattlesScreen() {
               <TextInput
                 style={styles.input}
                 value={entryFee}
-                onChangeText={setEntryFee}
+                onChangeText={(text) => {
+                  console.log('💰 Entry fee changed:', text);
+                  setEntryFee(text);
+                }}
                 keyboardType="numeric"
                 placeholder={`${MINI_BATTLE_MIN_ENTRY} - ${MINI_BATTLE_MAX_ENTRY}`}
                 placeholderTextColor={colors.textSecondary}
@@ -824,7 +899,10 @@ export default function MiniBattlesScreen() {
               <View style={styles.modalButtons}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.modalButtonCancel]}
-                  onPress={() => setShowCreateModal(false)}
+                  onPress={() => {
+                    console.log('❌ Create modal cancelled');
+                    setShowCreateModal(false);
+                  }}
                 >
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
@@ -845,7 +923,7 @@ export default function MiniBattlesScreen() {
         visible={showConfirmModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowConfirmModal(false)}
+        onRequestClose={() => !isCreating && setShowConfirmModal(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -900,6 +978,7 @@ export default function MiniBattlesScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => {
+                  console.log('⬅️ Back to create modal');
                   setShowConfirmModal(false);
                   setShowCreateModal(true);
                 }}
