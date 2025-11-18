@@ -20,7 +20,6 @@ import { colors, commonStyles } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -68,14 +67,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
     overflow: 'hidden',
-  },
-  countdownGradientBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    opacity: 0.15,
   },
   countdownHeader: {
     flexDirection: 'row',
@@ -188,11 +179,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceRowValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  balanceRowHighlight: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.text,
@@ -545,19 +531,15 @@ export default function HomeScreen() {
   // Load global metrics
   const loadGlobalMetrics = async () => {
     try {
-      console.log('🌍 Loading global metrics...');
-      
-      // Get all vesting data
       const { data: vestingRecords, error: vestingError } = await supabase
         .from('vesting')
         .select('total_mxi, purchased_mxi, current_rewards');
 
       if (vestingError) {
-        console.error('❌ Error loading global vesting:', vestingError);
+        console.error('Error loading global vesting:', vestingError);
         return;
       }
 
-      // Calculate totals
       const totalMXIInDistribution = vestingRecords?.reduce((sum, record) => 
         sum + (parseFloat(record.total_mxi?.toString() || '0')), 0) || 0;
       
@@ -570,13 +552,6 @@ export default function HomeScreen() {
       const totalUsersEarning = vestingRecords?.filter(record => 
         parseFloat(record.purchased_mxi?.toString() || '0') > 0).length || 0;
 
-      console.log('✅ Global metrics loaded:', {
-        totalMXIInDistribution,
-        totalPurchasedMXI,
-        globalVestingRewards,
-        totalUsersEarning,
-      });
-
       setGlobalMetrics({
         totalMXIInDistribution,
         totalUsersEarning,
@@ -584,7 +559,7 @@ export default function HomeScreen() {
         totalPurchasedMXI,
       });
     } catch (error) {
-      console.error('❌ Failed to load global metrics:', error);
+      console.error('Failed to load global metrics:', error);
     }
   };
 
@@ -592,7 +567,6 @@ export default function HomeScreen() {
   useEffect(() => {
     loadGlobalMetrics();
 
-    // Subscribe to vesting changes
     const vestingSubscription = supabase
       .channel('global-vesting-changes')
       .on(
@@ -603,13 +577,11 @@ export default function HomeScreen() {
           table: 'vesting',
         },
         () => {
-          console.log('🔔 Global vesting change detected, reloading metrics');
           loadGlobalMetrics();
         }
       )
       .subscribe();
 
-    // Subscribe to presale stage changes
     const stageSubscription = supabase
       .channel('presale-stage-changes')
       .on(
@@ -620,7 +592,6 @@ export default function HomeScreen() {
           table: 'presale_stages',
         },
         () => {
-          console.log('🔔 Presale stage change detected, reloading data');
           refreshData();
         }
       )
@@ -653,32 +624,6 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, [globalMetrics?.totalPurchasedMXI]);
-
-  // Debug logging for referral stats
-  useEffect(() => {
-    console.log('🏠 ========================================');
-    console.log('🏠 HOME SCREEN - DATA UPDATE');
-    console.log('🏠 ========================================');
-    console.log('🏠 Vesting Data:', {
-      totalMXI: vestingData?.totalMXI,
-      purchasedMXI: vestingData?.purchasedMXI,
-      currentRewards: vestingData?.currentRewards,
-      tournamentsBalance: vestingData?.tournamentsBalance,
-      commissionBalance: vestingData?.commissionBalance,
-      note: 'Vesting rewards calculated ONLY on purchasedMXI'
-    });
-    console.log('🏠 Referral Stats:', {
-      totalReferrals: referralStats?.totalReferrals,
-      level1Count: referralStats?.level1Count,
-      level2Count: referralStats?.level2Count,
-      level3Count: referralStats?.level3Count,
-      level1MXI: referralStats?.level1MXI,
-      level2MXI: referralStats?.level2MXI,
-      level3MXI: referralStats?.level3MXI,
-      totalMXIEarned: referralStats?.totalMXIEarned,
-    });
-    console.log('🏠 ========================================');
-  }, [referralStats, vestingData]);
 
   // Countdown to February 20, 2026 (Token Launch)
   useEffect(() => {
@@ -735,7 +680,6 @@ export default function HomeScreen() {
   }, [currentStage?.endDate]);
 
   const onRefresh = async () => {
-    console.log('🔄 Home Screen - Manual refresh triggered');
     setRefreshing(true);
     await refreshData();
     await loadGlobalMetrics();
@@ -753,7 +697,7 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown using the new purchased_mxi field
+  // Calculate MXI breakdown
   const totalMXI = vestingData?.totalMXI || 0;
   const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
@@ -761,18 +705,8 @@ export default function HomeScreen() {
   const tournamentsBalance = vestingData?.tournamentsBalance || 0;
   const commissionBalance = vestingData?.commissionBalance || 0;
   
-  console.log('🏠 Display Values:', {
-    totalMXI,
-    purchasedMXI,
-    referralMXI,
-    vestingRewards,
-    tournamentsBalance,
-    commissionBalance,
-    'Calculation check': `${purchasedMXI} + ${referralMXI} = ${purchasedMXI + referralMXI} (should equal ${totalMXI})`,
-  });
-  
   // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
-  const totalMXIAvailable = 25000000; // Total MXI available for presale
+  const totalMXIAvailable = 25000000;
   const totalDistributed = globalMetrics?.totalMXIInDistribution || 0;
   const progress = (totalDistributed / totalMXIAvailable) * 100;
 
@@ -784,7 +718,6 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* Logo at the top */}
         <View style={styles.logoContainer}>
           <Image
             source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
@@ -797,7 +730,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Your MXI Dashboard</Text>
         </View>
 
-        {/* PROFESSIONAL COUNTDOWN TIMER - SMALLER */}
+        {/* Token Launch Countdown */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
@@ -829,19 +762,17 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card - SMALLER */}
+        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>💰 Total MXI Balance</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
           
           <View style={styles.balanceBreakdown}>
-            {/* MXI Purchased */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>💎 MXI Purchased</Text>
               <Text style={styles.balanceRowValue}>{purchasedMXI.toFixed(2)} MXI</Text>
             </View>
             
-            {/* Referral Commissions - From referrals */}
             <View style={styles.balanceRow}>
               <Text style={styles.balanceRowLabel}>🎁 Referral Commissions</Text>
               <Text style={styles.balanceRowValue}>{referralMXI.toFixed(2)} MXI</Text>
@@ -877,7 +808,6 @@ export default function HomeScreen() {
 
             <View style={styles.divider} />
 
-            {/* GAME BALANCES - AVAILABLE FOR CHALLENGES */}
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceRowLabel, { fontWeight: '700', color: colors.text }]}>
                 🏆 Tournament Winnings (Available)
@@ -905,7 +835,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display with Real-Time Updates - SMALLER */}
+        {/* Vesting Display */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>📈 Vesting Rewards</Text>
@@ -915,7 +845,6 @@ export default function HomeScreen() {
           </View>
           
           <View style={styles.vestingMetrics}>
-            {/* Real-time rewards display */}
             <View style={styles.vestingRewardsContainer}>
               <Text style={styles.vestingRewardsLabel}>Current Rewards (Real-Time)</Text>
               <Text style={styles.vestingRewardsAmount}>
@@ -939,7 +868,6 @@ export default function HomeScreen() {
               <Text style={styles.metricValue}>{((vestingData?.monthlyRate || 0.03) * 100).toFixed(1)}%</Text>
             </View>
 
-            {/* Projections - Based ONLY on purchased MXI */}
             <View style={styles.projectionsContainer}>
               <Text style={[styles.metricLabel, { marginBottom: 6 }]}>Projected Earnings (on Purchased MXI)</Text>
               
@@ -967,7 +895,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* UNIFIED: Current Phase Status with Global Data - SMALLER */}
+        {/* Current Phase Status */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -978,7 +906,6 @@ export default function HomeScreen() {
             </View>
             
             <View style={styles.salesMetrics}>
-              {/* UNIFIED: Show total MXI in distribution from all users */}
               <View style={styles.metricRow}>
                 <Text style={styles.metricLabel}>Total MXI in Distribution</Text>
                 <Text style={styles.metricValue}>
@@ -1016,7 +943,6 @@ export default function HomeScreen() {
 
               <View style={styles.divider} />
 
-              {/* PROFESSIONAL PHASE END COUNTDOWN - SMALLER */}
               <View style={styles.phaseCountdownContainer}>
                 <Text style={styles.phaseCountdownTitle}>⏰ Phase Ends In</Text>
                 <View style={styles.phaseCountdownGrid}>
@@ -1049,7 +975,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Action Cards - SMALLER */}
+        {/* Action Cards */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardPurchase]}
