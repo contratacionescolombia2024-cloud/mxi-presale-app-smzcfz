@@ -290,10 +290,10 @@ export default function PurchaseScreen() {
   const handlePurchase = async () => {
     const amountNum = parseFloat(amount);
     
-    if (isNaN(amountNum) || amountNum < 10 || amountNum > 50000) {
+    if (isNaN(amountNum) || amountNum < 20 || amountNum > 50000) {
       Alert.alert(
         t('error'),
-        `${t('amountMustBeBetween')} 10 ${t('and')} 50,000 USDT`
+        `${t('amountMustBeBetween')} 20 ${t('and')} 50,000 USDT`
       );
       return;
     }
@@ -412,7 +412,7 @@ export default function PurchaseScreen() {
             editable={!loading}
           />
           <Text style={styles.helperText}>
-            {t('minimum')}: 10 USDT • {t('maximum')}: 50,000 USDT
+            {t('minimum')}: 20 USDT • {t('maximum')}: 50,000 USDT
           </Text>
 
           {mxiAmount > 0 && (
