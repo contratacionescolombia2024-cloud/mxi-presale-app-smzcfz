@@ -18,6 +18,7 @@ export const translations = {
     ok: 'OK',
     yes: 'Yes',
     no: 'No',
+    and: 'and',
     
     // Auth
     login: 'Login',
@@ -138,7 +139,7 @@ export const translations = {
     
     // Purchase
     buyMXITokens: 'Buy MXI tokens at current stage price',
-    stageDetails: 'Stage Details',
+    stageDetails: 'Details',
     currentPricePerMXI: 'Current Price per MXI',
     available: 'Available',
     preSaleStagePrices: 'Pre-Sale Stage Prices',
@@ -149,15 +150,19 @@ export const translations = {
     youWillReceive: 'You will receive',
     pricePerMXI: 'Price per MXI',
     selectPaymentMethod: '💳 Select Payment Method',
-    paypal: 'PayPal',
-    creditDebitCard: 'Credit/Debit Card & PayPal Balance',
-    binance: 'Binance',
-    cryptocurrencyPayment: 'Cryptocurrency Payment',
+    cryptomus: 'Cryptomus',
+    cryptomusDescription: 'Secure Cryptocurrency Payment Gateway',
     completePurchase: 'Complete Purchase',
     currentPrice: 'Current Price',
     completePurchaseVia: 'Complete Purchase via',
     selectPaymentMethodButton: 'Select Payment Method',
     stage: 'Stage',
+    cryptomusInfoTitle: 'About Cryptomus Payment',
+    cryptomusInfo1: 'Secure and fast cryptocurrency payments',
+    cryptomusInfo2: 'Supports multiple cryptocurrencies (BTC, ETH, USDT, etc.)',
+    cryptomusInfo3: 'Instant transaction confirmation',
+    cryptomusInfo4: 'Low transaction fees',
+    cryptomusPurchaseMessage: 'Your purchase via Cryptomus is being processed. You will receive your MXI tokens shortly after payment confirmation.',
     
     // Referrals
     referralProgram: 'Referral Program',
@@ -266,6 +271,7 @@ export const translations = {
     ok: 'OK',
     yes: 'Sí',
     no: 'No',
+    and: 'y',
     
     // Auth
     login: 'Iniciar Sesión',
@@ -386,7 +392,7 @@ export const translations = {
     
     // Purchase
     buyMXITokens: 'Compra tokens MXI al precio de la etapa actual',
-    stageDetails: 'Detalles de la Etapa',
+    stageDetails: 'Detalles',
     currentPricePerMXI: 'Precio Actual por MXI',
     available: 'Disponible',
     preSaleStagePrices: 'Precios de las Etapas de Preventa',
@@ -397,15 +403,19 @@ export const translations = {
     youWillReceive: 'Recibirás',
     pricePerMXI: 'Precio por MXI',
     selectPaymentMethod: '💳 Seleccionar Método de Pago',
-    paypal: 'PayPal',
-    creditDebitCard: 'Tarjeta de Crédito/Débito y Saldo de PayPal',
-    binance: 'Binance',
-    cryptocurrencyPayment: 'Pago con Criptomonedas',
+    cryptomus: 'Cryptomus',
+    cryptomusDescription: 'Pasarela de Pago Segura con Criptomonedas',
     completePurchase: 'Completar Compra',
     currentPrice: 'Precio Actual',
     completePurchaseVia: 'Completar Compra vía',
     selectPaymentMethodButton: 'Seleccionar Método de Pago',
     stage: 'Etapa',
+    cryptomusInfoTitle: 'Acerca del Pago con Cryptomus',
+    cryptomusInfo1: 'Pagos seguros y rápidos con criptomonedas',
+    cryptomusInfo2: 'Soporta múltiples criptomonedas (BTC, ETH, USDT, etc.)',
+    cryptomusInfo3: 'Confirmación instantánea de transacciones',
+    cryptomusInfo4: 'Bajas comisiones de transacción',
+    cryptomusPurchaseMessage: 'Tu compra vía Cryptomus está siendo procesada. Recibirás tus tokens MXI poco después de la confirmación del pago.',
     
     // Referrals
     referralProgram: 'Programa de Referidos',
@@ -514,6 +524,7 @@ export const translations = {
     ok: 'OK',
     yes: 'Sim',
     no: 'Não',
+    and: 'e',
     
     // Auth
     login: 'Entrar',
@@ -634,7 +645,7 @@ export const translations = {
     
     // Purchase
     buyMXITokens: 'Compre tokens MXI ao preço da fase atual',
-    stageDetails: 'Detalhes da Fase',
+    stageDetails: 'Detalhes',
     currentPricePerMXI: 'Preço Atual por MXI',
     available: 'Disponível',
     preSaleStagePrices: 'Preços das Fases de Pré-venda',
@@ -645,15 +656,19 @@ export const translations = {
     youWillReceive: 'Você receberá',
     pricePerMXI: 'Preço por MXI',
     selectPaymentMethod: '💳 Selecionar Método de Pagamento',
-    paypal: 'PayPal',
-    creditDebitCard: 'Cartão de Crédito/Débito e Saldo do PayPal',
-    binance: 'Binance',
-    cryptocurrencyPayment: 'Pagamento com Criptomoedas',
+    cryptomus: 'Cryptomus',
+    cryptomusDescription: 'Gateway de Pagamento Seguro com Criptomoedas',
     completePurchase: 'Concluir Compra',
     currentPrice: 'Preço Atual',
     completePurchaseVia: 'Concluir Compra via',
     selectPaymentMethodButton: 'Selecionar Método de Pagamento',
     stage: 'Fase',
+    cryptomusInfoTitle: 'Sobre o Pagamento com Cryptomus',
+    cryptomusInfo1: 'Pagamentos seguros e rápidos com criptomoedas',
+    cryptomusInfo2: 'Suporta múltiplas criptomoedas (BTC, ETH, USDT, etc.)',
+    cryptomusInfo3: 'Confirmação instantânea de transações',
+    cryptomusInfo4: 'Baixas taxas de transação',
+    cryptomusPurchaseMessage: 'Sua compra via Cryptomus está sendo processada. Você receberá seus tokens MXI logo após a confirmação do pagamento.',
     
     // Referrals
     referralProgram: 'Programa de Indicações',

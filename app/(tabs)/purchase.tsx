@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { usePreSale } from '@/contexts/PreSaleContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -250,12 +252,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
+  cryptomusInfo: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cryptomusInfoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  cryptomusInfoText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
 });
 
 export default function PurchaseScreen() {
   const { currentStage, purchaseMXI, isLoading } = usePreSale();
+  const { t } = useLanguage();
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'binance' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'cryptomus' | null>(null);
   const [loading, setLoading] = useState(false);
 
   const calculateMXI = () => {
@@ -268,12 +291,15 @@ export default function PurchaseScreen() {
     const amountNum = parseFloat(amount);
     
     if (isNaN(amountNum) || amountNum < 10 || amountNum > 50000) {
-      Alert.alert('Invalid Amount', 'Amount must be between 10 and 50,000 USDT');
+      Alert.alert(
+        t('error'),
+        `${t('amountMustBeBetween')} 10 ${t('and')} 50,000 USDT`
+      );
       return;
     }
 
     if (!paymentMethod) {
-      Alert.alert('Select Payment Method', 'Please select a payment method');
+      Alert.alert(t('selectPaymentMethodAlert'), t('pleaseSelectPaymentMethod'));
       return;
     }
 
@@ -281,11 +307,11 @@ export default function PurchaseScreen() {
     try {
       await purchaseMXI(amountNum, paymentMethod);
       Alert.alert(
-        'Purchase Initiated',
-        `Your purchase via ${paymentMethod === 'paypal' ? 'PayPal' : 'Binance'} is being processed. You will receive your MXI tokens shortly.`,
+        t('purchaseInitiated'),
+        t('cryptomusPurchaseMessage'),
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => {
               setAmount('');
               setPaymentMethod(null);
@@ -295,7 +321,7 @@ export default function PurchaseScreen() {
       );
     } catch (error: any) {
       console.error('Purchase error:', error);
-      Alert.alert('Purchase Failed', error.message || 'Please try again.');
+      Alert.alert(t('purchaseFailed'), error.message || t('pleaseTryAgain'));
     } finally {
       setLoading(false);
     }
@@ -306,7 +332,7 @@ export default function PurchaseScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading purchase data...</Text>
+          <Text style={styles.loadingText}>{t('loadingPurchaseData')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -322,10 +348,8 @@ export default function PurchaseScreen() {
             size={80} 
             color={colors.textSecondary} 
           />
-          <Text style={styles.emptyTitle}>No Active Stage</Text>
-          <Text style={styles.emptyText}>
-            There is no active presale stage at the moment. Please check back later.
-          </Text>
+          <Text style={styles.emptyTitle}>{t('noActiveStage')}</Text>
+          <Text style={styles.emptyText}>{t('noActiveStageMes')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -338,19 +362,19 @@ export default function PurchaseScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Purchase MXI</Text>
-          <Text style={styles.subtitle}>Buy MXI tokens at current stage price</Text>
+          <Text style={styles.title}>{t('purchaseMXI')}</Text>
+          <Text style={styles.subtitle}>{t('buyMXITokens')}</Text>
         </View>
 
         <View style={styles.stageCard}>
-          <Text style={styles.stageTitle}>Stage {currentStage.stage} Details</Text>
+          <Text style={styles.stageTitle}>{t('stage')} {currentStage.stage} {t('stageDetails')}</Text>
           <View style={styles.stageInfo}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Current Price per MXI</Text>
+              <Text style={styles.infoLabel}>{t('currentPricePerMXI')}</Text>
               <Text style={styles.priceHighlight}>${currentStage.price.toFixed(2)} USDT</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Available</Text>
+              <Text style={styles.infoLabel}>{t('available')}</Text>
               <Text style={styles.infoValue}>
                 {(currentStage.totalMXI - currentStage.soldMXI).toLocaleString()} MXI
               </Text>
@@ -359,98 +383,64 @@ export default function PurchaseScreen() {
 
           <View style={styles.stagePriceInfo}>
             <Text style={[styles.infoLabel, { marginBottom: 12, textAlign: 'center' }]}>
-              Pre-Sale Stage Prices
+              {t('preSaleStagePrices')}
             </Text>
             <View style={styles.stagePriceRow}>
-              <Text style={styles.stagePriceLabel}>Stage 1:</Text>
+              <Text style={styles.stagePriceLabel}>{t('stage')} 1:</Text>
               <Text style={styles.stagePriceValue}>$0.40 USDT</Text>
             </View>
             <View style={styles.stagePriceRow}>
-              <Text style={styles.stagePriceLabel}>Stage 2:</Text>
+              <Text style={styles.stagePriceLabel}>{t('stage')} 2:</Text>
               <Text style={styles.stagePriceValue}>$0.70 USDT</Text>
             </View>
             <View style={styles.stagePriceRow}>
-              <Text style={styles.stagePriceLabel}>Stage 3:</Text>
+              <Text style={styles.stagePriceLabel}>{t('stage')} 3:</Text>
               <Text style={styles.stagePriceValue}>$1.00 USDT</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.purchaseCard}>
-          <Text style={styles.inputLabel}>Amount (USDT)</Text>
+          <Text style={styles.inputLabel}>{t('amount')} (USDT)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter amount"
+            placeholder={t('enterAmount')}
             placeholderTextColor={colors.textSecondary}
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
             editable={!loading}
           />
-          <Text style={styles.helperText}>Minimum: 10 USDT • Maximum: 50,000 USDT</Text>
+          <Text style={styles.helperText}>
+            {t('minimum')}: 10 USDT • {t('maximum')}: 50,000 USDT
+          </Text>
 
           {mxiAmount > 0 && (
             <View style={styles.calculationCard}>
               <View style={styles.calculationRow}>
-                <Text style={styles.calculationLabel}>You will receive</Text>
+                <Text style={styles.calculationLabel}>{t('youWillReceive')}</Text>
                 <Text style={styles.calculationValue}>{mxiAmount.toFixed(2)} MXI</Text>
               </View>
               <View style={styles.calculationRow}>
-                <Text style={styles.calculationLabel}>Price per MXI</Text>
+                <Text style={styles.calculationLabel}>{t('pricePerMXI')}</Text>
                 <Text style={styles.calculationValue}>${currentStage.price.toFixed(2)}</Text>
               </View>
             </View>
           )}
 
-          <Text style={styles.paymentMethodsTitle}>💳 Select Payment Method</Text>
+          <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
           <View style={styles.paymentMethods}>
             <TouchableOpacity
               style={[
                 styles.paymentButton,
-                paymentMethod === 'paypal' && styles.paymentButtonSelected,
+                paymentMethod === 'cryptomus' && styles.paymentButtonSelected,
               ]}
-              onPress={() => setPaymentMethod('paypal')}
+              onPress={() => setPaymentMethod('cryptomus')}
               disabled={loading}
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={['#0070BA', '#1546A0']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.paymentGradient}
-              >
-                <View style={styles.paymentLeft}>
-                  <View style={styles.paymentIconContainer}>
-                    <IconSymbol 
-                      ios_icon_name="creditcard.fill" 
-                      android_material_icon_name="payment" 
-                      size={28} 
-                      color="#FFFFFF" 
-                    />
-                  </View>
-                  <View style={styles.paymentInfo}>
-                    <Text style={styles.paymentName}>PayPal</Text>
-                    <Text style={styles.paymentDescription}>Credit/Debit Card & PayPal Balance</Text>
-                  </View>
-                </View>
-                <View style={styles.paymentPrice}>
-                  <Text style={styles.paymentPriceLabel}>Current Price</Text>
-                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.paymentButton,
-                paymentMethod === 'binance' && styles.paymentButtonSelected,
-              ]}
-              onPress={() => setPaymentMethod('binance')}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#F3BA2F', '#E8A825']}
+                colors={['#6C5CE7', '#A29BFE']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.paymentGradient}
@@ -465,16 +455,24 @@ export default function PurchaseScreen() {
                     />
                   </View>
                   <View style={styles.paymentInfo}>
-                    <Text style={styles.paymentName}>Binance</Text>
-                    <Text style={styles.paymentDescription}>Cryptocurrency Payment</Text>
+                    <Text style={styles.paymentName}>{t('cryptomus')}</Text>
+                    <Text style={styles.paymentDescription}>{t('cryptomusDescription')}</Text>
                   </View>
                 </View>
                 <View style={styles.paymentPrice}>
-                  <Text style={styles.paymentPriceLabel}>Current Price</Text>
+                  <Text style={styles.paymentPriceLabel}>{t('currentPrice')}</Text>
                   <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
                 </View>
               </LinearGradient>
             </TouchableOpacity>
+          </View>
+
+          <View style={styles.cryptomusInfo}>
+            <Text style={styles.cryptomusInfoTitle}>ℹ️ {t('cryptomusInfoTitle')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo1')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo2')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo3')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo4')}</Text>
           </View>
 
           <TouchableOpacity
@@ -486,7 +484,7 @@ export default function PurchaseScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.purchaseButtonText}>
-                {paymentMethod ? `Complete Purchase via ${paymentMethod === 'paypal' ? 'PayPal' : 'Binance'}` : 'Select Payment Method'}
+                {paymentMethod ? `${t('completePurchaseVia')} ${t('cryptomus')}` : t('selectPaymentMethodButton')}
               </Text>
             )}
           </TouchableOpacity>

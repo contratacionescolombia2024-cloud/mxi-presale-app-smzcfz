@@ -11,7 +11,7 @@ interface PreSaleContextType {
   vestingData: VestingData | null;
   referralStats: ReferralStats | null;
   isLoading: boolean;
-  purchaseMXI: (amount: number, paymentMethod: 'paypal' | 'binance') => Promise<void>;
+  purchaseMXI: (amount: number, paymentMethod: 'cryptomus') => Promise<void>;
   refreshData: () => Promise<void>;
   forceReloadReferrals: () => Promise<void>;
 }
@@ -550,7 +550,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, isAuthenticated, vestingData?.purchasedMXI, dataLoaded]);
 
-  const purchaseMXI = async (amount: number, paymentMethod: 'paypal' | 'binance') => {
+  const purchaseMXI = async (amount: number, paymentMethod: 'cryptomus') => {
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
