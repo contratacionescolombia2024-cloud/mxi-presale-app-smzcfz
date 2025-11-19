@@ -17,6 +17,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import AppFooter from '@/components/AppFooter';
+import TermsAndConditions from '@/components/TermsAndConditions';
 
 const styles = StyleSheet.create({
   container: {
@@ -81,9 +82,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  termsContainer: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  termsCheckboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  termsLink: {
+    color: colors.primary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  termsWarning: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
+  termsWarningText: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   registerButton: {
     ...buttonStyles.primary,
     marginTop: 24,
+  },
+  registerButtonDisabled: {
+    opacity: 0.5,
   },
   registerButtonText: {
     ...buttonStyles.text,
@@ -150,6 +201,8 @@ export default function RegisterScreen() {
     referralCode: '',
   });
   const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
 
@@ -161,6 +214,15 @@ export default function RegisterScreen() {
 
     if (formData.password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (!termsAccepted) {
+      Alert.alert(
+        'Términos y Condiciones',
+        'Debes aceptar los Términos y Condiciones para continuar con el registro.',
+        [{ text: 'OK' }]
+      );
       return;
     }
 
@@ -340,6 +402,47 @@ export default function RegisterScreen() {
             </View>
           </View>
 
+          {/* Terms and Conditions Acceptance */}
+          <View style={styles.termsContainer}>
+            <TouchableOpacity
+              style={styles.termsCheckboxRow}
+              onPress={() => setTermsAccepted(!termsAccepted)}
+              disabled={loading}
+            >
+              <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+                {termsAccepted && (
+                  <IconSymbol
+                    ios_icon_name="checkmark"
+                    android_material_icon_name="check"
+                    size={16}
+                    color="#FFFFFF"
+                  />
+                )}
+              </View>
+              <Text style={styles.termsText}>
+                He leído y acepto los{' '}
+                <Text
+                  style={styles.termsLink}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setShowTerms(true);
+                  }}
+                >
+                  Términos y Condiciones de Uso
+                </Text>
+                {' '}de MXI Strategic *
+              </Text>
+            </TouchableOpacity>
+
+            {!termsAccepted && (
+              <View style={styles.termsWarning}>
+                <Text style={styles.termsWarningText}>
+                  ⚠️ Debes aceptar los términos para continuar
+                </Text>
+              </View>
+            )}
+          </View>
+
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>📧 Important: After registration</Text>
             <Text style={styles.infoBullet}>- Check your email inbox</Text>
@@ -348,9 +451,12 @@ export default function RegisterScreen() {
           </View>
 
           <TouchableOpacity
-            style={styles.registerButton}
+            style={[
+              styles.registerButton,
+              (!termsAccepted || loading) && styles.registerButtonDisabled,
+            ]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={!termsAccepted || loading}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -369,6 +475,13 @@ export default function RegisterScreen() {
 
         <AppFooter />
       </ScrollView>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditions
+        visible={showTerms}
+        onClose={() => setShowTerms(false)}
+        showAcceptButton={false}
+      />
     </SafeAreaView>
   );
 }

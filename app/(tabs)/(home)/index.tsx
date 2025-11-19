@@ -23,6 +23,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
 import * as WebBrowser from 'expo-web-browser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TermsAndConditions from '@/components/TermsAndConditions';
 
 const styles = StyleSheet.create({
   container: {
@@ -106,6 +108,27 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: colors.textSecondary,
+  },
+  termsLinkContainer: {
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  termsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.card,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  termsLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 0.3,
   },
   countdownCard: {
     backgroundColor: colors.card,
@@ -569,6 +592,8 @@ const languageFlags: Record<string, string> = {
   pt: '🇧🇷',
 };
 
+const TERMS_ACCEPTED_KEY = '@mxi_terms_accepted';
+
 export default function HomeScreen() {
   const { currentStage, vestingData, referralStats, isLoading, refreshData } = usePreSale();
   const { user } = useAuth();
@@ -576,6 +601,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [globalMetrics, setGlobalMetrics] = useState<GlobalMetrics | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
   const [countdown, setCountdown] = useState({
     days: 0,
     hours: 0,
@@ -588,6 +614,32 @@ export default function HomeScreen() {
     minutes: 0,
     seconds: 0,
   });
+
+  // Check if user has accepted terms on first launch
+  useEffect(() => {
+    const checkTermsAcceptance = async () => {
+      try {
+        const accepted = await AsyncStorage.getItem(TERMS_ACCEPTED_KEY);
+        if (!accepted) {
+          // Show terms modal on first launch
+          setShowTerms(true);
+        }
+      } catch (error) {
+        console.error('Error checking terms acceptance:', error);
+      }
+    };
+
+    checkTermsAcceptance();
+  }, []);
+
+  const handleAcceptTerms = async () => {
+    try {
+      await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
+      setShowTerms(false);
+    } catch (error) {
+      console.error('Error saving terms acceptance:', error);
+    }
+  };
 
   // Load global metrics
   const loadGlobalMetrics = useCallback(async () => {
@@ -842,6 +894,22 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Text style={styles.greeting}>{t('welcome')}, {user?.name || 'User'}!</Text>
           <Text style={styles.subtitle}>{t('yourMXIDashboard')}</Text>
+        </View>
+
+        {/* Terms and Conditions Link */}
+        <View style={styles.termsLinkContainer}>
+          <TouchableOpacity 
+            style={styles.termsLink}
+            onPress={() => setShowTerms(true)}
+          >
+            <IconSymbol
+              ios_icon_name="doc.text.fill"
+              android_material_icon_name="description"
+              size={16}
+              color={colors.primary}
+            />
+            <Text style={styles.termsLinkText}>Términos y Condiciones</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Token Launch Countdown */}
@@ -1133,6 +1201,14 @@ export default function HomeScreen() {
 
         <AppFooter />
       </ScrollView>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditions
+        visible={showTerms}
+        onClose={() => setShowTerms(false)}
+        onAccept={handleAcceptTerms}
+        showAcceptButton={false}
+      />
     </SafeAreaView>
   );
 }
