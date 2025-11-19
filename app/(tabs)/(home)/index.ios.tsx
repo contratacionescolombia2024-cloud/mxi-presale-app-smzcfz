@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
@@ -19,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
+import * as WebBrowser from 'expo-web-browser';
 
 const styles = StyleSheet.create({
   container: {
@@ -36,12 +38,35 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     position: 'relative',
   },
+  socialIconsContainer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    flexDirection: 'row',
+    gap: 8,
+    zIndex: 1000,
+  },
+  socialIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   logoContainer: {
     alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 48,
+    width: 160,
+    height: 64,
     resizeMode: 'contain',
   },
   languageButton: {
@@ -596,6 +621,15 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [refreshData, loadGlobalMetrics]);
 
+  const openSocialLink = async (url: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch (error) {
+      console.error('Error opening browser:', error);
+      Alert.alert('Error', 'Could not open the link');
+    }
+  };
+
   if (isLoading && !currentStage) {
     return (
       <SafeAreaView style={styles.container}>
@@ -628,15 +662,38 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* Top Bar with Logo and Language Selector */}
+        {/* Top Bar with Social Icons, Logo and Language Selector */}
         <View style={styles.topBar}>
+          {/* Social Media Icons - Top Left */}
+          <View style={styles.socialIconsContainer}>
+            <TouchableOpacity 
+              style={styles.socialIconButton}
+              onPress={() => openSocialLink('https://www.facebook.com/MXIStrategic/')}
+            >
+              <IconSymbol
+                ios_icon_name="f.square.fill"
+                android_material_icon_name="facebook"
+                size={20}
+                color="#1877F2"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialIconButton}
+              onPress={() => openSocialLink('https://x.com/MXIStragic')}
+            >
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Logo - Center */}
           <View style={styles.logoContainer}>
             <Image
               source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
               style={styles.logo}
             />
           </View>
-          {/* ONLY ONE LANGUAGE BUTTON - Flag Icon */}
+
+          {/* Language Button - Top Right */}
           <TouchableOpacity 
             style={styles.languageButton}
             onPress={() => router.push('/language-settings')}

@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
+import * as WebBrowser from 'expo-web-browser';
 
 const styles = StyleSheet.create({
   container: {
@@ -27,13 +28,36 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
   },
+  socialIconsContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    gap: 12,
+    zIndex: 1000,
+  },
+  socialIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   header: {
     alignItems: 'center',
     marginBottom: 48,
   },
   logo: {
-    width: 200,
-    height: 80,
+    width: 280,
+    height: 112,
     marginBottom: 24,
     resizeMode: 'contain',
   },
@@ -225,8 +249,38 @@ export default function LoginScreen() {
     }
   };
 
+  const openSocialLink = async (url: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch (error) {
+      console.error('Error opening browser:', error);
+      Alert.alert('Error', 'Could not open the link');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
+      {/* Social Media Icons - Top Left */}
+      <View style={styles.socialIconsContainer}>
+        <TouchableOpacity 
+          style={styles.socialIconButton}
+          onPress={() => openSocialLink('https://www.facebook.com/MXIStrategic/')}
+        >
+          <IconSymbol
+            ios_icon_name="f.square.fill"
+            android_material_icon_name="facebook"
+            size={24}
+            color="#1877F2"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.socialIconButton}
+          onPress={() => openSocialLink('https://x.com/MXIStragic')}
+        >
+          <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Image
