@@ -41,12 +41,13 @@ function safeNumeric(value: any): number {
 }
 
 export function PreSaleProvider({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [currentStage, setCurrentStage] = useState<PreSaleStage | null>(null);
   const [userPurchases, setUserPurchases] = useState<Purchase[]>([]);
   const [vestingData, setVestingData] = useState<VestingData | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const loadCurrentStage = useCallback(async () => {
     try {
@@ -188,8 +189,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('❌ Failed to load vesting data:', error);
       setVestingData(null);
-    } finally {
-      setIsLoading(false);
     }
   }, [user?.id]);
 
@@ -333,6 +332,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         ]);
       }
       console.log('✅ Data refresh complete');
+      setDataLoaded(true);
     } catch (error) {
       console.error('❌ Error refreshing data:', error);
     } finally {
@@ -340,24 +340,44 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, user, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
 
+  // Initial data load - wait for auth to complete
   useEffect(() => {
-    console.log('🔄 PreSaleContext - Loading data, auth state:', { isAuthenticated, userId: user?.id });
-    loadCurrentStage();
-    if (isAuthenticated && user) {
-      loadUserPurchases();
-      loadVestingData();
-      loadReferralStats();
-    } else {
-      setUserPurchases([]);
-      setVestingData(null);
-      setReferralStats(null);
-      setIsLoading(false);
+    if (authLoading) {
+      console.log('⏳ Waiting for auth to complete...');
+      return;
     }
-  }, [user, isAuthenticated, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
+
+    console.log('🔄 PreSaleContext - Loading data, auth state:', { isAuthenticated, userId: user?.id });
+    
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await loadCurrentStage();
+        if (isAuthenticated && user) {
+          await Promise.all([
+            loadUserPurchases(),
+            loadVestingData(),
+            loadReferralStats(),
+          ]);
+        } else {
+          setUserPurchases([]);
+          setVestingData(null);
+          setReferralStats(null);
+        }
+        setDataLoaded(true);
+      } catch (error) {
+        console.error('❌ Error loading initial data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id, isAuthenticated, authLoading, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
 
   // Real-time subscription for referrals
   useEffect(() => {
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || !user?.id || !dataLoaded) {
       return;
     }
 
@@ -424,11 +444,11 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       vestingSubscription.unsubscribe();
       profilesSubscription.unsubscribe();
     };
-  }, [user?.id, isAuthenticated, loadReferralStats, loadVestingData]);
+  }, [user?.id, isAuthenticated, dataLoaded, loadReferralStats, loadVestingData]);
 
   // Real-time vesting updates - NOW ONLY ON PURCHASED MXI
   useEffect(() => {
-    if (!isAuthenticated || !user || !vestingData?.purchasedMXI) {
+    if (!isAuthenticated || !user || !vestingData?.purchasedMXI || !dataLoaded) {
       return;
     }
 
@@ -465,7 +485,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       console.log('🛑 Stopping real-time vesting updates');
       clearInterval(interval);
     };
-  }, [user, isAuthenticated, vestingData?.purchasedMXI]);
+  }, [user, isAuthenticated, vestingData?.purchasedMXI, dataLoaded]);
 
   const purchaseMXI = async (amount: number, paymentMethod: 'paypal' | 'binance') => {
     if (!user?.id) {

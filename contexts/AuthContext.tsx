@@ -41,23 +41,55 @@ function generateReferralCode(): string {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     console.log('🔐 AuthContext - Initializing...');
     
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('📱 Initial session check:', session ? 'Session found' : 'No session');
-      if (session?.user) {
-        loadUserProfile(session.user.id, session.user.email || '');
-      } else {
-        setIsLoading(false);
+    let mounted = true;
+
+    // Check active session with retry logic
+    const checkSession = async () => {
+      try {
+        console.log('📱 Checking for existing session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('❌ Error getting session:', error);
+          if (mounted) {
+            setIsLoading(false);
+            setSessionChecked(true);
+          }
+          return;
+        }
+
+        console.log('📱 Session check result:', session ? 'Session found' : 'No session');
+        
+        if (session?.user && mounted) {
+          await loadUserProfile(session.user.id, session.user.email || '');
+        } else if (mounted) {
+          setIsLoading(false);
+          setSessionChecked(true);
+        }
+      } catch (error) {
+        console.error('❌ Error in checkSession:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setSessionChecked(true);
+        }
       }
-    });
+    };
+
+    // Initial session check with small delay to ensure AsyncStorage is ready
+    const initTimer = setTimeout(() => {
+      checkSession();
+    }, 100);
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!mounted) return;
+
         console.log('🔄 Auth state changed:', _event, session ? 'Session active' : 'No session');
         
         // Handle password recovery event
@@ -71,11 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUser(null);
           setIsLoading(false);
+          setSessionChecked(true);
         }
       }
     );
 
     return () => {
+      mounted = false;
+      clearTimeout(initTimer);
       console.log('🛑 Cleaning up auth subscription');
       subscription.unsubscribe();
     };
@@ -204,6 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } finally {
       setIsLoading(false);
+      setSessionChecked(true);
     }
   };
 
@@ -484,7 +520,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && sessionChecked,
         isAdmin: user?.isAdmin || false,
         isLoading,
         login,
