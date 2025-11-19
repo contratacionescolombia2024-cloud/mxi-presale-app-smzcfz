@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { useAuth } from './AuthContext';
 import { PreSaleStage, Purchase, VestingData, ReferralStats } from '@/types';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -446,13 +447,75 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id, isAuthenticated, dataLoaded, loadReferralStats, loadVestingData]);
 
-  // Real-time vesting updates - NOW ONLY ON PURCHASED MXI
+  // Calculate vesting rewards on the server when user opens the app
+  const calculateServerVestingRewards = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log('🔄 Calculating server-side vesting rewards for user:', user.id);
+      
+      // Call the database function to calculate and update vesting rewards
+      const { data, error } = await supabase.rpc('calculate_and_update_vesting_rewards', {
+        p_user_id: user.id,
+      });
+
+      if (error) {
+        console.error('❌ Error calculating vesting rewards:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const result = data[0];
+        console.log('✅ Server vesting calculation complete:', {
+          oldRewards: result.old_rewards,
+          newRewards: result.new_rewards,
+          secondsElapsed: result.seconds_elapsed,
+        });
+        
+        // Reload vesting data to get the updated values
+        await loadVestingData();
+      }
+    } catch (error) {
+      console.error('❌ Failed to calculate server vesting rewards:', error);
+    }
+  }, [user?.id, loadVestingData]);
+
+  // Calculate vesting rewards when app opens or comes to foreground
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id || !dataLoaded) {
+      return;
+    }
+
+    // Calculate rewards immediately when app opens
+    calculateServerVestingRewards();
+
+    // Set up periodic server-side updates (every 30 seconds)
+    const interval = setInterval(() => {
+      calculateServerVestingRewards();
+    }, 30000);
+
+    // Listen for app state changes (foreground/background)
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        console.log('📱 App came to foreground, calculating vesting rewards...');
+        calculateServerVestingRewards();
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [user?.id, isAuthenticated, dataLoaded, calculateServerVestingRewards]);
+
+  // Real-time vesting updates - CLIENT-SIDE DISPLAY ONLY
+  // This provides smooth UI updates between server syncs
   useEffect(() => {
     if (!isAuthenticated || !user || !vestingData?.purchasedMXI || !dataLoaded) {
       return;
     }
 
-    console.log('⏱️ Starting real-time vesting updates for user:', user.id);
+    console.log('⏱️ Starting real-time vesting display updates for user:', user.id);
     console.log('💰 Vesting calculated ONLY on purchased MXI:', vestingData.purchasedMXI);
 
     const interval = setInterval(() => {
@@ -482,7 +545,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }, 1000);
 
     return () => {
-      console.log('🛑 Stopping real-time vesting updates');
+      console.log('🛑 Stopping real-time vesting display updates');
       clearInterval(interval);
     };
   }, [user, isAuthenticated, vestingData?.purchasedMXI, dataLoaded]);
