@@ -809,6 +809,17 @@ export default function HomeScreen() {
             >
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
             </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.socialIconButton}
+              onPress={() => openSocialLink('http://www.mxistrategic.io/')}
+            >
+              <IconSymbol
+                ios_icon_name="globe"
+                android_material_icon_name="language"
+                size={20}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
           </View>
 
           {/* Logo - Center */}

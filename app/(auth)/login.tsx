@@ -279,6 +279,17 @@ export default function LoginScreen() {
         >
           <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
         </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.socialIconButton}
+          onPress={() => openSocialLink('http://www.mxistrategic.io/')}
+        >
+          <IconSymbol
+            ios_icon_name="globe"
+            android_material_icon_name="language"
+            size={24}
+            color={colors.primary}
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
