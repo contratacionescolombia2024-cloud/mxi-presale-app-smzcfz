@@ -190,50 +190,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  infoCard: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  infoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 4,
-  },
-  confirmationCard: {
-    backgroundColor: colors.success + '20',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: colors.success,
-  },
-  confirmationTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.success,
-    marginBottom: 8,
-  },
-  confirmationText: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  hashText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
   verificationCard: {
     backgroundColor: colors.primary + '20',
     borderRadius: 12,
@@ -252,6 +208,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     marginBottom: 4,
+  },
+  hashText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
 });
 
@@ -333,9 +294,9 @@ export default function PurchaseScreen() {
         if (response.status === 202) {
           // Transaction needs more confirmations
           Alert.alert(
-            '⏳ Waiting for Confirmations',
-            `Your transaction needs ${result.required - result.confirmations} more confirmations. Please wait a few minutes and check your balance.`,
-            [{ text: 'OK' }]
+            t('waitingForConfirmations'),
+            `${t('transactionNeedsConfirmations')} ${result.required - result.confirmations} ${t('moreConfirmations')}`,
+            [{ text: t('ok') }]
           );
           return;
         }
@@ -345,11 +306,11 @@ export default function PurchaseScreen() {
       console.log('✅ Transaction verified:', result);
 
       Alert.alert(
-        '✅ Purchase Confirmed!',
-        `Your purchase of ${mxiAmount.toFixed(2)} MXI has been confirmed!\n\nTransaction: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nYour MXI balance has been updated and referral commissions have been distributed.`,
+        t('purchaseConfirmed'),
+        `${t('purchaseConfirmedMessage')} ${mxiAmount.toFixed(2)} MXI!\n\n${t('transaction')}: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\n${t('balanceUpdated')}`,
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => {
               setAmount('');
               setTransactionHash(null);
@@ -361,8 +322,8 @@ export default function PurchaseScreen() {
     } catch (error: any) {
       console.error('❌ Verification error:', error);
       Alert.alert(
-        'Verification Failed',
-        error.message || 'Failed to verify transaction. Please contact support with your transaction hash.'
+        t('verificationFailed'),
+        error.message || t('verificationFailedMessage')
       );
     } finally {
       setVerifying(false);
@@ -381,17 +342,17 @@ export default function PurchaseScreen() {
     }
 
     if (!walletAddress || !signer) {
-      Alert.alert(t('error'), 'Please connect your wallet first');
+      Alert.alert(t('error'), t('connectWalletFirst'));
       return;
     }
 
     if (!user?.id) {
-      Alert.alert(t('error'), 'User not authenticated');
+      Alert.alert(t('error'), t('userNotAuthenticated'));
       return;
     }
 
     if (!currentStage) {
-      Alert.alert(t('error'), 'No active presale stage');
+      Alert.alert(t('error'), t('noActivePresaleStage'));
       return;
     }
 
@@ -428,15 +389,15 @@ export default function PurchaseScreen() {
       }
 
       Alert.alert(
-        '✅ Transaction Submitted!',
-        `Your USDT payment has been submitted to the blockchain.\n\nTransaction Hash: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nWe will verify the transaction and credit your MXI balance shortly.`,
+        t('transactionSubmittedSuccess'),
+        `${t('usdtPaymentSubmitted')}\n\n${t('transactionHash')}: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\n${t('verifyTransactionMessage')}`,
         [
           {
-            text: 'Verify Now',
+            text: t('verifyNow'),
             onPress: () => verifyTransaction(txHash, mxiAmount, amountNum),
           },
           {
-            text: 'Later',
+            text: t('later'),
             style: 'cancel',
           },
         ]
@@ -555,29 +516,19 @@ export default function PurchaseScreen() {
                 <Text style={styles.calculationValue}>${currentStage.price.toFixed(2)}</Text>
               </View>
               <View style={styles.calculationRow}>
-                <Text style={styles.calculationLabel}>Payment Method</Text>
+                <Text style={styles.calculationLabel}>{t('paymentMethod')}</Text>
                 <Text style={styles.calculationValue}>USDT (BEP-20)</Text>
               </View>
             </View>
           )}
 
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>ℹ️ Payment Information</Text>
-            <Text style={styles.infoText}>• Connect MetaMask, Trust Wallet, or any WalletConnect wallet</Text>
-            <Text style={styles.infoText}>• Make sure you&apos;re on BSC (Binance Smart Chain) network</Text>
-            <Text style={styles.infoText}>• Payment is made in USDT (BEP-20) tokens</Text>
-            <Text style={styles.infoText}>• MXI tokens credited after 3 blockchain confirmations</Text>
-            <Text style={styles.infoText}>• Referral commissions distributed automatically</Text>
-            <Text style={styles.infoText}>• Your private keys never leave your wallet</Text>
-          </View>
-
           {transactionHash && (
             <View style={styles.verificationCard}>
-              <Text style={styles.verificationTitle}>⏳ Transaction Submitted</Text>
+              <Text style={styles.verificationTitle}>⏳ {t('transactionSubmitted')}</Text>
               <Text style={styles.verificationText}>
-                Your payment has been submitted to the blockchain.
+                {t('paymentSubmittedToBlockchain')}
               </Text>
-              <Text style={styles.verificationText}>Transaction Hash:</Text>
+              <Text style={styles.verificationText}>{t('transactionHash')}:</Text>
               <Text style={styles.hashText}>{transactionHash}</Text>
               <TouchableOpacity
                 style={[styles.purchaseButton, { marginTop: 12 }]}
@@ -591,7 +542,7 @@ export default function PurchaseScreen() {
                 {verifying ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.purchaseButtonText}>Verify Transaction</Text>
+                  <Text style={styles.purchaseButtonText}>{t('verifyTransaction')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -607,8 +558,8 @@ export default function PurchaseScreen() {
             ) : (
               <Text style={styles.purchaseButtonText}>
                 {!walletAddress
-                  ? 'Connect Wallet First'
-                  : `Pay ${amount || '0'} USDT`}
+                  ? t('connectWalletFirst')
+                  : `${t('pay')} ${amount || '0'} USDT`}
               </Text>
             )}
           </TouchableOpacity>

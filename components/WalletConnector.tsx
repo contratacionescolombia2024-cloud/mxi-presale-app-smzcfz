@@ -22,6 +22,7 @@ import {
   BSC_NETWORK_NAME,
 } from '@/utils/walletConnect';
 import { getBNBBalance } from '@/utils/metamask';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WalletConnectorProps {
   onConnect: (address: string, walletType: WalletType, provider: any, signer: any) => void;
@@ -39,6 +40,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [provider, setProvider] = useState<any>(null);
   const [signer, setSigner] = useState<any>(null);
+  const { t } = useLanguage();
 
   const isWeb = Platform.OS === 'web';
 
@@ -63,8 +65,8 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
   const handleConnectWallet = async (type: WalletType) => {
     if (!isWeb) {
       Alert.alert(
-        'Web Only Feature',
-        'Crypto wallet integration is only available on web browsers. Please use the web version of this app.'
+        t('webOnlyFeature'),
+        t('cryptoWalletWebOnly')
       );
       return;
     }
@@ -92,12 +94,12 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
       onConnect(result.address, type, result.provider, result.signer);
 
       Alert.alert(
-        '✅ Wallet Connected',
-        `Successfully connected to ${type === 'metamask' ? 'MetaMask' : 'WalletConnect'}\n\nAddress: ${result.address.substring(0, 6)}...${result.address.substring(result.address.length - 4)}`
+        t('walletConnectedSuccess'),
+        `${t('successfullyConnectedTo')} ${type === 'metamask' ? 'MetaMask' : 'WalletConnect'}\n\n${t('address')}: ${result.address.substring(0, 6)}...${result.address.substring(result.address.length - 4)}`
       );
     } catch (error: any) {
       console.error('Connection error:', error);
-      Alert.alert('Connection Failed', error.message);
+      Alert.alert(t('connectionFailed'), error.message);
     } finally {
       setLoading(false);
     }
@@ -128,10 +130,10 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
           color={colors.textSecondary}
         />
         <Text style={styles.webOnlyText}>
-          Crypto wallet payments are only available on web browsers
+          {t('cryptoWalletWebOnly')}
         </Text>
         <Text style={styles.webOnlySubtext}>
-          Please use the web version to connect MetaMask, Trust Wallet, or other Web3 wallets
+          {t('pleaseUseWebVersion')}
         </Text>
       </View>
     );
@@ -162,7 +164,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                   size={24}
                   color="#fff"
                 />
-                <Text style={styles.connectButtonText}>Connect Wallet</Text>
+                <Text style={styles.connectButtonText}>{t('connectWallet')}</Text>
               </React.Fragment>
             )}
           </LinearGradient>
@@ -177,7 +179,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Connect Wallet</Text>
+                <Text style={styles.modalTitle}>{t('connectWallet')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowWalletModal(false)}
                   style={styles.closeButton}
@@ -192,7 +194,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
               </View>
 
               <Text style={styles.modalSubtitle}>
-                Choose your preferred wallet to connect
+                {t('chooseWalletToConnect')}
               </Text>
 
               <View style={styles.walletOptions}>
@@ -218,7 +220,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                     <View style={styles.walletOptionInfo}>
                       <Text style={styles.walletOptionName}>MetaMask</Text>
                       <Text style={styles.walletOptionDescription}>
-                        Browser extension wallet
+                        {t('browserExtensionWallet')}
                       </Text>
                     </View>
                     <IconSymbol
@@ -252,7 +254,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                     <View style={styles.walletOptionInfo}>
                       <Text style={styles.walletOptionName}>WalletConnect</Text>
                       <Text style={styles.walletOptionDescription}>
-                        Trust Wallet, Rainbow & more
+                        {t('trustWalletAndMore')}
                       </Text>
                     </View>
                     <IconSymbol
@@ -263,18 +265,6 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                     />
                   </LinearGradient>
                 </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalInfo}>
-                <IconSymbol
-                  ios_icon_name="info.circle"
-                  android_material_icon_name="info"
-                  size={20}
-                  color={colors.primary}
-                />
-                <Text style={styles.modalInfoText}>
-                  Make sure you&apos;re on BSC network. Your private keys never leave your wallet.
-                </Text>
               </View>
             </View>
           </View>
@@ -296,13 +286,13 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
             </Text>
           </View>
           <TouchableOpacity style={styles.disconnectButton} onPress={handleDisconnect}>
-            <Text style={styles.disconnectButtonText}>Disconnect</Text>
+            <Text style={styles.disconnectButtonText}>{t('disconnect')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.networkInfo}>
           <View style={styles.networkRow}>
-            <Text style={styles.networkLabel}>Network:</Text>
+            <Text style={styles.networkLabel}>{t('network')}:</Text>
             <View style={styles.networkBadgeCorrect}>
               <Text style={styles.networkBadgeText}>{BSC_NETWORK_NAME}</Text>
             </View>
@@ -310,7 +300,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
         </View>
 
         <View style={styles.balancesContainer}>
-          <Text style={styles.balancesTitle}>Available Balance</Text>
+          <Text style={styles.balancesTitle}>{t('availableBalance')}</Text>
           {balanceLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
@@ -439,20 +429,6 @@ const styles = StyleSheet.create({
   walletOptionDescription: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.8)',
-  },
-  modalInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
-  },
-  modalInfoText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
   connectedContainer: {
     marginBottom: 16,
