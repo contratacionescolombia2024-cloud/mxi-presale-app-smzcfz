@@ -14,44 +14,15 @@ config.cacheStores = [
 config.resolver = {
   ...config.resolver,
   extraNodeModules: {
-    buffer: path.resolve(__dirname, 'node_modules/buffer/'),
-    stream: path.resolve(__dirname, 'node_modules/stream-browserify'),
-    crypto: path.resolve(__dirname, 'node_modules/crypto-browserify'),
-    events: path.resolve(__dirname, 'node_modules/events/'),
-    process: path.resolve(__dirname, 'node_modules/process/browser.js'),
-    vm: path.resolve(__dirname, 'node_modules/vm-browserify'),
-    util: path.resolve(__dirname, 'node_modules/util/'),
+    buffer: require.resolve('buffer'),
+    stream: require.resolve('stream-browserify'),
+    crypto: require.resolve('crypto-browserify'),
+    events: require.resolve('events'),
+    process: require.resolve('process/browser.js'),
+    vm: require.resolve('vm-browserify'),
+    util: require.resolve('util'),
   },
   sourceExts: [...(config.resolver.sourceExts || []), 'cjs'],
-};
-
-// Add custom resolver to handle polyfills
-const originalResolveRequest = config.resolver.resolveRequest;
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // Map Node.js built-ins to their polyfills
-  const polyfillMap = {
-    'buffer': path.resolve(__dirname, 'node_modules/buffer/'),
-    'stream': path.resolve(__dirname, 'node_modules/stream-browserify'),
-    'crypto': path.resolve(__dirname, 'node_modules/crypto-browserify'),
-    'events': path.resolve(__dirname, 'node_modules/events/'),
-    'process': path.resolve(__dirname, 'node_modules/process/browser.js'),
-    'vm': path.resolve(__dirname, 'node_modules/vm-browserify'),
-    'util': path.resolve(__dirname, 'node_modules/util/'),
-  };
-
-  if (polyfillMap[moduleName]) {
-    return {
-      filePath: polyfillMap[moduleName],
-      type: 'sourceFile',
-    };
-  }
-
-  // Use the original resolver for everything else
-  if (originalResolveRequest) {
-    return originalResolveRequest(context, moduleName, platform);
-  }
-  
-  return context.resolveRequest(context, moduleName, platform);
 };
 
 module.exports = config;
