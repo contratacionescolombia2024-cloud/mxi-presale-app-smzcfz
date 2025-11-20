@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   socialIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
@@ -292,7 +292,7 @@ export default function LoginScreen() {
           <IconSymbol
             ios_icon_name="f.square.fill"
             android_material_icon_name="facebook"
-            size={24}
+            size={18}
             color="#1877F2"
           />
         </TouchableOpacity>
@@ -300,16 +300,16 @@ export default function LoginScreen() {
           style={styles.socialIconButton}
           onPress={() => openSocialLink('https://x.com/MXIStragic')}
         >
-          <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>𝕏</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.socialIconButton}
-          onPress={() => openSocialLink('http://www.mxistrategic.io/')}
+          onPress={() => openSocialLink('https://mxistrategic.live/')}
         >
           <IconSymbol
             ios_icon_name="globe"
             android_material_icon_name="language"
-            size={24}
+            size={18}
             color={colors.primary}
           />
         </TouchableOpacity>
