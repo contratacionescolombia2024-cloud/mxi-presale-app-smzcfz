@@ -307,7 +307,7 @@ export default function BalanceManagementScreen() {
 
     try {
       console.log('🔥 STEP 1: Verify Supabase connection');
-      const { data: testData, error: testError } = await supabase
+      const { data: _testData, error: testError } = await supabase
         .from('users_profiles')
         .select('id')
         .eq('id', selectedUser.id)

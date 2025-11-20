@@ -18,7 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Redirect, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { ICONS } from '@/constants/AppIcons';
 import { supabase } from '@/app/integrations/supabase/client';
 import { Tournament, MiniBattle, GAME_NAMES, VIRAL_ZONE_GAME_NAMES, MINI_BATTLE_GAME_NAMES } from '@/types/tournaments';
 

@@ -18,7 +18,6 @@ import {
   Platform,
 } from 'react-native';
 import React, { useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 import { sendUSDTPayment, WalletType } from '@/utils/walletConnect';
 import { supabase } from '@/app/integrations/supabase/client';
 
@@ -223,13 +222,11 @@ export default function PurchaseScreen() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [walletType, setWalletType] = useState<WalletType | null>(null);
-  const [provider, setProvider] = useState<any>(null);
+  const [_walletType, _setWalletType] = useState<WalletType | null>(null);
+  const [_provider, _setProvider] = useState<any>(null);
   const [signer, setSigner] = useState<any>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
-
-  const isWeb = Platform.OS === 'web';
 
   const calculateMXI = () => {
     const amountNum = parseFloat(amount);
@@ -244,16 +241,16 @@ export default function PurchaseScreen() {
     signerInstance: any
   ) => {
     setWalletAddress(address);
-    setWalletType(type);
-    setProvider(providerInstance);
+    _setWalletType(type);
+    _setProvider(providerInstance);
     setSigner(signerInstance);
     console.log('✅ Wallet connected:', { address, type });
   };
 
   const handleWalletDisconnect = () => {
     setWalletAddress(null);
-    setWalletType(null);
-    setProvider(null);
+    _setWalletType(null);
+    _setProvider(null);
     setSigner(null);
     setTransactionHash(null);
     console.log('🔌 Wallet disconnected');

@@ -10,7 +10,6 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
-  Modal,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -34,24 +33,6 @@ interface UserProfile {
   is_admin: boolean;
   account_blocked: boolean;
   created_at: string;
-}
-
-interface UserDetails {
-  profile: UserProfile;
-  vesting: {
-    total_mxi: number;
-    current_rewards: number;
-    monthly_rate: number;
-  };
-  purchases: {
-    total_purchases: number;
-    total_mxi_purchased: number;
-    total_spent_usd: number;
-  };
-  referrals: {
-    total_referrals: number;
-    total_referral_earnings: number;
-  };
 }
 
 interface MessageData {
@@ -102,7 +83,6 @@ export default function AdminScreen() {
 
   // Modal states
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<MessageData | null>(null);
   const [selectedKYC, setSelectedKYC] = useState<UserProfile | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -302,7 +282,6 @@ export default function AdminScreen() {
 
       if (data && data.success) {
         console.log('✅ User details loaded successfully');
-        setSelectedUserDetails(data as any);
         
         // Set edit form values
         setEditName(data.profile.name || '');
@@ -321,151 +300,6 @@ export default function AdminScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleToggleAccountBlock = async (blocked: boolean) => {
-    if (!selectedUser) return;
-
-    const action = blocked ? t('block') : t('unblock');
-    Alert.alert(
-      `${action} ${t('account')}`,
-      `${t('areYouSureYouWantTo')} ${action.toLowerCase()} ${selectedUser.name}${t('accountQuestion')}\n\n${blocked ? `⚠️ ${t('userWillNotBeAbleToLogin')}` : `✅ ${t('userWillRegainAccess')}`}`,
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: action,
-          style: blocked ? 'destructive' : 'default',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              console.log(`🔒 ${blocked ? 'Blocking' : 'Unblocking'} account for user ${selectedUser.id}`);
-              
-              const { data, error } = await supabase.rpc('admin_toggle_account_block', {
-                p_user_id: selectedUser.id,
-                p_blocked: blocked,
-              });
-
-              if (error) {
-                console.error('❌ RPC Error toggling account block:', error);
-                Alert.alert(t('error'), `${t('failedTo')} ${action.toLowerCase()} ${t('account')}: ${error.message}`);
-                throw error;
-              }
-
-              console.log('📦 Response:', data);
-
-              if (data && data.success) {
-                console.log(`✅ Account ${blocked ? 'blocked' : 'unblocked'} successfully`);
-                Alert.alert(t('success'), data.message);
-                await loadUsers();
-                await loadUserDetails(selectedUser.id);
-                
-                // Update selected user state
-                setSelectedUser({
-                  ...selectedUser,
-                  account_blocked: blocked,
-                });
-              } else {
-                const errorMsg = data?.error || `${t('failedTo')} ${action.toLowerCase()} ${t('account')}`;
-                console.error('❌ Operation failed:', errorMsg);
-                Alert.alert(t('error'), errorMsg);
-              }
-            } catch (error: any) {
-              console.error('❌ Exception in handleToggleAccountBlock:', error);
-              Alert.alert(t('error'), error.message || `${t('failedTo')} ${action.toLowerCase()} ${t('account')}`);
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const handleUpdateUserProfile = async () => {
-    if (!selectedUser) return;
-
-    setLoading(true);
-    try {
-      console.log(`✏️ Updating profile for user ${selectedUser.id}`);
-      console.log('📤 Update data:', { editName, editIdentification, editEmail, editAddress });
-      
-      const { data, error } = await supabase.rpc('admin_update_user_profile', {
-        p_user_id: selectedUser.id,
-        p_name: editName || null,
-        p_identification: editIdentification || null,
-        p_email: editEmail || null,
-        p_address: editAddress || null,
-      });
-
-      if (error) {
-        console.error('❌ RPC Error updating user profile:', error);
-        Alert.alert(t('error'), `${t('failedToUpdateProfile')}: ${error.message}`);
-        throw error;
-      }
-
-      console.log('📦 Update response:', data);
-
-      if (data && data.success) {
-        console.log('✅ User profile updated successfully');
-        Alert.alert(t('success'), t('userProfileUpdatedSuccessfully'));
-        await loadUsers();
-        await loadUserDetails(selectedUser.id);
-      } else {
-        const errorMsg = data?.error || t('failedToUpdateProfile');
-        console.error('❌ Profile update failed:', errorMsg);
-        Alert.alert(t('error'), errorMsg);
-      }
-    } catch (error: any) {
-      console.error('❌ Exception in handleUpdateUserProfile:', error);
-      Alert.alert(t('error'), error.message || t('failedToUpdateProfile'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateReferredBy = async () => {
-    if (!selectedUser) return;
-
-    Alert.alert(
-      t('updateReferral'),
-      `${t('changeReferralCodeFor')} ${selectedUser.name} ${t('to')}: ${editReferredBy || t('none')}?`,
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('update'),
-          onPress: async () => {
-            setLoading(true);
-            try {
-              console.log(`🔗 Updating referred_by for user ${selectedUser.id} to: ${editReferredBy}`);
-              
-              const { error } = await supabase
-                .from('users_profiles')
-                .update({
-                  referred_by: editReferredBy || null,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq('id', selectedUser.id);
-
-              if (error) {
-                console.error('❌ Error updating referred_by:', error);
-                Alert.alert(t('error'), `${t('failedToUpdate')}: ${error.message}`);
-                throw error;
-              }
-
-              console.log('✅ Referred_by updated successfully');
-              Alert.alert(t('success'), t('referralCodeUpdatedSuccessfully'));
-              await loadUsers();
-              await loadUserDetails(selectedUser.id);
-            } catch (error: any) {
-              console.error('❌ Exception in handleUpdateReferredBy:', error);
-              Alert.alert(t('error'), error.message || t('failedToUpdateReferralCode'));
-            } finally {
-              setLoading(false);
-            }
-          }
-        }
-      ]
-    );
   };
 
   const handleLinkReferral = async () => {
@@ -519,182 +353,6 @@ export default function AdminScreen() {
     } catch (error: any) {
       console.error('❌ Exception in handleLinkReferral:', error);
       Alert.alert(t('error'), error.message || t('failedToLinkReferral'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddReferral = async () => {
-    if (!selectedUser || !referralAmount) {
-      Alert.alert(t('error'), t('pleaseEnterValidReferralDetails'));
-      return;
-    }
-
-    const amount = parseFloat(referralAmount);
-    const level = parseInt(referralLevel);
-
-    if (isNaN(amount) || amount <= 0) {
-      Alert.alert(t('error'), t('pleaseEnterValidPositiveAmount'));
-      return;
-    }
-
-    if (isNaN(level) || level < 1 || level > 3) {
-      Alert.alert(t('error'), t('referralLevelMustBeBetween1And3'));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log(`🔗 Adding referral: ${amount} MXI at level ${level} for user ${selectedUser.id}`);
-
-      const { error: referralError } = await supabase
-        .from('referrals')
-        .insert({
-          referrer_id: selectedUser.id,
-          referred_id: user?.id,
-          level: level,
-          mxi_earned: amount,
-          commission_mxi: amount,
-        });
-
-      if (referralError) {
-        console.error('❌ Error inserting referral:', referralError);
-        Alert.alert(t('error'), `${t('failedToAddReferral')}: ${referralError.message}`);
-        throw referralError;
-      }
-
-      const { data: vestingData, error: vestingError } = await supabase
-        .from('vesting')
-        .select('*')
-        .eq('user_id', selectedUser.id)
-        .maybeSingle();
-
-      if (vestingError && vestingError.code !== 'PGRST116') {
-        console.error('❌ Error fetching vesting:', vestingError);
-        throw vestingError;
-      }
-
-      if (vestingData) {
-        const newTotal = parseFloat(vestingData.total_mxi) + amount;
-        console.log(`📊 Updating vesting: ${vestingData.total_mxi} + ${amount} = ${newTotal}`);
-        
-        const { error: updateError } = await supabase
-          .from('vesting')
-          .update({
-            total_mxi: newTotal,
-            last_update: new Date().toISOString(),
-          })
-          .eq('user_id', selectedUser.id);
-
-        if (updateError) {
-          console.error('❌ Error updating vesting:', updateError);
-          throw updateError;
-        }
-      } else {
-        console.log(`📊 Creating new vesting record with ${amount} MXI`);
-        
-        const { error: insertError } = await supabase
-          .from('vesting')
-          .insert({
-            user_id: selectedUser.id,
-            total_mxi: amount,
-            current_rewards: 0,
-            monthly_rate: 0.03,
-            last_update: new Date().toISOString(),
-          });
-
-        if (insertError) {
-          console.error('❌ Error inserting vesting:', insertError);
-          throw insertError;
-        }
-      }
-
-      console.log(`✅ Added referral earning of ${amount} MXI at level ${level}`);
-      Alert.alert(
-        t('success'), 
-        `${t('added')} ${amount} MXI ${t('referralEarnings')} (${t('level')} ${level}) ${t('toAccount')} ${selectedUser.name}`
-      );
-      setReferralAmount('');
-      setReferralLevel('1');
-      await loadUsers();
-      await loadMetrics();
-      await loadUserDetails(selectedUser.id);
-    } catch (error: any) {
-      console.error('❌ Exception in handleAddReferral:', error);
-      Alert.alert(t('error'), error.message || t('failedToAddReferral'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRespondToMessage = async () => {
-    if (!selectedMessage || !messageResponse.trim()) {
-      Alert.alert(t('error'), t('pleaseEnterResponse'));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      console.log(`💬 Responding to message ${selectedMessage.id}`);
-      
-      const { error } = await supabase
-        .from('messages')
-        .update({
-          response: messageResponse.trim(),
-          status: 'answered',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedMessage.id);
-
-      if (error) {
-        console.error('❌ Error responding to message:', error);
-        Alert.alert(t('error'), `${t('failedToSendResponse')}: ${error.message}`);
-        throw error;
-      }
-
-      console.log('✅ Response sent successfully');
-      Alert.alert(t('success'), t('responseSentSuccessfully'));
-      setMessageResponse('');
-      setShowMessageModal(false);
-      await loadMessages();
-      await loadMetrics();
-    } catch (error: any) {
-      console.error('❌ Exception in handleRespondToMessage:', error);
-      Alert.alert(t('error'), error.message || t('failedToSendResponse'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleKYCDecision = async (decision: 'approved' | 'rejected') => {
-    if (!selectedKYC) return;
-
-    setLoading(true);
-    try {
-      console.log(`✅ ${decision === 'approved' ? 'Approving' : 'Rejecting'} KYC for ${selectedKYC.id}`);
-      
-      const { error } = await supabase
-        .from('users_profiles')
-        .update({
-          kyc_status: decision,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedKYC.id);
-
-      if (error) {
-        console.error('❌ Error updating KYC:', error);
-        Alert.alert(t('error'), `${t('failedToUpdateKYC')}: ${error.message}`);
-        throw error;
-      }
-
-      console.log(`✅ KYC ${decision} successfully`);
-      Alert.alert(t('success'), `KYC ${decision === 'approved' ? t('approved') : t('rejected')} ${t('for')} ${selectedKYC.name}`);
-      setShowKYCModal(false);
-      await loadKYCSubmissions();
-      await loadMetrics();
-    } catch (error: any) {
-      console.error('❌ Exception in handleKYCDecision:', error);
-      Alert.alert(t('error'), error.message || t('failedToUpdateKYCStatus'));
     } finally {
       setLoading(false);
     }

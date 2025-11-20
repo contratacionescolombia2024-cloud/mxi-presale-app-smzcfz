@@ -416,7 +416,7 @@ export default function AdminUsersTableScreen() {
           </View>
         ) : (
           <>
-            {filteredUsers.map((user, index) => (
+            {filteredUsers.map((user) => (
               <TouchableOpacity
                 key={user.id}
                 style={styles.userCard}
