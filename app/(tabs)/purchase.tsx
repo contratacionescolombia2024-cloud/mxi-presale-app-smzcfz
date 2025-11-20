@@ -4,6 +4,8 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import MetaMaskConnect from '@/components/MetaMaskConnect';
 import {
   View,
   Text,
@@ -14,10 +16,16 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Linking,
 } from 'react-native';
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  sendBNBPayment,
+  sendUSDTPayment,
+  getBNBPriceInUSD,
+  isMetaMaskInstalled,
+} from '@/utils/metamask';
+import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
   container: {
@@ -252,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  cryptomusInfo: {
+  metamaskInfo: {
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
@@ -260,31 +268,96 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  cryptomusInfoTitle: {
+  metamaskInfoTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
   },
-  cryptomusInfoText: {
+  metamaskInfoText: {
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 4,
   },
+  confirmationCard: {
+    backgroundColor: colors.success + '20',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: colors.success,
+  },
+  confirmationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.success,
+    marginBottom: 8,
+  },
+  confirmationText: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  hashText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  bnbPriceInfo: {
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 8,
+  },
+  bnbPriceText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
 });
 
 export default function PurchaseScreen() {
-  const { currentStage, purchaseMXI, isLoading } = usePreSale();
+  const { currentStage, refreshData, isLoading } = usePreSale();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cryptomus' | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'USDT' | 'BNB' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [bnbPrice, setBnbPrice] = useState<number>(600);
+
+  const isWeb = Platform.OS === 'web';
+
+  // Load BNB price
+  React.useEffect(() => {
+    if (isWeb && isMetaMaskInstalled()) {
+      getBNBPriceInUSD().then(setBnbPrice).catch(console.error);
+    }
+  }, [isWeb]);
 
   const calculateMXI = () => {
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || !currentStage) return 0;
     return amountNum / currentStage.price;
+  };
+
+  const calculateBNBAmount = () => {
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || !bnbPrice) return 0;
+    return amountNum / bnbPrice;
+  };
+
+  const handleMetaMaskConnect = (address: string) => {
+    setWalletAddress(address);
+    console.log('✅ MetaMask connected:', address);
+  };
+
+  const handleMetaMaskDisconnect = () => {
+    setWalletAddress(null);
+    setTransactionHash(null);
+    console.log('🔌 MetaMask disconnected');
   };
 
   const handlePurchase = async () => {
@@ -303,24 +376,127 @@ export default function PurchaseScreen() {
       return;
     }
 
+    if (!walletAddress) {
+      Alert.alert(t('error'), 'Please connect your MetaMask wallet first');
+      return;
+    }
+
+    if (!user?.id) {
+      Alert.alert(t('error'), 'User not authenticated');
+      return;
+    }
+
+    if (!currentStage) {
+      Alert.alert(t('error'), 'No active presale stage');
+      return;
+    }
+
     setLoading(true);
+    setTransactionHash(null);
+
     try {
-      await purchaseMXI(amountNum, paymentMethod);
+      let txHash: string;
+
+      // Send payment based on selected method
+      if (paymentMethod === 'BNB') {
+        txHash = await sendBNBPayment(walletAddress, amountNum, bnbPrice);
+      } else {
+        txHash = await sendUSDTPayment(walletAddress, amountNum);
+      }
+
+      console.log('✅ Transaction sent:', txHash);
+      setTransactionHash(txHash);
+
+      // Calculate MXI amount
+      const mxiAmount = amountNum / currentStage.price;
+
+      // Save transaction to database
+      const { error: txError } = await supabase
+        .from('metamask_transactions')
+        .insert({
+          user_id: user.id,
+          wallet_address: walletAddress,
+          transaction_hash: txHash,
+          amount_usd: amountNum,
+          mxi_amount: mxiAmount,
+          payment_currency: paymentMethod,
+          stage: currentStage.stage,
+          status: 'pending',
+        });
+
+      if (txError) {
+        console.error('❌ Error saving transaction:', txError);
+        throw new Error('Failed to save transaction to database');
+      }
+
+      // Update vesting record
+      const { data: existingVesting } = await supabase
+        .from('vesting')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingVesting) {
+        const newTotal = (parseFloat(existingVesting.total_mxi) || 0) + mxiAmount;
+        const newPurchased = (parseFloat(existingVesting.purchased_mxi) || 0) + mxiAmount;
+        
+        const { error: vestingError } = await supabase
+          .from('vesting')
+          .update({
+            total_mxi: newTotal,
+            purchased_mxi: newPurchased,
+            last_update: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
+
+        if (vestingError) {
+          console.error('❌ Vesting update error:', vestingError);
+        }
+      } else {
+        const { error: vestingError } = await supabase
+          .from('vesting')
+          .insert({
+            user_id: user.id,
+            total_mxi: mxiAmount,
+            purchased_mxi: mxiAmount,
+            current_rewards: 0,
+            monthly_rate: 0.03,
+            last_update: new Date().toISOString(),
+          });
+
+        if (vestingError) {
+          console.error('❌ Vesting creation error:', vestingError);
+        }
+      }
+
+      // Update presale stage sold amount
+      const { error: stageError } = await supabase
+        .from('presale_stages')
+        .update({
+          sold_mxi: currentStage.soldMXI + mxiAmount,
+        })
+        .eq('stage', currentStage.stage);
+
+      if (stageError) {
+        console.error('❌ Stage update error:', stageError);
+      }
+
       Alert.alert(
-        t('purchaseInitiated'),
-        t('cryptomusPurchaseMessage'),
+        '✅ Purchase Successful!',
+        `Transaction Hash: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nYou will receive ${mxiAmount.toFixed(2)} MXI once the transaction is confirmed on the blockchain.`,
         [
           {
-            text: t('ok'),
+            text: 'OK',
             onPress: () => {
               setAmount('');
               setPaymentMethod(null);
+              refreshData();
             },
           },
         ]
       );
     } catch (error: any) {
-      console.error('Purchase error:', error);
+      console.error('❌ Purchase error:', error);
       Alert.alert(t('purchaseFailed'), error.message || t('pleaseTryAgain'));
     } finally {
       setLoading(false);
@@ -356,7 +532,8 @@ export default function PurchaseScreen() {
   }
 
   const mxiAmount = calculateMXI();
-  const canPurchase = mxiAmount > 0 && paymentMethod && !loading;
+  const bnbAmount = calculateBNBAmount();
+  const canPurchase = mxiAmount > 0 && paymentMethod && walletAddress && !loading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -401,6 +578,11 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.purchaseCard}>
+          <MetaMaskConnect
+            onConnect={handleMetaMaskConnect}
+            onDisconnect={handleMetaMaskDisconnect}
+          />
+
           <Text style={styles.inputLabel}>{t('amount')} (USDT)</Text>
           <TextInput
             style={styles.input}
@@ -409,7 +591,7 @@ export default function PurchaseScreen() {
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
-            editable={!loading}
+            editable={!loading && walletAddress !== null}
           />
           <Text style={styles.helperText}>
             {t('minimum')}: 20 USDT • {t('maximum')}: 50,000 USDT
@@ -428,52 +610,114 @@ export default function PurchaseScreen() {
             </View>
           )}
 
-          <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
-          <View style={styles.paymentMethods}>
-            <TouchableOpacity
-              style={[
-                styles.paymentButton,
-                paymentMethod === 'cryptomus' && styles.paymentButtonSelected,
-              ]}
-              onPress={() => setPaymentMethod('cryptomus')}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#6C5CE7', '#A29BFE']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.paymentGradient}
-              >
-                <View style={styles.paymentLeft}>
-                  <View style={styles.paymentIconContainer}>
-                    <IconSymbol 
-                      ios_icon_name="bitcoinsign.circle.fill" 
-                      android_material_icon_name="currency_bitcoin" 
-                      size={28} 
-                      color="#FFFFFF" 
-                    />
-                  </View>
-                  <View style={styles.paymentInfo}>
-                    <Text style={styles.paymentName}>{t('cryptomus')}</Text>
-                    <Text style={styles.paymentDescription}>{t('cryptomusDescription')}</Text>
-                  </View>
+          {walletAddress && (
+            <React.Fragment>
+              <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
+              <View style={styles.paymentMethods}>
+                <TouchableOpacity
+                  style={[
+                    styles.paymentButton,
+                    paymentMethod === 'USDT' && styles.paymentButtonSelected,
+                  ]}
+                  onPress={() => setPaymentMethod('USDT')}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#26A17B', '#50AF95']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.paymentGradient}
+                  >
+                    <View style={styles.paymentLeft}>
+                      <View style={styles.paymentIconContainer}>
+                        <IconSymbol 
+                          ios_icon_name="dollarsign.circle.fill" 
+                          android_material_icon_name="attach_money" 
+                          size={28} 
+                          color="#FFFFFF" 
+                        />
+                      </View>
+                      <View style={styles.paymentInfo}>
+                        <Text style={styles.paymentName}>USDT (BEP-20)</Text>
+                        <Text style={styles.paymentDescription}>Pay with Tether on BSC</Text>
+                      </View>
+                    </View>
+                    <View style={styles.paymentPrice}>
+                      <Text style={styles.paymentPriceLabel}>Amount</Text>
+                      <Text style={styles.paymentPriceValue}>{amount || '0'} USDT</Text>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.paymentButton,
+                    paymentMethod === 'BNB' && styles.paymentButtonSelected,
+                  ]}
+                  onPress={() => setPaymentMethod('BNB')}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={['#F3BA2F', '#F0B90B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.paymentGradient}
+                  >
+                    <View style={styles.paymentLeft}>
+                      <View style={styles.paymentIconContainer}>
+                        <IconSymbol 
+                          ios_icon_name="bitcoinsign.circle.fill" 
+                          android_material_icon_name="currency_bitcoin" 
+                          size={28} 
+                          color="#FFFFFF" 
+                        />
+                      </View>
+                      <View style={styles.paymentInfo}>
+                        <Text style={styles.paymentName}>BNB</Text>
+                        <Text style={styles.paymentDescription}>Pay with Binance Coin</Text>
+                      </View>
+                    </View>
+                    <View style={styles.paymentPrice}>
+                      <Text style={styles.paymentPriceLabel}>Amount</Text>
+                      <Text style={styles.paymentPriceValue}>
+                        {bnbAmount > 0 ? bnbAmount.toFixed(4) : '0'} BNB
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
+              {paymentMethod === 'BNB' && (
+                <View style={styles.bnbPriceInfo}>
+                  <Text style={styles.bnbPriceText}>
+                    Current BNB Price: ${bnbPrice.toFixed(2)} USD
+                  </Text>
                 </View>
-                <View style={styles.paymentPrice}>
-                  <Text style={styles.paymentPriceLabel}>{t('currentPrice')}</Text>
-                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
+              )}
+            </React.Fragment>
+          )}
+
+          <View style={styles.metamaskInfo}>
+            <Text style={styles.metamaskInfoTitle}>ℹ️ {t('metamaskInfoTitle') || 'MetaMask Payment Info'}</Text>
+            <Text style={styles.metamaskInfoText}>• Connect your MetaMask wallet to BSC network</Text>
+            <Text style={styles.metamaskInfoText}>• Choose to pay with USDT (BEP-20) or BNB</Text>
+            <Text style={styles.metamaskInfoText}>• Transaction will be sent to project wallet</Text>
+            <Text style={styles.metamaskInfoText}>• MXI tokens will be credited after confirmation</Text>
+            <Text style={styles.metamaskInfoText}>• Your private keys never leave MetaMask</Text>
           </View>
 
-          <View style={styles.cryptomusInfo}>
-            <Text style={styles.cryptomusInfoTitle}>ℹ️ {t('cryptomusInfoTitle')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo1')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo2')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo3')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo4')}</Text>
-          </View>
+          {transactionHash && (
+            <View style={styles.confirmationCard}>
+              <Text style={styles.confirmationTitle}>✅ Transaction Submitted</Text>
+              <Text style={styles.confirmationText}>
+                Your payment has been submitted to the blockchain.
+              </Text>
+              <Text style={styles.confirmationText}>Transaction Hash:</Text>
+              <Text style={styles.hashText}>{transactionHash}</Text>
+            </View>
+          )}
 
           <TouchableOpacity
             style={canPurchase ? styles.purchaseButton : styles.purchaseButtonDisabled}
@@ -484,7 +728,11 @@ export default function PurchaseScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.purchaseButtonText}>
-                {paymentMethod ? `${t('completePurchaseVia')} ${t('cryptomus')}` : t('selectPaymentMethodButton')}
+                {!walletAddress
+                  ? 'Connect MetaMask First'
+                  : !paymentMethod
+                  ? t('selectPaymentMethodButton')
+                  : `Pay with ${paymentMethod}`}
               </Text>
             )}
           </TouchableOpacity>

@@ -27,6 +27,7 @@
     "@types/difflib": "^0.2.7",
     "difflib": "^0.2.4",
     "eas": "^0.1.0",
+    "ethers": "^6.15.0",
     "expo": "~54.0.1",
     "expo-blur": "^15.0.6",
     "expo-clipboard": "^8.0.7",
