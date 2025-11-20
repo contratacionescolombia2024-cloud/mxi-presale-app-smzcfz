@@ -1,4 +1,7 @@
 
+// Import polyfills at the very top
+import '../polyfills';
+
 import React, { useEffect } from "react";
 import { useColorScheme, Alert, AppState, Platform } from "react-native";
 import * as SplashScreen from "expo-splash-screen";

@@ -1,3 +1,4 @@
+
 module.exports = function (api) {
   api.cache(true);
 
@@ -35,6 +36,12 @@ module.exports = function (api) {
             "@hooks": "./hooks",
             "@types": "./types",
             "@contexts": "./contexts",
+            // Add polyfill aliases
+            "buffer": "buffer",
+            "stream": "stream-browserify",
+            "crypto": "crypto-browserify",
+            "events": "events",
+            "process": "process/browser",
           },
         },
       ],

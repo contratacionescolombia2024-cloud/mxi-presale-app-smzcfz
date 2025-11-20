@@ -1,3 +1,4 @@
+
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
@@ -15,7 +16,8 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "workbox-config.js",
+    "global.d.ts",
+    "workbox-config.js"
   ],
   "exclude": [
     "node_modules"
