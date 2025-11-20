@@ -22,7 +22,7 @@ export default function ProfileScreen() {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       t('logout'),
       t('logoutConfirm'),
@@ -31,9 +31,19 @@ export default function ProfileScreen() {
         { 
           text: t('logout'), 
           style: 'destructive',
-          onPress: () => {
-            logout();
-            router.replace('/(auth)/login');
+          onPress: async () => {
+            try {
+              console.log('🚪 User confirmed logout, proceeding...');
+              await logout();
+              console.log('✅ Logout completed, navigating to login...');
+              // Use setTimeout to ensure state updates complete before navigation
+              setTimeout(() => {
+                router.replace('/(auth)/login');
+              }, 100);
+            } catch (error: any) {
+              console.error('❌ Logout error in profile screen:', error);
+              Alert.alert('Error', error.message || 'Failed to logout. Please try again.');
+            }
           }
         },
       ]

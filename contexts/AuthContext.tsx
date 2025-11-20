@@ -98,6 +98,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // The reset-password screen will handle the actual password update
         }
         
+        // Handle sign out event
+        if (_event === 'SIGNED_OUT') {
+          console.log('🚪 User signed out, clearing user state');
+          setUser(null);
+          setIsLoading(false);
+          setSessionChecked(true);
+          return;
+        }
+        
         if (session?.user) {
           await loadUserProfile(session.user.id, session.user.email || '');
         } else {
@@ -419,16 +428,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      console.log('🚪 Logging out...');
+      console.log('🚪 Logging out user...');
+      
+      // Clear user state immediately to prevent UI issues
+      setUser(null);
+      setIsLoading(true);
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
+      
       if (error) {
         console.error('❌ Logout error:', error);
-        throw error;
+        // Even if there's an error, we've already cleared the local state
+        // This ensures the user is logged out locally
+        console.log('⚠️ Logout error occurred, but local state cleared');
+      } else {
+        console.log('✅ Logout successful');
       }
-      console.log('✅ Logout successful');
-      setUser(null);
+      
+      // Ensure loading state is reset
+      setIsLoading(false);
+      setSessionChecked(true);
+      
     } catch (error) {
-      console.error('❌ Logout failed:', error);
+      console.error('❌ Logout exception:', error);
+      // Even on exception, ensure user is logged out locally
+      setUser(null);
+      setIsLoading(false);
+      setSessionChecked(true);
       throw error;
     }
   };
