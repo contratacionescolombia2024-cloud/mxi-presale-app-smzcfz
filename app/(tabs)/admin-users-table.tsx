@@ -415,8 +415,8 @@ export default function AdminUsersTableScreen() {
             )}
           </View>
         ) : (
-          <React.Fragment>
-            {filteredUsers.map((user) => (
+          <>
+            {filteredUsers.map((user, index) => (
               <TouchableOpacity
                 key={user.id}
                 style={styles.userCard}
@@ -501,7 +501,7 @@ export default function AdminUsersTableScreen() {
                 </View>
               </TouchableOpacity>
             ))}
-          </React.Fragment>
+          </>
         )}
       </ScrollView>
 

@@ -141,7 +141,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
 
   if (!isConnected) {
     return (
-      <React.Fragment>
+      <>
         <TouchableOpacity
           style={styles.connectButton}
           onPress={() => setShowWalletModal(true)}
@@ -157,7 +157,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <React.Fragment>
+              <>
                 <IconSymbol
                   ios_icon_name="wallet.pass.fill"
                   android_material_icon_name="account_balance_wallet"
@@ -165,7 +165,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                   color="#fff"
                 />
                 <Text style={styles.connectButtonText}>{t('connectWallet')}</Text>
-              </React.Fragment>
+              </>
             )}
           </LinearGradient>
         </TouchableOpacity>
@@ -269,7 +269,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
             </View>
           </View>
         </Modal>
-      </React.Fragment>
+      </>
     );
   }
 
@@ -304,7 +304,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
           {balanceLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <React.Fragment>
+            <>
               <View style={styles.balanceRow}>
                 <Text style={styles.balanceLabel}>BNB:</Text>
                 <Text style={styles.balanceValue}>{bnbBalance}</Text>
@@ -313,7 +313,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
                 <Text style={styles.balanceLabel}>USDT:</Text>
                 <Text style={styles.balanceValue}>{usdtBalance}</Text>
               </View>
-            </React.Fragment>
+            </>
           )}
         </View>
       </View>
