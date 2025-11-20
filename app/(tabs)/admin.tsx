@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Redirect, useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -86,6 +87,7 @@ interface AdminMetrics {
 
 export default function AdminScreen() {
   const { isAdmin, user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'metrics' | 'users' | 'kyc' | 'messages' | 'settings' | 'link-referral'>('metrics');
   const [loading, setLoading] = useState(false);
@@ -268,11 +270,11 @@ export default function AdminScreen() {
       console.log('✅ All admin data loaded successfully');
     } catch (error) {
       console.error('❌ Error loading admin data:', error);
-      Alert.alert('Error', 'Failed to load admin data. Please try again.');
+      Alert.alert(t('error'), t('adminDataLoadFailed'));
     } finally {
       setRefreshing(false);
     }
-  }, [loadMetrics, loadUsers, loadKYCSubmissions, loadMessages, loadPlatformSettings]);
+  }, [loadMetrics, loadUsers, loadKYCSubmissions, loadMessages, loadPlatformSettings, t]);
 
   useEffect(() => {
     console.log('🔐 Admin Panel - isAdmin:', isAdmin);
@@ -292,7 +294,7 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ RPC Error loading user details:', error);
-        Alert.alert('Error', `Failed to load user details: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToLoadUserDetails')}: ${error.message}`);
         throw error;
       }
 
@@ -309,13 +311,13 @@ export default function AdminScreen() {
         setEditAddress(data.profile.address || '');
         setEditReferredBy(data.profile.referred_by || '');
       } else {
-        const errorMsg = data?.error || 'Failed to load user details';
+        const errorMsg = data?.error || t('failedToLoadUserDetails');
         console.error('❌ User details load failed:', errorMsg);
-        Alert.alert('Error', errorMsg);
+        Alert.alert(t('error'), errorMsg);
       }
     } catch (error: any) {
       console.error('❌ Exception in loadUserDetails:', error);
-      Alert.alert('Error', error.message || 'Failed to load user details');
+      Alert.alert(t('error'), error.message || t('failedToLoadUserDetails'));
     } finally {
       setLoading(false);
     }
@@ -324,14 +326,14 @@ export default function AdminScreen() {
   const handleToggleAccountBlock = async (blocked: boolean) => {
     if (!selectedUser) return;
 
-    const action = blocked ? 'block' : 'unblock';
+    const action = blocked ? t('block') : t('unblock');
     Alert.alert(
-      `${blocked ? 'Block' : 'Unblock'} Account`,
-      `Are you sure you want to ${action} ${selectedUser.name}'s account?\n\n${blocked ? '⚠️ The user will not be able to log in or access the application.' : '✅ The user will regain access to the application.'}`,
+      `${action} ${t('account')}`,
+      `${t('areYouSureYouWantTo')} ${action.toLowerCase()} ${selectedUser.name}${t('accountQuestion')}\n\n${blocked ? `⚠️ ${t('userWillNotBeAbleToLogin')}` : `✅ ${t('userWillRegainAccess')}`}`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: blocked ? 'Block' : 'Unblock',
+          text: action,
           style: blocked ? 'destructive' : 'default',
           onPress: async () => {
             setLoading(true);
@@ -345,7 +347,7 @@ export default function AdminScreen() {
 
               if (error) {
                 console.error('❌ RPC Error toggling account block:', error);
-                Alert.alert('Error', `Failed to ${action} account: ${error.message}`);
+                Alert.alert(t('error'), `${t('failedTo')} ${action.toLowerCase()} ${t('account')}: ${error.message}`);
                 throw error;
               }
 
@@ -353,7 +355,7 @@ export default function AdminScreen() {
 
               if (data && data.success) {
                 console.log(`✅ Account ${blocked ? 'blocked' : 'unblocked'} successfully`);
-                Alert.alert('Success', data.message);
+                Alert.alert(t('success'), data.message);
                 await loadUsers();
                 await loadUserDetails(selectedUser.id);
                 
@@ -363,13 +365,13 @@ export default function AdminScreen() {
                   account_blocked: blocked,
                 });
               } else {
-                const errorMsg = data?.error || `Failed to ${action} account`;
+                const errorMsg = data?.error || `${t('failedTo')} ${action.toLowerCase()} ${t('account')}`;
                 console.error('❌ Operation failed:', errorMsg);
-                Alert.alert('Error', errorMsg);
+                Alert.alert(t('error'), errorMsg);
               }
             } catch (error: any) {
               console.error('❌ Exception in handleToggleAccountBlock:', error);
-              Alert.alert('Error', error.message || `Failed to ${action} account`);
+              Alert.alert(t('error'), error.message || `${t('failedTo')} ${action.toLowerCase()} ${t('account')}`);
             } finally {
               setLoading(false);
             }
@@ -397,7 +399,7 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ RPC Error updating user profile:', error);
-        Alert.alert('Error', `Failed to update profile: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToUpdateProfile')}: ${error.message}`);
         throw error;
       }
 
@@ -405,17 +407,17 @@ export default function AdminScreen() {
 
       if (data && data.success) {
         console.log('✅ User profile updated successfully');
-        Alert.alert('Success', 'User profile updated successfully');
+        Alert.alert(t('success'), t('userProfileUpdatedSuccessfully'));
         await loadUsers();
         await loadUserDetails(selectedUser.id);
       } else {
-        const errorMsg = data?.error || 'Failed to update user profile';
+        const errorMsg = data?.error || t('failedToUpdateProfile');
         console.error('❌ Profile update failed:', errorMsg);
-        Alert.alert('Error', errorMsg);
+        Alert.alert(t('error'), errorMsg);
       }
     } catch (error: any) {
       console.error('❌ Exception in handleUpdateUserProfile:', error);
-      Alert.alert('Error', error.message || 'Failed to update user profile');
+      Alert.alert(t('error'), error.message || t('failedToUpdateProfile'));
     } finally {
       setLoading(false);
     }
@@ -425,12 +427,12 @@ export default function AdminScreen() {
     if (!selectedUser) return;
 
     Alert.alert(
-      'Update Referral',
-      `Change referral code for ${selectedUser.name} to: ${editReferredBy || 'None'}?`,
+      t('updateReferral'),
+      `${t('changeReferralCodeFor')} ${selectedUser.name} ${t('to')}: ${editReferredBy || t('none')}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Update',
+          text: t('update'),
           onPress: async () => {
             setLoading(true);
             try {
@@ -446,17 +448,17 @@ export default function AdminScreen() {
 
               if (error) {
                 console.error('❌ Error updating referred_by:', error);
-                Alert.alert('Error', `Failed to update: ${error.message}`);
+                Alert.alert(t('error'), `${t('failedToUpdate')}: ${error.message}`);
                 throw error;
               }
 
               console.log('✅ Referred_by updated successfully');
-              Alert.alert('Success', 'Referral code updated successfully');
+              Alert.alert(t('success'), t('referralCodeUpdatedSuccessfully'));
               await loadUsers();
               await loadUserDetails(selectedUser.id);
             } catch (error: any) {
               console.error('❌ Exception in handleUpdateReferredBy:', error);
-              Alert.alert('Error', error.message || 'Failed to update referral code');
+              Alert.alert(t('error'), error.message || t('failedToUpdateReferralCode'));
             } finally {
               setLoading(false);
             }
@@ -468,7 +470,7 @@ export default function AdminScreen() {
 
   const handleLinkReferral = async () => {
     if (!linkReferralEmail.trim() || !linkReferralCode.trim()) {
-      Alert.alert('Error', 'Please enter both user email and referral code');
+      Alert.alert(t('error'), t('pleaseEnterBothUserEmailAndReferralCode'));
       return;
     }
 
@@ -483,7 +485,7 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ RPC Error linking referral:', error);
-        Alert.alert('Error', `Failed to link referral: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToLinkReferral')}: ${error.message}`);
         throw error;
       }
 
@@ -491,15 +493,15 @@ export default function AdminScreen() {
 
       if (data && data.success) {
         const commissionsMsg = data.total_commissions_distributed 
-          ? `\n\nTotal commissions distributed: ${data.total_commissions_distributed.toFixed(2)} MXI`
+          ? `\n\n${t('totalCommissionsDistributed')}: ${data.total_commissions_distributed.toFixed(2)} MXI`
           : '';
         
         Alert.alert(
-          'Success',
+          t('success'),
           `${data.message}${commissionsMsg}`,
           [
             {
-              text: 'OK',
+              text: t('ok'),
               onPress: () => {
                 setLinkReferralEmail('');
                 setLinkReferralCode('');
@@ -510,13 +512,13 @@ export default function AdminScreen() {
           ]
         );
       } else {
-        const errorMsg = data?.error || 'Failed to link referral';
+        const errorMsg = data?.error || t('failedToLinkReferral');
         console.error('❌ Referral link failed:', errorMsg);
-        Alert.alert('Error', errorMsg);
+        Alert.alert(t('error'), errorMsg);
       }
     } catch (error: any) {
       console.error('❌ Exception in handleLinkReferral:', error);
-      Alert.alert('Error', error.message || 'Failed to link referral');
+      Alert.alert(t('error'), error.message || t('failedToLinkReferral'));
     } finally {
       setLoading(false);
     }
@@ -524,7 +526,7 @@ export default function AdminScreen() {
 
   const handleAddReferral = async () => {
     if (!selectedUser || !referralAmount) {
-      Alert.alert('Error', 'Please enter valid referral details');
+      Alert.alert(t('error'), t('pleaseEnterValidReferralDetails'));
       return;
     }
 
@@ -532,12 +534,12 @@ export default function AdminScreen() {
     const level = parseInt(referralLevel);
 
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Error', 'Please enter a valid positive amount');
+      Alert.alert(t('error'), t('pleaseEnterValidPositiveAmount'));
       return;
     }
 
     if (isNaN(level) || level < 1 || level > 3) {
-      Alert.alert('Error', 'Referral level must be between 1 and 3');
+      Alert.alert(t('error'), t('referralLevelMustBeBetween1And3'));
       return;
     }
 
@@ -557,7 +559,7 @@ export default function AdminScreen() {
 
       if (referralError) {
         console.error('❌ Error inserting referral:', referralError);
-        Alert.alert('Error', `Failed to add referral: ${referralError.message}`);
+        Alert.alert(t('error'), `${t('failedToAddReferral')}: ${referralError.message}`);
         throw referralError;
       }
 
@@ -609,8 +611,8 @@ export default function AdminScreen() {
 
       console.log(`✅ Added referral earning of ${amount} MXI at level ${level}`);
       Alert.alert(
-        'Success', 
-        `Added ${amount} MXI referral earnings (Level ${level}) to ${selectedUser.name}'s account`
+        t('success'), 
+        `${t('added')} ${amount} MXI ${t('referralEarnings')} (${t('level')} ${level}) ${t('toAccount')} ${selectedUser.name}`
       );
       setReferralAmount('');
       setReferralLevel('1');
@@ -619,7 +621,7 @@ export default function AdminScreen() {
       await loadUserDetails(selectedUser.id);
     } catch (error: any) {
       console.error('❌ Exception in handleAddReferral:', error);
-      Alert.alert('Error', error.message || 'Failed to add referral');
+      Alert.alert(t('error'), error.message || t('failedToAddReferral'));
     } finally {
       setLoading(false);
     }
@@ -627,7 +629,7 @@ export default function AdminScreen() {
 
   const handleRespondToMessage = async () => {
     if (!selectedMessage || !messageResponse.trim()) {
-      Alert.alert('Error', 'Please enter a response');
+      Alert.alert(t('error'), t('pleaseEnterResponse'));
       return;
     }
 
@@ -646,19 +648,19 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ Error responding to message:', error);
-        Alert.alert('Error', `Failed to send response: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToSendResponse')}: ${error.message}`);
         throw error;
       }
 
       console.log('✅ Response sent successfully');
-      Alert.alert('Success', 'Response sent successfully');
+      Alert.alert(t('success'), t('responseSentSuccessfully'));
       setMessageResponse('');
       setShowMessageModal(false);
       await loadMessages();
       await loadMetrics();
     } catch (error: any) {
       console.error('❌ Exception in handleRespondToMessage:', error);
-      Alert.alert('Error', error.message || 'Failed to send response');
+      Alert.alert(t('error'), error.message || t('failedToSendResponse'));
     } finally {
       setLoading(false);
     }
@@ -681,18 +683,18 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ Error updating KYC:', error);
-        Alert.alert('Error', `Failed to update KYC: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToUpdateKYC')}: ${error.message}`);
         throw error;
       }
 
       console.log(`✅ KYC ${decision} successfully`);
-      Alert.alert('Success', `KYC ${decision} for ${selectedKYC.name}`);
+      Alert.alert(t('success'), `KYC ${decision === 'approved' ? t('approved') : t('rejected')} ${t('for')} ${selectedKYC.name}`);
       setShowKYCModal(false);
       await loadKYCSubmissions();
       await loadMetrics();
     } catch (error: any) {
       console.error('❌ Exception in handleKYCDecision:', error);
-      Alert.alert('Error', error.message || 'Failed to update KYC status');
+      Alert.alert(t('error'), error.message || t('failedToUpdateKYCStatus'));
     } finally {
       setLoading(false);
     }
@@ -717,16 +719,16 @@ export default function AdminScreen() {
 
       if (error) {
         console.error('❌ Error updating settings:', error);
-        Alert.alert('Error', `Failed to update settings: ${error.message}`);
+        Alert.alert(t('error'), `${t('failedToUpdateSettings')}: ${error.message}`);
         throw error;
       }
 
       console.log('✅ Platform settings updated successfully');
-      Alert.alert('Success', 'Platform settings updated successfully');
+      Alert.alert(t('success'), t('platformSettingsUpdatedSuccessfully'));
       await loadPlatformSettings();
     } catch (error: any) {
       console.error('❌ Exception in handleUpdatePlatformSettings:', error);
-      Alert.alert('Error', error.message || 'Failed to update settings');
+      Alert.alert(t('error'), error.message || t('failedToUpdateSettings'));
     } finally {
       setLoading(false);
     }
@@ -738,12 +740,12 @@ export default function AdminScreen() {
   }
 
   const tabs = [
-    { id: 'metrics', label: 'Metrics', iosIcon: 'chart.bar.fill', androidIcon: 'bar_chart' },
-    { id: 'users', label: 'Users', iosIcon: 'person.3.fill', androidIcon: 'group' },
-    { id: 'link-referral', label: 'Link Referral', iosIcon: 'link.circle.fill', androidIcon: 'link' },
+    { id: 'metrics', label: t('metrics'), iosIcon: 'chart.bar.fill', androidIcon: 'bar_chart' },
+    { id: 'users', label: t('users'), iosIcon: 'person.3.fill', androidIcon: 'group' },
+    { id: 'link-referral', label: t('linkReferral'), iosIcon: 'link.circle.fill', androidIcon: 'link' },
     { id: 'kyc', label: 'KYC', iosIcon: 'checkmark.shield.fill', androidIcon: 'verified_user' },
-    { id: 'messages', label: 'Messages', iosIcon: 'message.fill', androidIcon: 'message' },
-    { id: 'settings', label: 'Settings', iosIcon: 'gearshape.fill', androidIcon: 'settings' },
+    { id: 'messages', label: t('messages'), iosIcon: 'message.fill', androidIcon: 'message' },
+    { id: 'settings', label: t('settings'), iosIcon: 'gearshape.fill', androidIcon: 'settings' },
   ];
 
   const filteredUsers = users.filter(u => 
@@ -760,7 +762,7 @@ export default function AdminScreen() {
           size={40} 
           color={colors.error} 
         />
-        <Text style={styles.title}>Admin Panel</Text>
+        <Text style={styles.title}>{t('adminPanel')}</Text>
         <TouchableOpacity onPress={loadAllData} disabled={refreshing}>
           {refreshing ? (
             <ActivityIndicator size="small" color={colors.primary} />
@@ -787,7 +789,7 @@ export default function AdminScreen() {
             size={24} 
             color={colors.card} 
           />
-          <Text style={styles.quickAccessButtonText}>Complete User Table</Text>
+          <Text style={styles.quickAccessButtonText}>{t('completeUserTable')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -806,7 +808,7 @@ export default function AdminScreen() {
             size={24} 
             color={colors.card} 
           />
-          <Text style={styles.quickAccessButtonText}>Balance Management</Text>
+          <Text style={styles.quickAccessButtonText}>{t('balanceManagement')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -856,7 +858,7 @@ export default function AdminScreen() {
                       color={colors.primary} 
                     />
                     <Text style={styles.metricValue}>{metrics.totalUsers.toLocaleString()}</Text>
-                    <Text style={styles.metricLabel}>Total Users</Text>
+                    <Text style={styles.metricLabel}>{t('totalUsers')}</Text>
                   </View>
 
                   <View style={[commonStyles.card, styles.metricCard]}>
@@ -867,7 +869,7 @@ export default function AdminScreen() {
                       color={colors.secondary} 
                     />
                     <Text style={styles.metricValue}>{metrics.totalMXISold.toLocaleString()}</Text>
-                    <Text style={styles.metricLabel}>MXI Sold</Text>
+                    <Text style={styles.metricLabel}>{t('mxiSold')}</Text>
                   </View>
 
                   <View style={[commonStyles.card, styles.metricCard]}>
@@ -878,7 +880,7 @@ export default function AdminScreen() {
                       color={colors.success} 
                     />
                     <Text style={styles.metricValue}>${metrics.totalRevenue.toLocaleString()}</Text>
-                    <Text style={styles.metricLabel}>Total Revenue</Text>
+                    <Text style={styles.metricLabel}>{t('totalRevenue')}</Text>
                   </View>
 
                   <View style={[commonStyles.card, styles.metricCard]}>
@@ -889,32 +891,32 @@ export default function AdminScreen() {
                       color={colors.warning} 
                     />
                     <Text style={styles.metricValue}>{metrics.pendingKYC}</Text>
-                    <Text style={styles.metricLabel}>Pending KYC</Text>
+                    <Text style={styles.metricLabel}>{t('pendingKYC')}</Text>
                   </View>
                 </View>
 
                 <View style={commonStyles.card}>
-                  <Text style={styles.cardTitle}>Stage Breakdown</Text>
+                  <Text style={styles.cardTitle}>{t('stageBreakdown')}</Text>
                   {metrics.stageBreakdown.stage1 !== undefined && (
                     <View style={styles.stageItem}>
-                      <Text style={styles.stageLabel}>Stage 1 ($0.40)</Text>
+                      <Text style={styles.stageLabel}>{t('stage')} 1 ($0.40)</Text>
                       <Text style={styles.stageValue}>{metrics.stageBreakdown.stage1.toLocaleString()} MXI</Text>
                     </View>
                   )}
                   {metrics.stageBreakdown.stage2 !== undefined && (
                     <View style={styles.stageItem}>
-                      <Text style={styles.stageLabel}>Stage 2 ($0.70)</Text>
+                      <Text style={styles.stageLabel}>{t('stage')} 2 ($0.70)</Text>
                       <Text style={styles.stageValue}>{metrics.stageBreakdown.stage2.toLocaleString()} MXI</Text>
                     </View>
                   )}
                   {metrics.stageBreakdown.stage3 !== undefined && (
                     <View style={styles.stageItem}>
-                      <Text style={styles.stageLabel}>Stage 3 ($1.00)</Text>
+                      <Text style={styles.stageLabel}>{t('stage')} 3 ($1.00)</Text>
                       <Text style={styles.stageValue}>{metrics.stageBreakdown.stage3.toLocaleString()} MXI</Text>
                     </View>
                   )}
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalLabel}>Total Sold</Text>
+                    <Text style={styles.totalLabel}>{t('totalSold')}</Text>
                     <Text style={styles.totalValue}>{metrics.totalMXISold.toLocaleString()} MXI</Text>
                   </View>
                   <View style={styles.progressBar}>
@@ -923,14 +925,14 @@ export default function AdminScreen() {
                     />
                   </View>
                   <Text style={styles.progressText}>
-                    {((metrics.totalMXISold / 25000000) * 100).toFixed(2)}% of 25M total
+                    {((metrics.totalMXISold / 25000000) * 100).toFixed(2)}% {t('of')} 25M {t('total')}
                   </Text>
                 </View>
               </React.Fragment>
             ) : (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading metrics...</Text>
+                <Text style={styles.loadingText}>{t('loadingMetrics')}</Text>
               </View>
             )}
           </React.Fragment>
@@ -940,10 +942,10 @@ export default function AdminScreen() {
         {activeTab === 'users' && (
           <React.Fragment>
             <View style={commonStyles.card}>
-              <Text style={styles.cardTitle}>User Management ({users.length} users)</Text>
+              <Text style={styles.cardTitle}>{t('userManagement')} ({users.length} {t('users')})</Text>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search users by name or email..."
+                placeholder={t('searchUsersByNameOrEmail')}
                 placeholderTextColor={colors.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -972,15 +974,15 @@ export default function AdminScreen() {
                             size={12} 
                             color={colors.card} 
                           />
-                          <Text style={styles.blockedBadgeText}>BLOCKED</Text>
+                          <Text style={styles.blockedBadgeText}>{t('blocked')}</Text>
                         </View>
                       )}
                     </View>
                     <Text style={styles.userEmail}>{u.email}</Text>
-                    <Text style={styles.userDetail}>KYC: {u.kyc_status}</Text>
-                    <Text style={styles.userDetail}>Referral Code: {u.referral_code}</Text>
+                    <Text style={styles.userDetail}>KYC: {t(u.kyc_status)}</Text>
+                    <Text style={styles.userDetail}>{t('referralCode')}: {u.referral_code}</Text>
                     {u.referred_by && (
-                      <Text style={styles.userDetail}>Referred By: {u.referred_by}</Text>
+                      <Text style={styles.userDetail}>{t('referredBy')}: {u.referred_by}</Text>
                     )}
                   </View>
                   <IconSymbol 
@@ -994,7 +996,7 @@ export default function AdminScreen() {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>
-                  {searchQuery ? 'No users found' : 'No users registered yet'}
+                  {searchQuery ? t('noUsersFound') : t('noUsersRegisteredYet')}
                 </Text>
               </View>
             )}
@@ -1011,23 +1013,23 @@ export default function AdminScreen() {
                 size={48} 
                 color={colors.primary} 
               />
-              <Text style={styles.cardTitle}>Link User to Referral Code</Text>
+              <Text style={styles.cardTitle}>{t('linkUserToReferralCode')}</Text>
             </View>
             
             <Text style={styles.linkReferralDescription}>
-              Manually link a user to a referral code. The system will automatically:
+              {t('manuallyLinkUserDescription')}
             </Text>
             <View style={styles.featureList}>
-              <Text style={styles.featureItem}>- Establish the referral relationship</Text>
-              <Text style={styles.featureItem}>- Calculate commissions for all existing purchases</Text>
-              <Text style={styles.featureItem}>- Distribute multi-level commissions (5%, 2%, 1%)</Text>
-              <Text style={styles.featureItem}>- Update all referrers&apos; vesting balances</Text>
+              <Text style={styles.featureItem}>- {t('establishReferralRelationship')}</Text>
+              <Text style={styles.featureItem}>- {t('calculateCommissionsForPurchases')}</Text>
+              <Text style={styles.featureItem}>- {t('distributeMultiLevelCommissions')}</Text>
+              <Text style={styles.featureItem}>- {t('updateAllReferrersVestingBalances')}</Text>
             </View>
 
-            <Text style={styles.inputLabel}>User Email</Text>
+            <Text style={styles.inputLabel}>{t('userEmail')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter user's email address"
+              placeholder={t('enterUserEmailAddress')}
               placeholderTextColor={colors.textSecondary}
               value={linkReferralEmail}
               onChangeText={setLinkReferralEmail}
@@ -1036,10 +1038,10 @@ export default function AdminScreen() {
               autoCorrect={false}
             />
 
-            <Text style={styles.inputLabel}>Referral Code</Text>
+            <Text style={styles.inputLabel}>{t('referralCode')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter referrer's code (e.g., MXI123456)"
+              placeholder={t('enterReferrerCode')}
               placeholderTextColor={colors.textSecondary}
               value={linkReferralCode}
               onChangeText={(text) => setLinkReferralCode(text.toUpperCase())}
@@ -1055,7 +1057,7 @@ export default function AdminScreen() {
                 color={colors.warning} 
               />
               <Text style={styles.warningText}>
-                This action cannot be undone. Make sure the email and referral code are correct before proceeding.
+                {t('actionCannotBeUndone')}
               </Text>
             </View>
 
@@ -1074,7 +1076,7 @@ export default function AdminScreen() {
                     size={24} 
                     color={colors.card} 
                   />
-                  <Text style={styles.linkButtonText}>Link Referral</Text>
+                  <Text style={styles.linkButtonText}>{t('linkReferral')}</Text>
                 </React.Fragment>
               )}
             </TouchableOpacity>
@@ -1085,11 +1087,11 @@ export default function AdminScreen() {
         {activeTab === 'kyc' && (
           <React.Fragment>
             <View style={commonStyles.card}>
-              <Text style={styles.cardTitle}>KYC Verification</Text>
+              <Text style={styles.cardTitle}>{t('kycVerification')}</Text>
               <View style={styles.kycStats}>
                 <View style={styles.kycStat}>
                   <Text style={styles.kycStatValue}>{kycSubmissions.length}</Text>
-                  <Text style={styles.kycStatLabel}>Pending</Text>
+                  <Text style={styles.kycStatLabel}>{t('pending')}</Text>
                 </View>
               </View>
             </View>
@@ -1108,7 +1110,7 @@ export default function AdminScreen() {
                     <Text style={styles.kycName}>{kyc.name}</Text>
                     <Text style={styles.kycEmail}>{kyc.email}</Text>
                     <Text style={styles.kycDetail}>ID: {kyc.identification}</Text>
-                    <Text style={styles.kycDetail}>Documents: {kyc.kyc_documents?.length || 0}</Text>
+                    <Text style={styles.kycDetail}>{t('documents')}: {kyc.kyc_documents?.length || 0}</Text>
                   </View>
                   <IconSymbol 
                     ios_icon_name="chevron.right" 
@@ -1126,7 +1128,7 @@ export default function AdminScreen() {
                   size={64} 
                   color={colors.success} 
                 />
-                <Text style={styles.emptyText}>No pending KYC submissions</Text>
+                <Text style={styles.emptyText}>{t('noPendingKYCSubmissions')}</Text>
               </View>
             )}
           </React.Fragment>
@@ -1136,7 +1138,7 @@ export default function AdminScreen() {
         {activeTab === 'messages' && (
           <React.Fragment>
             <View style={commonStyles.card}>
-              <Text style={styles.cardTitle}>User Messages ({messages.length} total)</Text>
+              <Text style={styles.cardTitle}>{t('userMessages')} ({messages.length} {t('total')})</Text>
               <View style={styles.messageStats}>
                 <View style={styles.messageStat}>
                   <IconSymbol 
@@ -1148,7 +1150,7 @@ export default function AdminScreen() {
                   <Text style={styles.messageStatValue}>
                     {messages.filter(m => m.status === 'pending').length}
                   </Text>
-                  <Text style={styles.messageStatLabel}>Pending</Text>
+                  <Text style={styles.messageStatLabel}>{t('pending')}</Text>
                 </View>
                 <View style={styles.messageStat}>
                   <IconSymbol 
@@ -1160,7 +1162,7 @@ export default function AdminScreen() {
                   <Text style={styles.messageStatValue}>
                     {messages.filter(m => m.status === 'answered').length}
                   </Text>
-                  <Text style={styles.messageStatLabel}>Answered</Text>
+                  <Text style={styles.messageStatLabel}>{t('answered')}</Text>
                 </View>
               </View>
             </View>
@@ -1197,14 +1199,14 @@ export default function AdminScreen() {
                             : styles.statusTextAnswered,
                         ]}
                       >
-                        {msg.status === 'pending' ? 'Pending' : 'Answered'}
+                        {msg.status === 'pending' ? t('pending') : t('answered')}
                       </Text>
                     </View>
                   </View>
                   <Text style={styles.messageText} numberOfLines={2}>{msg.message}</Text>
                   {msg.response && (
                     <Text style={styles.messageResponse} numberOfLines={1}>
-                      Response: {msg.response}
+                      {t('response')}: {msg.response}
                     </Text>
                   )}
                   <Text style={styles.messageDate}>
@@ -1220,7 +1222,7 @@ export default function AdminScreen() {
                   size={64} 
                   color={colors.textSecondary} 
                 />
-                <Text style={styles.emptyText}>No messages yet</Text>
+                <Text style={styles.emptyText}>{t('noMessagesYet')}</Text>
               </View>
             )}
           </React.Fragment>
@@ -1231,9 +1233,9 @@ export default function AdminScreen() {
           <React.Fragment>
             {platformSettings ? (
               <View style={commonStyles.card}>
-                <Text style={styles.cardTitle}>Pre-Sale Settings</Text>
+                <Text style={styles.cardTitle}>{t('preSaleSettings')}</Text>
                 
-                <Text style={styles.inputLabel}>Minimum Purchase (USD)</Text>
+                <Text style={styles.inputLabel}>{t('minimumPurchaseUSD')}</Text>
                 <TextInput
                   style={styles.input}
                   value={platformSettings.min_purchase_usd.toString()}
@@ -1242,11 +1244,11 @@ export default function AdminScreen() {
                     min_purchase_usd: parseFloat(text) || 0
                   })}
                   keyboardType="decimal-pad"
-                  placeholder="Minimum purchase amount"
+                  placeholder={t('minimumPurchaseAmount')}
                   placeholderTextColor={colors.textSecondary}
                 />
 
-                <Text style={styles.inputLabel}>Maximum Purchase (USD)</Text>
+                <Text style={styles.inputLabel}>{t('maximumPurchaseUSD')}</Text>
                 <TextInput
                   style={styles.input}
                   value={platformSettings.max_purchase_usd.toString()}
@@ -1255,11 +1257,11 @@ export default function AdminScreen() {
                     max_purchase_usd: parseFloat(text) || 0
                   })}
                   keyboardType="decimal-pad"
-                  placeholder="Maximum purchase amount"
+                  placeholder={t('maximumPurchaseAmount')}
                   placeholderTextColor={colors.textSecondary}
                 />
 
-                <Text style={styles.inputLabel}>Monthly Vesting Rate (%)</Text>
+                <Text style={styles.inputLabel}>{t('monthlyVestingRatePercent')}</Text>
                 <TextInput
                   style={styles.input}
                   value={(platformSettings.monthly_vesting_rate * 100).toString()}
@@ -1268,7 +1270,7 @@ export default function AdminScreen() {
                     monthly_vesting_rate: (parseFloat(text) || 0) / 100
                   })}
                   keyboardType="decimal-pad"
-                  placeholder="Monthly vesting percentage"
+                  placeholder={t('monthlyVestingPercentage')}
                   placeholderTextColor={colors.textSecondary}
                 />
 
@@ -1280,22 +1282,19 @@ export default function AdminScreen() {
                   {loading ? (
                     <ActivityIndicator color={colors.card} />
                   ) : (
-                    <Text style={styles.saveButtonText}>Save Changes</Text>
+                    <Text style={styles.saveButtonText}>{t('saveChanges')}</Text>
                   )}
                 </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Loading settings...</Text>
+                <Text style={styles.loadingText}>{t('loadingSettings')}</Text>
               </View>
             )}
           </React.Fragment>
         )}
       </ScrollView>
-
-      {/* User Management Modal - Keeping existing modal code */}
-      {/* ... (rest of the modals remain the same) ... */}
     </SafeAreaView>
   );
 }

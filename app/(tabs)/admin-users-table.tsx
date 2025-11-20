@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Redirect } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -40,6 +41,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function AdminUsersTableScreen() {
   const { isAdmin } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [users, setUsers] = useState<UserTableData[]>([]);
@@ -270,9 +272,9 @@ export default function AdminUsersTableScreen() {
             color={colors.primary} 
           />
           <View>
-            <Text style={styles.title}>User Database</Text>
+            <Text style={styles.title}>{t('userDatabase')}</Text>
             <Text style={styles.subtitle}>
-              {filteredUsers.length} of {users.length} users
+              {filteredUsers.length} {t('of')} {users.length} {t('users')}
             </Text>
           </View>
         </View>
@@ -301,7 +303,7 @@ export default function AdminUsersTableScreen() {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by name, email, or code..."
+            placeholder={t('searchByNameEmailOrCode')}
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -335,49 +337,55 @@ export default function AdminUsersTableScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Sort Options */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortBar}>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'name' && styles.sortChipActive]}
-          onPress={() => handleSort('name')}
+      {/* Sort Options - Fixed with better spacing */}
+      <View style={styles.sortBarContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={styles.sortBarContent}
         >
-          <Text style={[styles.sortChipText, sortField === 'name' && styles.sortChipTextActive]}>
-            Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'total_mxi' && styles.sortChipActive]}
-          onPress={() => handleSort('total_mxi')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'total_mxi' && styles.sortChipTextActive]}>
-            Total MXI {sortField === 'total_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'purchased_mxi' && styles.sortChipActive]}
-          onPress={() => handleSort('purchased_mxi')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'purchased_mxi' && styles.sortChipTextActive]}>
-            Purchased {sortField === 'purchased_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'total_deposits' && styles.sortChipActive]}
-          onPress={() => handleSort('total_deposits')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'total_deposits' && styles.sortChipTextActive]}>
-            Deposits {sortField === 'total_deposits' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'created_at' && styles.sortChipActive]}
-          onPress={() => handleSort('created_at')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'created_at' && styles.sortChipTextActive]}>
-            Date {sortField === 'created_at' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'name' && styles.sortChipActive]}
+            onPress={() => handleSort('name')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'name' && styles.sortChipTextActive]}>
+              {t('name')} {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'total_mxi' && styles.sortChipActive]}
+            onPress={() => handleSort('total_mxi')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'total_mxi' && styles.sortChipTextActive]}>
+              {t('totalMXI')} {sortField === 'total_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'purchased_mxi' && styles.sortChipActive]}
+            onPress={() => handleSort('purchased_mxi')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'purchased_mxi' && styles.sortChipTextActive]}>
+              {t('purchased')} {sortField === 'purchased_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'total_deposits' && styles.sortChipActive]}
+            onPress={() => handleSort('total_deposits')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'total_deposits' && styles.sortChipTextActive]}>
+              {t('deposits')} {sortField === 'total_deposits' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'created_at' && styles.sortChipActive]}
+            onPress={() => handleSort('created_at')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'created_at' && styles.sortChipTextActive]}>
+              {t('date')} {sortField === 'created_at' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
 
       {/* User Table */}
       <ScrollView 
@@ -389,7 +397,7 @@ export default function AdminUsersTableScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Loading users...</Text>
+            <Text style={styles.loadingText}>{t('loadingUsers')}</Text>
           </View>
         ) : filteredUsers.length === 0 ? (
           <View style={styles.emptyState}>
@@ -399,10 +407,10 @@ export default function AdminUsersTableScreen() {
               size={64} 
               color={colors.textSecondary} 
             />
-            <Text style={styles.emptyText}>No users found</Text>
+            <Text style={styles.emptyText}>{t('noUsersFound')}</Text>
             {activeFiltersCount() > 0 && (
               <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
-                <Text style={styles.clearFiltersText}>Clear Filters</Text>
+                <Text style={styles.clearFiltersText}>{t('clearFilters')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -426,7 +434,7 @@ export default function AdminUsersTableScreen() {
                       user.kyc_status === 'rejected' && styles.kycBadgeRejected,
                       user.kyc_status === 'pending' && styles.kycBadgePending,
                     ]}>
-                      <Text style={styles.kycBadgeText}>{user.kyc_status.toUpperCase()}</Text>
+                      <Text style={styles.kycBadgeText}>{t(user.kyc_status).toUpperCase()}</Text>
                     </View>
                   </View>
                   <IconSymbol 
@@ -447,7 +455,7 @@ export default function AdminUsersTableScreen() {
                       size={16} 
                       color={colors.primary} 
                     />
-                    <Text style={styles.statLabel}>Total MXI:</Text>
+                    <Text style={styles.statLabel}>{t('totalMXI')}:</Text>
                     <Text style={styles.statValue}>{user.total_mxi.toFixed(2)}</Text>
                   </View>
                   <View style={styles.statItem}>
@@ -457,7 +465,7 @@ export default function AdminUsersTableScreen() {
                       size={16} 
                       color={colors.secondary} 
                     />
-                    <Text style={styles.statLabel}>Purchased:</Text>
+                    <Text style={styles.statLabel}>{t('purchased')}:</Text>
                     <Text style={styles.statValue}>{user.purchased_mxi.toFixed(2)}</Text>
                   </View>
                 </View>
@@ -470,7 +478,7 @@ export default function AdminUsersTableScreen() {
                       size={16} 
                       color={colors.accent} 
                     />
-                    <Text style={styles.statLabel}>Commissions:</Text>
+                    <Text style={styles.statLabel}>{t('commissions')}:</Text>
                     <Text style={styles.statValue}>{user.commission_balance.toFixed(2)}</Text>
                   </View>
                   <View style={styles.statItem}>
@@ -480,15 +488,15 @@ export default function AdminUsersTableScreen() {
                       size={16} 
                       color={colors.success} 
                     />
-                    <Text style={styles.statLabel}>Deposits:</Text>
+                    <Text style={styles.statLabel}>{t('deposits')}:</Text>
                     <Text style={styles.statValue}>${user.total_deposits.toFixed(2)}</Text>
                   </View>
                 </View>
 
                 <View style={styles.userFooter}>
-                  <Text style={styles.userCode}>Code: {user.referral_code}</Text>
+                  <Text style={styles.userCode}>{t('code')}: {user.referral_code}</Text>
                   {user.referred_by && (
-                    <Text style={styles.userReferrer}>Ref: {user.referred_by}</Text>
+                    <Text style={styles.userReferrer}>{t('ref')}: {user.referred_by}</Text>
                   )}
                 </View>
               </TouchableOpacity>
@@ -507,7 +515,7 @@ export default function AdminUsersTableScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Advanced Filters</Text>
+              <Text style={styles.modalTitle}>{t('advancedFilters')}</Text>
               <TouchableOpacity onPress={() => setShowFiltersModal(false)}>
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
@@ -520,14 +528,14 @@ export default function AdminUsersTableScreen() {
 
             <ScrollView>
               {/* KYC Status Filter */}
-              <Text style={styles.filterLabel}>KYC Status</Text>
+              <Text style={styles.filterLabel}>{t('kycStatus')}</Text>
               <View style={styles.filterOptions}>
                 <TouchableOpacity
                   style={[styles.filterOption, filterKYC === 'all' && styles.filterOptionActive]}
                   onPress={() => setFilterKYC('all')}
                 >
                   <Text style={[styles.filterOptionText, filterKYC === 'all' && styles.filterOptionTextActive]}>
-                    All
+                    {t('all')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -535,7 +543,7 @@ export default function AdminUsersTableScreen() {
                   onPress={() => setFilterKYC('pending')}
                 >
                   <Text style={[styles.filterOptionText, filterKYC === 'pending' && styles.filterOptionTextActive]}>
-                    Pending
+                    {t('pending')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -543,7 +551,7 @@ export default function AdminUsersTableScreen() {
                   onPress={() => setFilterKYC('approved')}
                 >
                   <Text style={[styles.filterOptionText, filterKYC === 'approved' && styles.filterOptionTextActive]}>
-                    Approved
+                    {t('approved')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -551,17 +559,17 @@ export default function AdminUsersTableScreen() {
                   onPress={() => setFilterKYC('rejected')}
                 >
                   <Text style={[styles.filterOptionText, filterKYC === 'rejected' && styles.filterOptionTextActive]}>
-                    Rejected
+                    {t('rejected')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {/* MXI Balance Filter */}
-              <Text style={styles.filterLabel}>Total MXI Balance</Text>
+              <Text style={styles.filterLabel}>{t('totalMXIBalance')}</Text>
               <View style={styles.rangeInputs}>
                 <TextInput
                   style={styles.rangeInput}
-                  placeholder="Min"
+                  placeholder={t('min')}
                   placeholderTextColor={colors.textSecondary}
                   value={filterMinMXI}
                   onChangeText={setFilterMinMXI}
@@ -570,7 +578,7 @@ export default function AdminUsersTableScreen() {
                 <Text style={styles.rangeSeparator}>-</Text>
                 <TextInput
                   style={styles.rangeInput}
-                  placeholder="Max"
+                  placeholder={t('max')}
                   placeholderTextColor={colors.textSecondary}
                   value={filterMaxMXI}
                   onChangeText={setFilterMaxMXI}
@@ -579,11 +587,11 @@ export default function AdminUsersTableScreen() {
               </View>
 
               {/* Deposit Amount Filter */}
-              <Text style={styles.filterLabel}>Total Deposits (USD)</Text>
+              <Text style={styles.filterLabel}>{t('totalDepositsUSD')}</Text>
               <View style={styles.rangeInputs}>
                 <TextInput
                   style={styles.rangeInput}
-                  placeholder="Min"
+                  placeholder={t('min')}
                   placeholderTextColor={colors.textSecondary}
                   value={filterMinDeposit}
                   onChangeText={setFilterMinDeposit}
@@ -592,7 +600,7 @@ export default function AdminUsersTableScreen() {
                 <Text style={styles.rangeSeparator}>-</Text>
                 <TextInput
                   style={styles.rangeInput}
-                  placeholder="Max"
+                  placeholder={t('max')}
                   placeholderTextColor={colors.textSecondary}
                   value={filterMaxDeposit}
                   onChangeText={setFilterMaxDeposit}
@@ -601,14 +609,14 @@ export default function AdminUsersTableScreen() {
               </View>
 
               {/* Has Referrer Filter */}
-              <Text style={styles.filterLabel}>Referral Status</Text>
+              <Text style={styles.filterLabel}>{t('referralStatus')}</Text>
               <View style={styles.filterOptions}>
                 <TouchableOpacity
                   style={[styles.filterOption, filterHasReferrer === 'all' && styles.filterOptionActive]}
                   onPress={() => setFilterHasReferrer('all')}
                 >
                   <Text style={[styles.filterOptionText, filterHasReferrer === 'all' && styles.filterOptionTextActive]}>
-                    All
+                    {t('all')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -616,7 +624,7 @@ export default function AdminUsersTableScreen() {
                   onPress={() => setFilterHasReferrer('yes')}
                 >
                   <Text style={[styles.filterOptionText, filterHasReferrer === 'yes' && styles.filterOptionTextActive]}>
-                    Has Referrer
+                    {t('hasReferrer')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -624,20 +632,20 @@ export default function AdminUsersTableScreen() {
                   onPress={() => setFilterHasReferrer('no')}
                 >
                   <Text style={[styles.filterOptionText, filterHasReferrer === 'no' && styles.filterOptionTextActive]}>
-                    No Referrer
+                    {t('noReferrer')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
-                  <Text style={styles.clearButtonText}>Clear All</Text>
+                  <Text style={styles.clearButtonText}>{t('clearAll')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.applyButton} 
                   onPress={() => setShowFiltersModal(false)}
                 >
-                  <Text style={styles.applyButtonText}>Apply Filters</Text>
+                  <Text style={styles.applyButtonText}>{t('applyFilters')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -655,7 +663,7 @@ export default function AdminUsersTableScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>User Details</Text>
+              <Text style={styles.modalTitle}>{t('userDetails')}</Text>
               <TouchableOpacity onPress={() => setShowUserModal(false)}>
                 <IconSymbol 
                   ios_icon_name="xmark.circle.fill" 
@@ -677,66 +685,66 @@ export default function AdminUsersTableScreen() {
                     selectedUser.kyc_status === 'rejected' && styles.kycBadgeRejected,
                     selectedUser.kyc_status === 'pending' && styles.kycBadgePending,
                   ]}>
-                    <Text style={styles.kycBadgeText}>KYC: {selectedUser.kyc_status.toUpperCase()}</Text>
+                    <Text style={styles.kycBadgeText}>KYC: {t(selectedUser.kyc_status).toUpperCase()}</Text>
                   </View>
                 </View>
 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Balance Overview</Text>
+                  <Text style={styles.detailSectionTitle}>{t('balanceOverview')}</Text>
                   <View style={styles.detailGrid}>
                     <View style={styles.detailGridItem}>
-                      <Text style={styles.detailGridLabel}>Total MXI</Text>
+                      <Text style={styles.detailGridLabel}>{t('totalMXI')}</Text>
                       <Text style={styles.detailGridValue}>{selectedUser.total_mxi.toFixed(2)}</Text>
                     </View>
                     <View style={styles.detailGridItem}>
-                      <Text style={styles.detailGridLabel}>Purchased</Text>
+                      <Text style={styles.detailGridLabel}>{t('purchased')}</Text>
                       <Text style={styles.detailGridValue}>{selectedUser.purchased_mxi.toFixed(2)}</Text>
                     </View>
                     <View style={styles.detailGridItem}>
-                      <Text style={styles.detailGridLabel}>Commissions</Text>
+                      <Text style={styles.detailGridLabel}>{t('commissions')}</Text>
                       <Text style={styles.detailGridValue}>{selectedUser.commission_balance.toFixed(2)}</Text>
                     </View>
                     <View style={styles.detailGridItem}>
-                      <Text style={styles.detailGridLabel}>Vesting</Text>
+                      <Text style={styles.detailGridLabel}>{t('vesting')}</Text>
                       <Text style={styles.detailGridValue}>{selectedUser.current_rewards.toFixed(4)}</Text>
                     </View>
                   </View>
                 </View>
 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Purchase History</Text>
+                  <Text style={styles.detailSectionTitle}>{t('purchaseHistory')}</Text>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Total Deposits:</Text>
+                    <Text style={styles.detailRowLabel}>{t('totalDeposits')}:</Text>
                     <Text style={styles.detailRowValue}>${selectedUser.total_deposits.toFixed(2)}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Purchase Count:</Text>
+                    <Text style={styles.detailRowLabel}>{t('purchaseCount')}:</Text>
                     <Text style={styles.detailRowValue}>{selectedUser.purchase_count}</Text>
                   </View>
                 </View>
 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Referral Information</Text>
+                  <Text style={styles.detailSectionTitle}>{t('referralInformation')}</Text>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Referral Code:</Text>
+                    <Text style={styles.detailRowLabel}>{t('referralCode')}:</Text>
                     <Text style={styles.detailRowValue}>{selectedUser.referral_code}</Text>
                   </View>
                   {selectedUser.referred_by && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailRowLabel}>Referred By:</Text>
+                      <Text style={styles.detailRowLabel}>{t('referredBy')}:</Text>
                       <Text style={styles.detailRowValue}>{selectedUser.referred_by}</Text>
                     </View>
                   )}
                 </View>
 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>Account Information</Text>
+                  <Text style={styles.detailSectionTitle}>{t('accountInformation')}</Text>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>User ID:</Text>
+                    <Text style={styles.detailRowLabel}>{t('userId')}:</Text>
                     <Text style={[styles.detailRowValue, styles.detailRowValueSmall]}>{selectedUser.id}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailRowLabel}>Joined:</Text>
+                    <Text style={styles.detailRowLabel}>{t('joined')}:</Text>
                     <Text style={styles.detailRowValue}>
                       {new Date(selectedUser.created_at).toLocaleDateString()} {new Date(selectedUser.created_at).toLocaleTimeString()}
                     </Text>
@@ -830,16 +838,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.card,
   },
-  sortBar: {
-    paddingHorizontal: 20,
+  sortBarContainer: {
     marginBottom: 16,
+    minHeight: 56,
+  },
+  sortBarContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    gap: 8,
+    alignItems: 'center',
   },
   sortChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 24,
     backgroundColor: colors.card,
     marginRight: 8,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
   },
   sortChipActive: {
     backgroundColor: colors.primary,
