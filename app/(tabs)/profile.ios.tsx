@@ -29,33 +29,45 @@ export default function ProfileScreen() {
           text: 'Logout', 
           style: 'destructive',
           onPress: async () => {
+            console.log('🚪 ========== USER INITIATED LOGOUT (iOS) ==========');
+            console.log('👤 User:', user?.email);
+            
             try {
-              console.log('🚪 User confirmed logout, proceeding...');
+              console.log('🔄 Calling logout function...');
               
-              // Call logout function
+              // Call logout function and wait for it to complete
               await logout();
               
-              console.log('✅ Logout completed successfully');
+              console.log('✅ Logout function completed');
+              console.log('🔄 Preparing to navigate to login screen...');
               
-              // Navigate to login screen after a short delay to ensure state updates
-              setTimeout(() => {
-                console.log('🔄 Navigating to login screen...');
-                router.replace('/(auth)/login');
-              }, 200);
+              // Use a small delay to ensure all state updates have propagated
+              await new Promise(resolve => setTimeout(resolve, 300));
+              
+              console.log('🔄 Navigating to login screen...');
+              
+              // Force replace to login screen
+              router.replace('/(auth)/login');
+              
+              console.log('✅ Navigation completed');
+              console.log('✅ ========== LOGOUT UI FLOW COMPLETED (iOS) ==========');
               
             } catch (error: any) {
-              console.error('❌ Logout error in profile screen:', error);
+              console.error('❌ ========== LOGOUT UI FLOW FAILED (iOS) ==========');
+              console.error('Error in profile screen logout handler:', error);
+              console.error('Error message:', error?.message);
+              console.error('Error stack:', error?.stack);
               
-              // Show error alert
+              // Show error alert but still navigate to login
               Alert.alert(
-                'Logout Error', 
-                error.message || 'Failed to logout. Please try again.',
+                'Logout Notice', 
+                'You have been logged out. If you experience any issues, please restart the app.',
                 [
                   {
                     text: 'OK',
                     onPress: () => {
-                      // Force navigation to login even if logout failed
                       console.log('🔄 Force navigating to login after error...');
+                      // Force navigation to login even if logout had issues
                       router.replace('/(auth)/login');
                     }
                   }

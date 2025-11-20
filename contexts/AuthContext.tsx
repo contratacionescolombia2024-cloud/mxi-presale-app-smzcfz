@@ -428,55 +428,134 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    console.log('🚪 ========== LOGOUT PROCESS STARTED ==========');
+    
     try {
-      console.log('🚪 Starting logout process...');
-      
-      // Step 1: Clear user state immediately to prevent UI issues
-      console.log('🧹 Clearing user state...');
+      // Step 1: Immediately clear user state to prevent any UI issues
+      console.log('🧹 Step 1: Clearing user state immediately...');
       setUser(null);
-      
-      // Step 2: Set loading to true to show transition
       setIsLoading(true);
+      console.log('✅ User state cleared');
       
-      // Step 3: Clear AsyncStorage session data
+      // Step 2: Clear all AsyncStorage keys related to authentication
+      console.log('🗑️ Step 2: Clearing AsyncStorage...');
       try {
-        console.log('🗑️ Clearing AsyncStorage session data...');
-        await AsyncStorage.removeItem('supabase.auth.token');
-        console.log('✅ AsyncStorage cleared');
+        const allKeys = await AsyncStorage.getAllKeys();
+        console.log('📋 All AsyncStorage keys:', allKeys);
+        
+        // Filter keys that might contain session data
+        const authKeys = allKeys.filter(key => 
+          key.includes('supabase') || 
+          key.includes('auth') || 
+          key.includes('session') ||
+          key.includes('token')
+        );
+        
+        console.log('🔑 Auth-related keys to remove:', authKeys);
+        
+        if (authKeys.length > 0) {
+          await AsyncStorage.multiRemove(authKeys);
+          console.log('✅ Removed', authKeys.length, 'auth-related keys from AsyncStorage');
+        }
+        
+        // Also try to remove specific known keys
+        const specificKeys = [
+          'supabase.auth.token',
+          'sb-kllolspugrhdgytwdmzp-auth-token',
+          '@supabase.auth.token',
+        ];
+        
+        for (const key of specificKeys) {
+          try {
+            await AsyncStorage.removeItem(key);
+            console.log('✅ Removed specific key:', key);
+          } catch (e) {
+            console.log('⚠️ Could not remove key:', key, e);
+          }
+        }
+        
+        console.log('✅ AsyncStorage cleared successfully');
       } catch (storageError) {
         console.error('⚠️ Error clearing AsyncStorage:', storageError);
         // Continue with logout even if storage clear fails
       }
       
-      // Step 4: Sign out from Supabase
-      console.log('🔓 Signing out from Supabase...');
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('❌ Supabase logout error:', error);
-        // Even if there's an error, we've already cleared the local state
-        // This ensures the user is logged out locally
-        console.log('⚠️ Supabase logout error occurred, but local state cleared');
-      } else {
-        console.log('✅ Supabase logout successful');
+      // Step 3: Sign out from Supabase with scope 'global' to clear all sessions
+      console.log('🔓 Step 3: Signing out from Supabase (global scope)...');
+      try {
+        const { error: signOutError } = await supabase.auth.signOut({ scope: 'global' });
+        
+        if (signOutError) {
+          console.error('❌ Supabase signOut error:', signOutError);
+          console.error('Error details:', JSON.stringify(signOutError, null, 2));
+          // Don't throw - we want to continue with local cleanup
+        } else {
+          console.log('✅ Supabase signOut successful');
+        }
+      } catch (supabaseError) {
+        console.error('❌ Exception during Supabase signOut:', supabaseError);
+        // Don't throw - we want to continue with local cleanup
       }
       
-      // Step 5: Ensure loading state is reset
-      console.log('✅ Resetting loading state...');
+      // Step 4: Verify session is cleared
+      console.log('🔍 Step 4: Verifying session is cleared...');
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.log('⚠️ Error checking session (expected after logout):', sessionError);
+        }
+        
+        if (session) {
+          console.warn('⚠️ WARNING: Session still exists after logout!', session);
+          // Try one more time to clear it
+          await supabase.auth.signOut({ scope: 'global' });
+        } else {
+          console.log('✅ Session verified as cleared');
+        }
+      } catch (verifyError) {
+        console.log('⚠️ Could not verify session (this is OK):', verifyError);
+      }
+      
+      // Step 5: Reset all state flags
+      console.log('🔄 Step 5: Resetting state flags...');
       setIsLoading(false);
       setSessionChecked(true);
+      console.log('✅ State flags reset');
       
-      console.log('✅ Logout process completed successfully');
+      console.log('✅ ========== LOGOUT PROCESS COMPLETED SUCCESSFULLY ==========');
       
     } catch (error) {
-      console.error('❌ Logout exception:', error);
+      console.error('❌ ========== LOGOUT PROCESS FAILED ==========');
+      console.error('Exception during logout:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
       // Even on exception, ensure user is logged out locally
+      console.log('🛡️ Forcing local logout despite error...');
       setUser(null);
       setIsLoading(false);
       setSessionChecked(true);
       
-      // Re-throw the error so the UI can handle it
-      throw new Error('Logout failed. Please try again.');
+      // Clear AsyncStorage one more time as a safety measure
+      try {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const authKeys = allKeys.filter(key => 
+          key.includes('supabase') || 
+          key.includes('auth') || 
+          key.includes('session') ||
+          key.includes('token')
+        );
+        if (authKeys.length > 0) {
+          await AsyncStorage.multiRemove(authKeys);
+        }
+      } catch (cleanupError) {
+        console.error('⚠️ Final cleanup failed:', cleanupError);
+      }
+      
+      console.log('✅ Local logout forced');
+      
+      // Re-throw with a user-friendly message
+      throw new Error('Logout completed with warnings. If you experience issues, please restart the app.');
     }
   };
 
