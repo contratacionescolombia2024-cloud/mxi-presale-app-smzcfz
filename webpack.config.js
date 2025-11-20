@@ -1,13 +1,19 @@
 
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const webpack = require('webpack');
+const path = require('path');
 
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(
     {
       ...env,
       babel: {
-        dangerouslyAddModulePathsToTranspile: ['@walletconnect'],
+        dangerouslyAddModulePathsToTranspile: [
+          '@walletconnect',
+          'ethereumjs-util',
+          'ethers',
+          '@ethersproject',
+        ],
       },
     },
     argv
@@ -21,6 +27,8 @@ module.exports = async function (env, argv) {
     crypto: require.resolve('crypto-browserify'),
     events: require.resolve('events/'),
     process: require.resolve('process/browser'),
+    vm: require.resolve('vm-browserify'),
+    util: require.resolve('util/'),
     http: false,
     https: false,
     os: false,
@@ -31,12 +39,20 @@ module.exports = async function (env, argv) {
     fs: false,
   };
 
-  // Add ProvidePlugin to inject globals
+  // Add ProvidePlugin to inject globals automatically
   config.plugins = config.plugins || [];
   config.plugins.push(
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
       process: 'process/browser',
+    })
+  );
+
+  // Add DefinePlugin to define process.env
+  config.plugins.push(
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+      'process.browser': 'true',
     })
   );
 

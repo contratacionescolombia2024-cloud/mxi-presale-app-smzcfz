@@ -36,12 +36,15 @@ module.exports = function (api) {
             "@hooks": "./hooks",
             "@types": "./types",
             "@contexts": "./contexts",
-            // Add polyfill aliases
+            // Add polyfill aliases - these must match the extraNodeModules in metro.config.js
             "buffer": "buffer",
             "stream": "stream-browserify",
             "crypto": "crypto-browserify",
             "events": "events",
-            "process": "process/browser",
+            "process/browser": "process/browser.js",
+            "process": "process/browser.js",
+            "vm": "vm-browserify",
+            "util": "util",
           },
         },
       ],

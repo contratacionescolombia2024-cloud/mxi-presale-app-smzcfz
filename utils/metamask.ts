@@ -1,4 +1,7 @@
 
+// Import polyfills first
+import '../polyfills';
+
 import { ethers } from 'ethers';
 
 // BSC Mainnet Configuration

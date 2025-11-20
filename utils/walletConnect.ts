@@ -1,4 +1,7 @@
 
+// Import polyfills first
+import '../polyfills';
+
 import WalletConnectProvider from '@walletconnect/web3-provider';
 import { ethers } from 'ethers';
 
