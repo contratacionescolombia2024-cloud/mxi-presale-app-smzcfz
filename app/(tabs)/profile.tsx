@@ -39,30 +39,28 @@ export default function ProfileScreen() {
             try {
               console.log('🔄 Calling logout function...');
               
-              // Call logout function and wait for it to complete
               await logout();
               
               console.log('✅ Logout function completed');
               console.log('🔄 Preparing to navigate to login screen...');
               
-              // Use a small delay to ensure all state updates have propagated
               await new Promise(resolve => setTimeout(resolve, 300));
               
               console.log('🔄 Navigating to login screen...');
               
-              // Force replace to login screen
               router.replace('/(auth)/login');
               
               console.log('✅ Navigation completed');
               console.log('✅ ========== LOGOUT UI FLOW COMPLETED ==========');
               
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('❌ ========== LOGOUT UI FLOW FAILED ==========');
               console.error('Error in profile screen logout handler:', error);
-              console.error('Error message:', error?.message);
-              console.error('Error stack:', error?.stack);
+              if (error instanceof Error) {
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+              }
               
-              // Show error alert but still navigate to login
               Alert.alert(
                 'Logout Notice', 
                 'You have been logged out. If you experience any issues, please restart the app.',
@@ -71,7 +69,6 @@ export default function ProfileScreen() {
                     text: 'OK',
                     onPress: () => {
                       console.log('🔄 Force navigating to login after error...');
-                      // Force navigation to login even if logout had issues
                       router.replace('/(auth)/login');
                     }
                   }
@@ -216,25 +213,6 @@ export default function ProfileScreen() {
             color={colors.accent} 
           />
           <Text style={styles.menuItemText}>{t('messages')}</Text>
-          <IconSymbol 
-            ios_icon_name="chevron.right" 
-            android_material_icon_name="chevron_right" 
-            size={20} 
-            color={colors.textSecondary} 
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.menuItem}
-          onPress={() => router.push('/ecosystem/withdrawals')}
-        >
-          <IconSymbol 
-            ios_icon_name="banknote" 
-            android_material_icon_name="account_balance_wallet" 
-            size={24} 
-            color={colors.success} 
-          />
-          <Text style={styles.menuItemText}>{t('withdrawals')}</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 

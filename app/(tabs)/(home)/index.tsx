@@ -18,7 +18,7 @@ import { ICONS } from '@/constants/AppIcons';
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -452,66 +452,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  globalVestingCard: {
-    backgroundColor: colors.sectionPink,
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(236, 72, 153, 0.4)',
-  },
-  globalVestingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  globalVestingTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(236, 72, 153, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#4ade80',
-  },
-  liveBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  globalMetricsGrid: {
-    gap: 10,
-  },
-  globalMetricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(236, 72, 153, 0.1)',
-    padding: 12,
-    borderRadius: 10,
-  },
-  globalMetricLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  globalMetricValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.highlight,
-  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -593,7 +533,6 @@ export default function HomeScreen() {
     seconds: 0,
   });
 
-  // Load global metrics
   const loadGlobalMetrics = useCallback(async () => {
     try {
       const { data: vestingRecords, error: vestingError } = await supabase
@@ -628,7 +567,6 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Real-time subscription for global metrics
   useEffect(() => {
     loadGlobalMetrics();
 
@@ -668,7 +606,6 @@ export default function HomeScreen() {
     };
   }, [loadGlobalMetrics, refreshData]);
 
-  // Real-time update for global vesting rewards (every second)
   useEffect(() => {
     if (!globalMetrics?.totalPurchasedMXI) return;
 
@@ -690,7 +627,6 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [globalMetrics?.totalPurchasedMXI]);
 
-  // Countdown to February 20, 2026 (Token Launch)
   useEffect(() => {
     const targetDate = new Date('2026-02-20T00:00:00').getTime();
 
@@ -716,7 +652,6 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Countdown to current phase end
   useEffect(() => {
     if (!currentStage?.endDate) return;
 
@@ -771,15 +706,12 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate MXI breakdown
   const totalMXI = vestingData?.totalMXI || 0;
   const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
   const tournamentsBalance = vestingData?.tournamentsBalance || 0;
-  const commissionBalance = vestingData?.commissionBalance || 0;
   
-  // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
   const totalMXIAvailable = 25000000;
   const totalDistributed = globalMetrics?.totalMXIInDistribution || 0;
   const progress = (totalDistributed / totalMXIAvailable) * 100;
@@ -792,9 +724,7 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
-        {/* Top Bar with Social Icons, Logo and Language Selector */}
         <View style={styles.topBar}>
-          {/* Social Media Icons - Top Left */}
           <View style={styles.socialIconsContainer}>
             <TouchableOpacity 
               style={styles.socialIconButton}
@@ -826,7 +756,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Logo - Center */}
           <View style={styles.logoContainer}>
             <Image
               source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
@@ -834,7 +763,6 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Language Button - Top Right */}
           <TouchableOpacity 
             style={styles.languageButton}
             onPress={() => router.push('/language-settings')}
@@ -848,7 +776,6 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>{t('yourMXIDashboard')}</Text>
         </View>
 
-        {/* Token Launch Countdown */}
         <View style={styles.countdownCard}>
           <View style={styles.countdownHeader}>
             <Text style={styles.rocketIcon}>🚀</Text>
@@ -880,7 +807,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>{t('totalMXIBalance')}</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -944,7 +870,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Vesting Display */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>{t('vestingRewardsTitle')}</Text>
@@ -1004,7 +929,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Current Phase Status */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -1084,7 +1008,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Action Cards */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardPurchase]}

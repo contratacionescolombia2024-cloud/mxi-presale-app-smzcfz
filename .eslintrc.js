@@ -26,6 +26,7 @@ module.exports = {
       {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
       },
     ],
     // Allow console statements (we use them for debugging)
@@ -40,5 +41,9 @@ module.exports = {
     'prefer-const': 'warn',
     // Allow empty catch blocks with comment
     'no-empty': ['error', { allowEmptyCatch: true }],
+    // Disable no-empty-object-type rule
+    '@typescript-eslint/no-empty-object-type': 'off',
+    // Disable no-wrapper-object-types rule
+    '@typescript-eslint/no-wrapper-object-types': 'off',
   },
 };
