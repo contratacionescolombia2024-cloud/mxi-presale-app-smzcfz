@@ -4,6 +4,7 @@ import { User } from '@/types';
 import { supabase } from '@/app/integrations/supabase/client';
 import { Alert } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AuthContextType {
   user: User | null;
@@ -428,27 +429,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      console.log('🚪 Logging out user...');
+      console.log('🚪 Starting logout process...');
       
-      // Clear user state immediately to prevent UI issues
+      // Step 1: Clear user state immediately to prevent UI issues
+      console.log('🧹 Clearing user state...');
       setUser(null);
+      
+      // Step 2: Set loading to true to show transition
       setIsLoading(true);
       
-      // Sign out from Supabase
+      // Step 3: Clear AsyncStorage session data
+      try {
+        console.log('🗑️ Clearing AsyncStorage session data...');
+        await AsyncStorage.removeItem('supabase.auth.token');
+        console.log('✅ AsyncStorage cleared');
+      } catch (storageError) {
+        console.error('⚠️ Error clearing AsyncStorage:', storageError);
+        // Continue with logout even if storage clear fails
+      }
+      
+      // Step 4: Sign out from Supabase
+      console.log('🔓 Signing out from Supabase...');
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('❌ Logout error:', error);
+        console.error('❌ Supabase logout error:', error);
         // Even if there's an error, we've already cleared the local state
         // This ensures the user is logged out locally
-        console.log('⚠️ Logout error occurred, but local state cleared');
+        console.log('⚠️ Supabase logout error occurred, but local state cleared');
       } else {
-        console.log('✅ Logout successful');
+        console.log('✅ Supabase logout successful');
       }
       
-      // Ensure loading state is reset
+      // Step 5: Ensure loading state is reset
+      console.log('✅ Resetting loading state...');
       setIsLoading(false);
       setSessionChecked(true);
+      
+      console.log('✅ Logout process completed successfully');
       
     } catch (error) {
       console.error('❌ Logout exception:', error);
@@ -456,7 +474,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setIsLoading(false);
       setSessionChecked(true);
-      throw error;
+      
+      // Re-throw the error so the UI can handle it
+      throw new Error('Logout failed. Please try again.');
     }
   };
 

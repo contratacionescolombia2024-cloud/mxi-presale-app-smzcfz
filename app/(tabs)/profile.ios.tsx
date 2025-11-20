@@ -31,15 +31,36 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               console.log('🚪 User confirmed logout, proceeding...');
+              
+              // Call logout function
               await logout();
-              console.log('✅ Logout completed, navigating to login...');
-              // Use setTimeout to ensure state updates complete before navigation
+              
+              console.log('✅ Logout completed successfully');
+              
+              // Navigate to login screen after a short delay to ensure state updates
               setTimeout(() => {
+                console.log('🔄 Navigating to login screen...');
                 router.replace('/(auth)/login');
-              }, 100);
+              }, 200);
+              
             } catch (error: any) {
               console.error('❌ Logout error in profile screen:', error);
-              Alert.alert('Error', error.message || 'Failed to logout. Please try again.');
+              
+              // Show error alert
+              Alert.alert(
+                'Logout Error', 
+                error.message || 'Failed to logout. Please try again.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Force navigation to login even if logout failed
+                      console.log('🔄 Force navigating to login after error...');
+                      router.replace('/(auth)/login');
+                    }
+                  }
+                ]
+              );
             }
           }
         },
