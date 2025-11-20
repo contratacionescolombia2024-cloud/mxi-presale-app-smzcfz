@@ -36,21 +36,12 @@ module.exports = function (api) {
             "@hooks": "./hooks",
             "@types": "./types",
             "@contexts": "./contexts",
-            // Add polyfill aliases - these must match the extraNodeModules in metro.config.js
-            "buffer": "buffer",
-            "stream": "stream-browserify",
-            "crypto": "crypto-browserify",
-            "events": "events",
-            "process/browser": "process/browser.js",
-            "process": "process/browser.js",
-            "vm": "vm-browserify",
-            "util": "util",
           },
         },
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      "react-native-worklets/plugin", // react-native-worklets/plugin must be listed last!
+      "react-native-worklets/plugin",
     ],
   };
 };

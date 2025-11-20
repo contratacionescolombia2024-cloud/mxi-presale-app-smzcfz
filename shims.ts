@@ -1,36 +1,41 @@
 
 // Additional shims for React Native environment
-// This file provides extra compatibility for Node.js modules
+// This provides extra compatibility layers
 
 // Ensure global exists
 if (typeof global === 'undefined') {
-  (window as any).global = window;
+  if (typeof window !== 'undefined') {
+    (window as any).global = window;
+  } else if (typeof globalThis !== 'undefined') {
+    (globalThis as any).global = globalThis;
+  }
 }
 
-// Ensure process exists with minimal implementation
-if (typeof process === 'undefined') {
+// Minimal process implementation if not already set
+if (typeof (global as any).process === 'undefined') {
   (global as any).process = {
     env: {},
     version: '',
     versions: {},
     platform: 'browser',
-    nextTick: (fn: (...args: any[]) => void, ...args: any[]) => {
+    browser: true,
+    nextTick: (fn: (...args: unknown[]) => void, ...args: unknown[]) => {
       setTimeout(() => fn(...args), 0);
     },
   };
 }
 
-// Polyfill for setImmediate if not available
-if (typeof setImmediate === 'undefined') {
-  (global as any).setImmediate = (fn: (...args: any[]) => void, ...args: any[]) => {
-    setTimeout(() => fn(...args), 0);
+// setImmediate polyfill
+if (typeof (global as any).setImmediate === 'undefined') {
+  (global as any).setImmediate = (fn: (...args: unknown[]) => void, ...args: unknown[]) => {
+    return setTimeout(() => fn(...args), 0);
   };
 }
 
-// Polyfill for clearImmediate if not available
-if (typeof clearImmediate === 'undefined') {
-  (global as any).clearImmediate = (id: any) => {
-    clearTimeout(id);
+// clearImmediate polyfill
+if (typeof (global as any).clearImmediate === 'undefined') {
+  (global as any).clearImmediate = (id: unknown) => {
+    clearTimeout(id as number);
   };
 }
 

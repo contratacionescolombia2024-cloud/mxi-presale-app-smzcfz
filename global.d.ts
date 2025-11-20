@@ -15,11 +15,12 @@ declare global {
       };
       version: string;
       versions: {
-        node: string;
-        [key: string]: string;
+        node?: string;
+        [key: string]: string | undefined;
       };
       platform: string;
-      nextTick: (callback: (...args: any[]) => void, ...args: any[]) => void;
+      browser?: boolean;
+      nextTick: (callback: (...args: unknown[]) => void, ...args: unknown[]) => void;
     }
     
     interface Global {
@@ -32,8 +33,12 @@ declare global {
     Buffer: typeof Buffer;
     process: NodeJS.Process;
     global: typeof globalThis;
-    ethereum?: any;
+    ethereum?: unknown;
   }
+
+  // Fix for setImmediate/clearImmediate
+  function setImmediate(callback: (...args: unknown[]) => void, ...args: unknown[]): number;
+  function clearImmediate(id: number): void;
 }
 
 export {};

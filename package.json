@@ -1,15 +1,18 @@
+
 {
   "name": "mxi-presale-app-smzcfz",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "dev": "EXPO_NO_TELEMETRY=1 expo start --tunnel",
-    "android": "EXPO_NO_TELEMETRY=1 expo start --android",
-    "ios": "EXPO_NO_TELEMETRY=1 expo start --ios",
-    "web": "EXPO_NO_TELEMETRY=1 expo start --web",
+    "start": "EXPO_NO_TELEMETRY=1 expo start --clear",
+    "dev": "EXPO_NO_TELEMETRY=1 expo start --tunnel --clear",
+    "android": "EXPO_NO_TELEMETRY=1 expo start --android --clear",
+    "ios": "EXPO_NO_TELEMETRY=1 expo start --ios --clear",
+    "web": "EXPO_NO_TELEMETRY=1 expo start --web --clear",
     "build:web": "expo export -p web && npx workbox generateSW workbox-config.js",
     "build:android": "expo prebuild -p android",
-    "lint": "eslint ."
+    "lint": "eslint . --fix",
+    "clean": "rm -rf node_modules/.cache .expo android ios"
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
