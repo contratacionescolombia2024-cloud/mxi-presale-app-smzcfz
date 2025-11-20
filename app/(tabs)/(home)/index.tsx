@@ -543,6 +543,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sectionTeal,
     borderColor: 'rgba(20, 184, 166, 0.4)',
   },
+  actionCardWithdrawals: {
+    backgroundColor: colors.sectionGreen,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
   actionLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -1128,6 +1132,19 @@ export default function HomeScreen() {
               color="#14B8A6"
             />
             <Text style={styles.actionLabel}>{t('kycVerification')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionCard, styles.actionCardWithdrawals]}
+            onPress={() => router.push('/ecosystem/withdrawals')}
+          >
+            <IconSymbol 
+              ios_icon_name="banknote" 
+              android_material_icon_name="account_balance_wallet" 
+              size={32} 
+              color="#10B981"
+            />
+            <Text style={styles.actionLabel}>{t('withdrawals')}</Text>
           </TouchableOpacity>
         </View>
 

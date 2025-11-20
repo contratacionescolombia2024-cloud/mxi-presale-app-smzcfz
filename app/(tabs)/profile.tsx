@@ -224,6 +224,25 @@ export default function ProfileScreen() {
           />
         </TouchableOpacity>
 
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => router.push('/ecosystem/withdrawals')}
+        >
+          <IconSymbol 
+            ios_icon_name="banknote" 
+            android_material_icon_name="account_balance_wallet" 
+            size={24} 
+            color={colors.success} 
+          />
+          <Text style={styles.menuItemText}>{t('withdrawals')}</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.textSecondary} 
+          />
+        </TouchableOpacity>
+
         {isAdmin && (
           <TouchableOpacity 
             style={styles.menuItem}

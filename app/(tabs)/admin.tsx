@@ -816,6 +816,25 @@ export default function AdminScreen() {
             color={colors.card} 
           />
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.quickAccessButton, { backgroundColor: colors.success }]}
+          onPress={() => router.push('/admin-withdrawals')}
+        >
+          <IconSymbol 
+            ios_icon_name="banknote" 
+            android_material_icon_name="account_balance_wallet" 
+            size={24} 
+            color={colors.card} 
+          />
+          <Text style={styles.quickAccessButtonText}>Withdrawal Management</Text>
+          <IconSymbol 
+            ios_icon_name="chevron.right" 
+            android_material_icon_name="chevron_right" 
+            size={20} 
+            color={colors.card} 
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar}>
