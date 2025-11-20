@@ -5,7 +5,7 @@ import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import MetaMaskConnect from '@/components/MetaMaskConnect';
+import WalletConnector from '@/components/WalletConnector';
 import {
   View,
   Text,
@@ -19,12 +19,7 @@ import {
 } from 'react-native';
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  sendBNBPayment,
-  sendUSDTPayment,
-  getBNBPriceInUSD,
-  isMetaMaskInstalled,
-} from '@/utils/metamask';
+import { sendUSDTPayment, WalletType } from '@/utils/walletConnect';
 import { supabase } from '@/app/integrations/supabase/client';
 
 const styles = StyleSheet.create({
@@ -143,71 +138,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  paymentMethodsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  paymentMethods: {
-    gap: 16,
-  },
-  paymentButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  paymentButtonSelected: {
-    borderColor: colors.primary,
-  },
-  paymentGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  paymentLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    flex: 1,
-  },
-  paymentIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paymentInfo: {
-    flex: 1,
-  },
-  paymentName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  paymentDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  paymentPrice: {
-    alignItems: 'flex-end',
-  },
-  paymentPriceLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  paymentPriceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
   purchaseButton: {
     ...buttonStyles.primary,
     marginTop: 16,
@@ -260,7 +190,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  metamaskInfo: {
+  infoCard: {
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
@@ -268,13 +198,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  metamaskInfoTitle: {
+  infoTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
   },
-  metamaskInfoText: {
+  infoText: {
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 18,
@@ -304,16 +234,24 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
-  bnbPriceInfo: {
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
+  verificationCard: {
+    backgroundColor: colors.primary + '20',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  bnbPriceText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
+  verificationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  verificationText: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 4,
   },
 });
 
@@ -322,20 +260,15 @@ export default function PurchaseScreen() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'USDT' | 'BNB' | null>(null);
   const [loading, setLoading] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletType, setWalletType] = useState<WalletType | null>(null);
+  const [provider, setProvider] = useState<any>(null);
+  const [signer, setSigner] = useState<any>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const [bnbPrice, setBnbPrice] = useState<number>(600);
+  const [verifying, setVerifying] = useState(false);
 
   const isWeb = Platform.OS === 'web';
-
-  // Load BNB price
-  React.useEffect(() => {
-    if (isWeb && isMetaMaskInstalled()) {
-      getBNBPriceInUSD().then(setBnbPrice).catch(console.error);
-    }
-  }, [isWeb]);
 
   const calculateMXI = () => {
     const amountNum = parseFloat(amount);
@@ -343,26 +276,102 @@ export default function PurchaseScreen() {
     return amountNum / currentStage.price;
   };
 
-  const calculateBNBAmount = () => {
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || !bnbPrice) return 0;
-    return amountNum / bnbPrice;
-  };
-
-  const handleMetaMaskConnect = (address: string) => {
+  const handleWalletConnect = (
+    address: string,
+    type: WalletType,
+    providerInstance: any,
+    signerInstance: any
+  ) => {
     setWalletAddress(address);
-    console.log('✅ MetaMask connected:', address);
+    setWalletType(type);
+    setProvider(providerInstance);
+    setSigner(signerInstance);
+    console.log('✅ Wallet connected:', { address, type });
   };
 
-  const handleMetaMaskDisconnect = () => {
+  const handleWalletDisconnect = () => {
     setWalletAddress(null);
+    setWalletType(null);
+    setProvider(null);
+    setSigner(null);
     setTransactionHash(null);
-    console.log('🔌 MetaMask disconnected');
+    console.log('🔌 Wallet disconnected');
+  };
+
+  const verifyTransaction = async (txHash: string, mxiAmount: number, usdtAmount: number) => {
+    setVerifying(true);
+    try {
+      console.log('🔍 Verifying transaction with backend...');
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(
+        `${supabase.supabaseUrl}/functions/v1/verify-usdt-purchase`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            userId: user?.id,
+            wallet: walletAddress,
+            txHash: txHash,
+            usdtPagados: usdtAmount,
+            mxiComprados: mxiAmount,
+            stage: currentStage?.stage,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 202) {
+          // Transaction needs more confirmations
+          Alert.alert(
+            '⏳ Waiting for Confirmations',
+            `Your transaction needs ${result.required - result.confirmations} more confirmations. Please wait a few minutes and check your balance.`,
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        throw new Error(result.error || 'Verification failed');
+      }
+
+      console.log('✅ Transaction verified:', result);
+
+      Alert.alert(
+        '✅ Purchase Confirmed!',
+        `Your purchase of ${mxiAmount.toFixed(2)} MXI has been confirmed!\n\nTransaction: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nYour MXI balance has been updated and referral commissions have been distributed.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              setAmount('');
+              setTransactionHash(null);
+              refreshData();
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('❌ Verification error:', error);
+      Alert.alert(
+        'Verification Failed',
+        error.message || 'Failed to verify transaction. Please contact support with your transaction hash.'
+      );
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handlePurchase = async () => {
     const amountNum = parseFloat(amount);
-    
+
     if (isNaN(amountNum) || amountNum < 20 || amountNum > 50000) {
       Alert.alert(
         t('error'),
@@ -371,13 +380,8 @@ export default function PurchaseScreen() {
       return;
     }
 
-    if (!paymentMethod) {
-      Alert.alert(t('selectPaymentMethodAlert'), t('pleaseSelectPaymentMethod'));
-      return;
-    }
-
-    if (!walletAddress) {
-      Alert.alert(t('error'), 'Please connect your MetaMask wallet first');
+    if (!walletAddress || !signer) {
+      Alert.alert(t('error'), 'Please connect your wallet first');
       return;
     }
 
@@ -395,14 +399,9 @@ export default function PurchaseScreen() {
     setTransactionHash(null);
 
     try {
-      let txHash: string;
-
-      // Send payment based on selected method
-      if (paymentMethod === 'BNB') {
-        txHash = await sendBNBPayment(walletAddress, amountNum, bnbPrice);
-      } else {
-        txHash = await sendUSDTPayment(walletAddress, amountNum);
-      }
+      // Send USDT payment
+      console.log('💰 Sending USDT payment...');
+      const txHash = await sendUSDTPayment(signer, amountNum);
 
       console.log('✅ Transaction sent:', txHash);
       setTransactionHash(txHash);
@@ -410,7 +409,7 @@ export default function PurchaseScreen() {
       // Calculate MXI amount
       const mxiAmount = amountNum / currentStage.price;
 
-      // Save transaction to database
+      // Save transaction to database as pending
       const { error: txError } = await supabase
         .from('metamask_transactions')
         .insert({
@@ -419,79 +418,26 @@ export default function PurchaseScreen() {
           transaction_hash: txHash,
           amount_usd: amountNum,
           mxi_amount: mxiAmount,
-          payment_currency: paymentMethod,
+          payment_currency: 'USDT',
           stage: currentStage.stage,
           status: 'pending',
         });
 
       if (txError) {
         console.error('❌ Error saving transaction:', txError);
-        throw new Error('Failed to save transaction to database');
-      }
-
-      // Update vesting record
-      const { data: existingVesting } = await supabase
-        .from('vesting')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingVesting) {
-        const newTotal = (parseFloat(existingVesting.total_mxi) || 0) + mxiAmount;
-        const newPurchased = (parseFloat(existingVesting.purchased_mxi) || 0) + mxiAmount;
-        
-        const { error: vestingError } = await supabase
-          .from('vesting')
-          .update({
-            total_mxi: newTotal,
-            purchased_mxi: newPurchased,
-            last_update: new Date().toISOString(),
-          })
-          .eq('user_id', user.id);
-
-        if (vestingError) {
-          console.error('❌ Vesting update error:', vestingError);
-        }
-      } else {
-        const { error: vestingError } = await supabase
-          .from('vesting')
-          .insert({
-            user_id: user.id,
-            total_mxi: mxiAmount,
-            purchased_mxi: mxiAmount,
-            current_rewards: 0,
-            monthly_rate: 0.03,
-            last_update: new Date().toISOString(),
-          });
-
-        if (vestingError) {
-          console.error('❌ Vesting creation error:', vestingError);
-        }
-      }
-
-      // Update presale stage sold amount
-      const { error: stageError } = await supabase
-        .from('presale_stages')
-        .update({
-          sold_mxi: currentStage.soldMXI + mxiAmount,
-        })
-        .eq('stage', currentStage.stage);
-
-      if (stageError) {
-        console.error('❌ Stage update error:', stageError);
       }
 
       Alert.alert(
-        '✅ Purchase Successful!',
-        `Transaction Hash: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nYou will receive ${mxiAmount.toFixed(2)} MXI once the transaction is confirmed on the blockchain.`,
+        '✅ Transaction Submitted!',
+        `Your USDT payment has been submitted to the blockchain.\n\nTransaction Hash: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\nWe will verify the transaction and credit your MXI balance shortly.`,
         [
           {
-            text: 'OK',
-            onPress: () => {
-              setAmount('');
-              setPaymentMethod(null);
-              refreshData();
-            },
+            text: 'Verify Now',
+            onPress: () => verifyTransaction(txHash, mxiAmount, amountNum),
+          },
+          {
+            text: 'Later',
+            style: 'cancel',
           },
         ]
       );
@@ -518,11 +464,11 @@ export default function PurchaseScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <IconSymbol 
-            ios_icon_name="exclamationmark.triangle" 
-            android_material_icon_name="warning" 
-            size={80} 
-            color={colors.textSecondary} 
+          <IconSymbol
+            ios_icon_name="exclamationmark.triangle"
+            android_material_icon_name="warning"
+            size={80}
+            color={colors.textSecondary}
           />
           <Text style={styles.emptyTitle}>{t('noActiveStage')}</Text>
           <Text style={styles.emptyText}>{t('noActiveStageMes')}</Text>
@@ -532,8 +478,7 @@ export default function PurchaseScreen() {
   }
 
   const mxiAmount = calculateMXI();
-  const bnbAmount = calculateBNBAmount();
-  const canPurchase = mxiAmount > 0 && paymentMethod && walletAddress && !loading;
+  const canPurchase = mxiAmount > 0 && walletAddress && !loading && !verifying;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -544,7 +489,9 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.stageCard}>
-          <Text style={styles.stageTitle}>{t('stage')} {currentStage.stage} {t('stageDetails')}</Text>
+          <Text style={styles.stageTitle}>
+            {t('stage')} {currentStage.stage} {t('stageDetails')}
+          </Text>
           <View style={styles.stageInfo}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('currentPricePerMXI')}</Text>
@@ -578,9 +525,9 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.purchaseCard}>
-          <MetaMaskConnect
-            onConnect={handleMetaMaskConnect}
-            onDisconnect={handleMetaMaskDisconnect}
+          <WalletConnector
+            onConnect={handleWalletConnect}
+            onDisconnect={handleWalletDisconnect}
           />
 
           <Text style={styles.inputLabel}>{t('amount')} (USDT)</Text>
@@ -591,7 +538,7 @@ export default function PurchaseScreen() {
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
-            editable={!loading && walletAddress !== null}
+            editable={!loading && !verifying && walletAddress !== null}
           />
           <Text style={styles.helperText}>
             {t('minimum')}: 20 USDT • {t('maximum')}: 50,000 USDT
@@ -607,115 +554,46 @@ export default function PurchaseScreen() {
                 <Text style={styles.calculationLabel}>{t('pricePerMXI')}</Text>
                 <Text style={styles.calculationValue}>${currentStage.price.toFixed(2)}</Text>
               </View>
+              <View style={styles.calculationRow}>
+                <Text style={styles.calculationLabel}>Payment Method</Text>
+                <Text style={styles.calculationValue}>USDT (BEP-20)</Text>
+              </View>
             </View>
           )}
 
-          {walletAddress && (
-            <React.Fragment>
-              <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
-              <View style={styles.paymentMethods}>
-                <TouchableOpacity
-                  style={[
-                    styles.paymentButton,
-                    paymentMethod === 'USDT' && styles.paymentButtonSelected,
-                  ]}
-                  onPress={() => setPaymentMethod('USDT')}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={['#26A17B', '#50AF95']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.paymentGradient}
-                  >
-                    <View style={styles.paymentLeft}>
-                      <View style={styles.paymentIconContainer}>
-                        <IconSymbol 
-                          ios_icon_name="dollarsign.circle.fill" 
-                          android_material_icon_name="attach_money" 
-                          size={28} 
-                          color="#FFFFFF" 
-                        />
-                      </View>
-                      <View style={styles.paymentInfo}>
-                        <Text style={styles.paymentName}>USDT (BEP-20)</Text>
-                        <Text style={styles.paymentDescription}>Pay with Tether on BSC</Text>
-                      </View>
-                    </View>
-                    <View style={styles.paymentPrice}>
-                      <Text style={styles.paymentPriceLabel}>Amount</Text>
-                      <Text style={styles.paymentPriceValue}>{amount || '0'} USDT</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.paymentButton,
-                    paymentMethod === 'BNB' && styles.paymentButtonSelected,
-                  ]}
-                  onPress={() => setPaymentMethod('BNB')}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient
-                    colors={['#F3BA2F', '#F0B90B']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.paymentGradient}
-                  >
-                    <View style={styles.paymentLeft}>
-                      <View style={styles.paymentIconContainer}>
-                        <IconSymbol 
-                          ios_icon_name="bitcoinsign.circle.fill" 
-                          android_material_icon_name="currency_bitcoin" 
-                          size={28} 
-                          color="#FFFFFF" 
-                        />
-                      </View>
-                      <View style={styles.paymentInfo}>
-                        <Text style={styles.paymentName}>BNB</Text>
-                        <Text style={styles.paymentDescription}>Pay with Binance Coin</Text>
-                      </View>
-                    </View>
-                    <View style={styles.paymentPrice}>
-                      <Text style={styles.paymentPriceLabel}>Amount</Text>
-                      <Text style={styles.paymentPriceValue}>
-                        {bnbAmount > 0 ? bnbAmount.toFixed(4) : '0'} BNB
-                      </Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-
-              {paymentMethod === 'BNB' && (
-                <View style={styles.bnbPriceInfo}>
-                  <Text style={styles.bnbPriceText}>
-                    Current BNB Price: ${bnbPrice.toFixed(2)} USD
-                  </Text>
-                </View>
-              )}
-            </React.Fragment>
-          )}
-
-          <View style={styles.metamaskInfo}>
-            <Text style={styles.metamaskInfoTitle}>ℹ️ {t('metamaskInfoTitle') || 'MetaMask Payment Info'}</Text>
-            <Text style={styles.metamaskInfoText}>• Connect your MetaMask wallet to BSC network</Text>
-            <Text style={styles.metamaskInfoText}>• Choose to pay with USDT (BEP-20) or BNB</Text>
-            <Text style={styles.metamaskInfoText}>• Transaction will be sent to project wallet</Text>
-            <Text style={styles.metamaskInfoText}>• MXI tokens will be credited after confirmation</Text>
-            <Text style={styles.metamaskInfoText}>• Your private keys never leave MetaMask</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>ℹ️ Payment Information</Text>
+            <Text style={styles.infoText}>• Connect MetaMask, Trust Wallet, or any WalletConnect wallet</Text>
+            <Text style={styles.infoText}>• Make sure you&apos;re on BSC (Binance Smart Chain) network</Text>
+            <Text style={styles.infoText}>• Payment is made in USDT (BEP-20) tokens</Text>
+            <Text style={styles.infoText}>• MXI tokens credited after 3 blockchain confirmations</Text>
+            <Text style={styles.infoText}>• Referral commissions distributed automatically</Text>
+            <Text style={styles.infoText}>• Your private keys never leave your wallet</Text>
           </View>
 
           {transactionHash && (
-            <View style={styles.confirmationCard}>
-              <Text style={styles.confirmationTitle}>✅ Transaction Submitted</Text>
-              <Text style={styles.confirmationText}>
+            <View style={styles.verificationCard}>
+              <Text style={styles.verificationTitle}>⏳ Transaction Submitted</Text>
+              <Text style={styles.verificationText}>
                 Your payment has been submitted to the blockchain.
               </Text>
-              <Text style={styles.confirmationText}>Transaction Hash:</Text>
+              <Text style={styles.verificationText}>Transaction Hash:</Text>
               <Text style={styles.hashText}>{transactionHash}</Text>
+              <TouchableOpacity
+                style={[styles.purchaseButton, { marginTop: 12 }]}
+                onPress={() => {
+                  const mxiAmount = calculateMXI();
+                  const usdtAmount = parseFloat(amount);
+                  verifyTransaction(transactionHash, mxiAmount, usdtAmount);
+                }}
+                disabled={verifying}
+              >
+                {verifying ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.purchaseButtonText}>Verify Transaction</Text>
+                )}
+              </TouchableOpacity>
             </View>
           )}
 
@@ -729,10 +607,8 @@ export default function PurchaseScreen() {
             ) : (
               <Text style={styles.purchaseButtonText}>
                 {!walletAddress
-                  ? 'Connect MetaMask First'
-                  : !paymentMethod
-                  ? t('selectPaymentMethodButton')
-                  : `Pay with ${paymentMethod}`}
+                  ? 'Connect Wallet First'
+                  : `Pay ${amount || '0'} USDT`}
               </Text>
             )}
           </TouchableOpacity>
