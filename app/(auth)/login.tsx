@@ -17,6 +17,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import * as WebBrowser from 'expo-web-browser';
+import TermsAndConditions from '@/components/TermsAndConditions';
 
 const styles = StyleSheet.create({
   container: {
@@ -179,6 +180,27 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
   },
+  termsLinkContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  termsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.card,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  termsLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 0.3,
+  },
 });
 
 export default function LoginScreen() {
@@ -186,6 +208,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTerms, setShowTerms] = useState(false);
   const { login, isAuthenticated, resendVerificationEmail } = useAuth();
   const router = useRouter();
 
@@ -395,7 +418,30 @@ export default function LoginScreen() {
             <Text style={styles.registerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Terms and Conditions Link */}
+        <View style={styles.termsLinkContainer}>
+          <TouchableOpacity 
+            style={styles.termsLink}
+            onPress={() => setShowTerms(true)}
+          >
+            <IconSymbol
+              ios_icon_name="doc.text.fill"
+              android_material_icon_name="description"
+              size={16}
+              color={colors.primary}
+            />
+            <Text style={styles.termsLinkText}>Términos y Condiciones</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditions
+        visible={showTerms}
+        onClose={() => setShowTerms(false)}
+        showAcceptButton={false}
+      />
     </SafeAreaView>
   );
 }
