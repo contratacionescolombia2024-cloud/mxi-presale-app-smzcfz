@@ -4,6 +4,8 @@
 
 // Import Buffer and process BEFORE anything else
 import { Buffer } from 'buffer';
+import process from 'process/browser';
+import { EventEmitter } from 'events';
 
 // Ensure global exists first
 if (typeof global === 'undefined') {
@@ -28,10 +30,6 @@ if (typeof window !== 'undefined') {
 if (typeof globalThis !== 'undefined') {
   (globalThis as any).Buffer = Buffer;
 }
-
-// Now import process after Buffer is set
-import process from 'process/browser';
-import { EventEmitter } from 'events';
 
 // Set process globally
 globalObj.process = process;
@@ -67,14 +65,14 @@ if (!process.env.NODE_ENV) {
 
 // Add nextTick if not present
 if (!process.nextTick) {
-  (process as any).nextTick = (fn: Function, ...args: any[]) => {
+  (process as any).nextTick = (fn: (...args: any[]) => void, ...args: any[]) => {
     setTimeout(() => fn(...args), 0);
   };
 }
 
 // Polyfill for setImmediate if not available
 if (typeof globalObj.setImmediate === 'undefined') {
-  globalObj.setImmediate = (fn: Function, ...args: any[]) => {
+  globalObj.setImmediate = (fn: (...args: any[]) => void, ...args: any[]) => {
     setTimeout(() => fn(...args), 0);
   };
 }

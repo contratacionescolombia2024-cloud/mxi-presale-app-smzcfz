@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -178,38 +178,7 @@ export default function TournamentLeaderboard({
   const [highestScore, setHighestScore] = useState(0);
   const channelRef = useRef<any>(null);
 
-  useEffect(() => {
-    loadLeaderboard();
-    setupRealtimeSubscription();
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [tournamentId]);
-
-  const setupRealtimeSubscription = async () => {
-    console.log('🔔 Setting up leaderboard real-time subscription for tournament:', tournamentId);
-
-    const channel = supabase.channel(`tournament:${tournamentId}:leaderboard`, {
-      config: { private: true },
-    });
-
-    channelRef.current = channel;
-
-    await supabase.realtime.setAuth();
-
-    channel
-      .on('broadcast', { event: 'score_update' }, (payload) => {
-        console.log('🔔 Score updated:', payload);
-        loadLeaderboard();
-      })
-      .subscribe();
-  };
-
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = useCallback(async () => {
     try {
       console.log('📊 Loading leaderboard for tournament:', tournamentId);
 
@@ -251,7 +220,38 @@ export default function TournamentLeaderboard({
       setIsLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [tournamentId, prizePool]);
+
+  const setupRealtimeSubscription = useCallback(async () => {
+    console.log('🔔 Setting up leaderboard real-time subscription for tournament:', tournamentId);
+
+    const channel = supabase.channel(`tournament:${tournamentId}:leaderboard`, {
+      config: { private: true },
+    });
+
+    channelRef.current = channel;
+
+    await supabase.realtime.setAuth();
+
+    channel
+      .on('broadcast', { event: 'score_update' }, (payload) => {
+        console.log('🔔 Score updated:', payload);
+        loadLeaderboard();
+      })
+      .subscribe();
+  }, [tournamentId, loadLeaderboard]);
+
+  useEffect(() => {
+    loadLeaderboard();
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [loadLeaderboard, setupRealtimeSubscription]);
 
   const onRefresh = async () => {
     setRefreshing(true);

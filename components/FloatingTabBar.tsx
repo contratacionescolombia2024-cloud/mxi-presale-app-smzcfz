@@ -105,7 +105,7 @@ export default function FloatingTabBar({
         stiffness: 90,
       });
     }
-  }, [activeIndex, containerWidth, tabs.length]);
+  }, [activeIndex, containerWidth, tabs.length, indicatorPosition]);
 
   const indicatorStyle = useAnimatedStyle(() => {
     return {

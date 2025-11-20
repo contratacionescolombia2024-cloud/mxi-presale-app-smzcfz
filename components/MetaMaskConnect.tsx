@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -42,6 +42,34 @@ export default function MetaMaskConnect({ onConnect, onDisconnect }: MetaMaskCon
   // Check if we're on web platform
   const isWeb = Platform.OS === 'web';
 
+  const loadBalances = useCallback(async (address: string) => {
+    if (!isWeb) return;
+    
+    setBalanceLoading(true);
+    try {
+      const [bnb, usdt] = await Promise.all([
+        getBNBBalance(address),
+        getUSDTBalance(address),
+      ]);
+      setBnbBalance(parseFloat(bnb).toFixed(4));
+      setUsdtBalance(parseFloat(usdt).toFixed(2));
+    } catch (error) {
+      console.error('Error loading balances:', error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, [isWeb]);
+
+  const handleDisconnect = useCallback(() => {
+    setIsConnected(false);
+    setAccount(null);
+    setChainId(null);
+    setIsCorrectNetwork(false);
+    setBnbBalance('0');
+    setUsdtBalance('0');
+    onDisconnect();
+  }, [onDisconnect]);
+
   useEffect(() => {
     if (!isWeb) return;
 
@@ -69,25 +97,7 @@ export default function MetaMaskConnect({ onConnect, onDisconnect }: MetaMaskCon
       unsubscribeAccounts();
       unsubscribeChain();
     };
-  }, [account, isWeb]);
-
-  const loadBalances = async (address: string) => {
-    if (!isWeb) return;
-    
-    setBalanceLoading(true);
-    try {
-      const [bnb, usdt] = await Promise.all([
-        getBNBBalance(address),
-        getUSDTBalance(address),
-      ]);
-      setBnbBalance(parseFloat(bnb).toFixed(4));
-      setUsdtBalance(parseFloat(usdt).toFixed(2));
-    } catch (error) {
-      console.error('Error loading balances:', error);
-    } finally {
-      setBalanceLoading(false);
-    }
-  };
+  }, [account, isWeb, handleDisconnect, loadBalances]);
 
   const handleConnect = async () => {
     if (!isWeb) {
@@ -164,16 +174,6 @@ export default function MetaMaskConnect({ onConnect, onDisconnect }: MetaMaskCon
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDisconnect = () => {
-    setIsConnected(false);
-    setAccount(null);
-    setChainId(null);
-    setIsCorrectNetwork(false);
-    setBnbBalance('0');
-    setUsdtBalance('0');
-    onDisconnect();
   };
 
   const handleSwitchNetwork = async () => {

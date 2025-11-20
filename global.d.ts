@@ -19,7 +19,7 @@ declare global {
         [key: string]: string;
       };
       platform: string;
-      nextTick: (callback: Function, ...args: any[]) => void;
+      nextTick: (callback: (...args: any[]) => void, ...args: any[]) => void;
     }
     
     interface Global {

@@ -14,7 +14,7 @@ if (typeof process === 'undefined') {
     version: '',
     versions: {},
     platform: 'browser',
-    nextTick: (fn: Function, ...args: any[]) => {
+    nextTick: (fn: (...args: any[]) => void, ...args: any[]) => {
       setTimeout(() => fn(...args), 0);
     },
   };
@@ -22,7 +22,7 @@ if (typeof process === 'undefined') {
 
 // Polyfill for setImmediate if not available
 if (typeof setImmediate === 'undefined') {
-  (global as any).setImmediate = (fn: Function, ...args: any[]) => {
+  (global as any).setImmediate = (fn: (...args: any[]) => void, ...args: any[]) => {
     setTimeout(() => fn(...args), 0);
   };
 }
