@@ -13,6 +13,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1a1a"
     },
+    "scheme": "mxipresale",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.Natively",
@@ -38,7 +39,6 @@
       "expo-web-browser",
       "expo-localization"
     ],
-    "scheme": "mxipresale",
     "experiments": {
       "typedRoutes": true
     }

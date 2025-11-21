@@ -18,7 +18,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export interface TabBarItem {
   name: string;
@@ -90,38 +90,35 @@ export default function FloatingTabBar({
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Use shared values for animation
   const indicatorPosition = useSharedValue(0);
+  const tabWidth = containerWidth / tabs.length;
 
+  // Find active tab index
   const activeIndex = tabs.findIndex((tab) => {
     const tabPath = typeof tab.route === 'string' ? tab.route : tab.route.pathname;
     return pathname.startsWith(tabPath || '');
   });
 
-  // Calculate tab width - store as shared value for worklet access
-  const tabWidth = useSharedValue(containerWidth / tabs.length);
-
-  React.useEffect(() => {
-    // Update tab width when container width changes
-    tabWidth.value = containerWidth / tabs.length;
-  }, [containerWidth, tabs.length]);
-
-  React.useEffect(() => {
+  // Update indicator position when active tab changes
+  useEffect(() => {
     if (activeIndex !== -1) {
-      indicatorPosition.value = withSpring(activeIndex * tabWidth.value, {
+      indicatorPosition.value = withSpring(activeIndex * tabWidth, {
         damping: 20,
         stiffness: 90,
       });
     }
-  }, [activeIndex]);
+  }, [activeIndex, tabWidth]);
 
-  // Simplified animated style - only use shared values
+  // Animated style for indicator - MUST be defined with 'worklet' directive
   const indicatorStyle = useAnimatedStyle(() => {
     'worklet';
     return {
       transform: [{ translateX: indicatorPosition.value }],
-      width: tabWidth.value,
+      width: tabWidth,
     };
-  });
+  }, [tabWidth]);
 
   const handleTabPress = (route: Href) => {
     console.log('[FloatingTabBar] Tab pressed:', route);
@@ -134,13 +131,6 @@ export default function FloatingTabBar({
       {tabs.map((tab, index) => {
         const isActive = index === activeIndex;
         const iconColor = isActive ? colors.primary : colors.text;
-
-        console.log(`[FloatingTabBar] Rendering tab "${tab.label}":`, {
-          ios: tab.iosIcon,
-          android: tab.androidIcon,
-          isActive,
-          color: iconColor,
-        });
 
         return (
           <TouchableOpacity
