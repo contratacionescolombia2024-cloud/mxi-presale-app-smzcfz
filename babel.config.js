@@ -41,8 +41,8 @@ module.exports = function (api) {
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      // CRITICAL: react-native-reanimated/plugin MUST be last and only included once
-      ["react-native-reanimated/plugin", {}, "reanimated-plugin"],
+      // CRITICAL: react-native-reanimated/plugin MUST be last
+      "react-native-reanimated/plugin",
     ],
   };
 };

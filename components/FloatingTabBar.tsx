@@ -97,26 +97,31 @@ export default function FloatingTabBar({
     return pathname.startsWith(tabPath || '');
   });
 
-  // Calculate tab width once
-  const tabWidth = containerWidth / tabs.length;
+  // Calculate tab width - store as shared value for worklet access
+  const tabWidth = useSharedValue(containerWidth / tabs.length);
+
+  React.useEffect(() => {
+    // Update tab width when container width changes
+    tabWidth.value = containerWidth / tabs.length;
+  }, [containerWidth, tabs.length]);
 
   React.useEffect(() => {
     if (activeIndex !== -1) {
-      indicatorPosition.value = withSpring(activeIndex * tabWidth, {
+      indicatorPosition.value = withSpring(activeIndex * tabWidth.value, {
         damping: 20,
         stiffness: 90,
       });
     }
-  }, [activeIndex, tabWidth]);
+  }, [activeIndex]);
 
-  // Use useAnimatedStyle with only primitive values
+  // Simplified animated style - only use shared values
   const indicatorStyle = useAnimatedStyle(() => {
     'worklet';
     return {
       transform: [{ translateX: indicatorPosition.value }],
-      width: tabWidth,
+      width: tabWidth.value,
     };
-  }, [tabWidth]);
+  });
 
   const handleTabPress = (route: Href) => {
     console.log('[FloatingTabBar] Tab pressed:', route);
