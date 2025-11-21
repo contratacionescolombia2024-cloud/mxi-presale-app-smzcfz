@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "Mxi Presale",
@@ -42,5 +41,6 @@
     "experiments": {
       "typedRoutes": true
     }
-  }
+  },
+  "scheme": "Mxi Presale"
 }

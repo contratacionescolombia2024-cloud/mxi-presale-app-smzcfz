@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, Fragment } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,13 +15,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/app/integrations/supabase/client';
 import {
-  Tournament,
   MiniBattle,
   GAME_NAMES,
   GAME_DESCRIPTIONS,
@@ -1021,12 +1020,12 @@ export default function TournamentsScreen() {
             Entry: 3 MXI • Players: 25-50 • Prize: 135 MXI • Distribution: 50% / 25% / 15% (10% to prize fund)
           </Text>
           <View style={styles.gamesGrid}>
-            {standardGames.map((game, index) => {
+            {standardGames.map((game) => {
               const gameType = game.type as keyof typeof GAME_NAMES;
               const activeTournamentCount = activeTournaments[game.type] || 0;
 
               return (
-                <View key={index} style={styles.gameCard}>
+                <View key={game.type} style={styles.gameCard}>
                   <View style={styles.gameHeader}>
                     <View style={styles.gameIcon}>
                       <IconSymbol name={game.icon} size={28} color={colors.light} />
@@ -1079,12 +1078,12 @@ export default function TournamentsScreen() {
             Entry: 1 MXI • Players: 100 • Prize: 100 MXI • Distribution: 50% / 25% / 15% (10% to prize fund)
           </Text>
           <View style={styles.gamesGrid}>
-            {viralZoneGames.map((game, index) => {
+            {viralZoneGames.map((game) => {
               const gameType = game.type as keyof typeof VIRAL_ZONE_GAME_NAMES;
               const activeTournamentCount = activeTournaments[game.type] || 0;
 
               return (
-                <View key={index} style={styles.gameCard}>
+                <View key={game.type} style={styles.gameCard}>
                   <View style={styles.gameHeader}>
                     <View style={[styles.gameIcon, { backgroundColor: colors.secondary }]}>
                       <IconSymbol name={game.icon} size={28} color={colors.light} />
@@ -1153,13 +1152,13 @@ export default function TournamentsScreen() {
           </View>
 
           <View style={styles.gamesGrid}>
-            {miniBattleGames.map((game, index) => {
+            {miniBattleGames.map((game) => {
               const gameType = game.type as keyof typeof MINI_BATTLE_GAME_NAMES;
               const activeMiniBattleCount = activeMiniBattles[game.type] || 0;
               const gameBattles = miniBattles.filter((mb) => mb.game_type === game.type);
 
               return (
-                <View key={index} style={styles.gameCard}>
+                <View key={game.type} style={styles.gameCard}>
                   <View style={styles.gameHeader}>
                     <View style={[styles.gameIcon, { backgroundColor: colors.accent }]}>
                       <Text style={{ fontSize: 28 }}>{game.emoji}</Text>

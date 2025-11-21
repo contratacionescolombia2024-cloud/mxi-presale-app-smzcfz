@@ -67,7 +67,7 @@ interface AdminMetrics {
 }
 
 export default function AdminScreen() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'metrics' | 'users' | 'kyc' | 'messages' | 'settings' | 'link-referral'>('metrics');
@@ -81,30 +81,12 @@ export default function AdminScreen() {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
-  // Modal states
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<MessageData | null>(null);
-  const [selectedKYC, setSelectedKYC] = useState<UserProfile | null>(null);
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [showKYCModal, setShowKYCModal] = useState(false);
-
   // Form states
-  const [referralLevel, setReferralLevel] = useState('1');
-  const [referralAmount, setReferralAmount] = useState('');
-  const [messageResponse, setMessageResponse] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Link Referral states
   const [linkReferralEmail, setLinkReferralEmail] = useState('');
   const [linkReferralCode, setLinkReferralCode] = useState('');
-
-  // User edit states
-  const [editName, setEditName] = useState('');
-  const [editIdentification, setEditIdentification] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editAddress, setEditAddress] = useState('');
-  const [editReferredBy, setEditReferredBy] = useState('');
 
   const loadMetrics = useCallback(async () => {
     try {
@@ -262,45 +244,6 @@ export default function AdminScreen() {
       loadAllData();
     }
   }, [isAdmin, loadAllData]);
-
-  const loadUserDetails = async (userId: string) => {
-    setLoading(true);
-    try {
-      console.log(`📋 Loading details for user ${userId}`);
-      
-      const { data, error } = await supabase.rpc('admin_get_user_details', {
-        p_user_id: userId,
-      });
-
-      if (error) {
-        console.error('❌ RPC Error loading user details:', error);
-        Alert.alert(t('error'), `${t('failedToLoadUserDetails')}: ${error.message}`);
-        throw error;
-      }
-
-      console.log('📦 RPC Response:', data);
-
-      if (data && data.success) {
-        console.log('✅ User details loaded successfully');
-        
-        // Set edit form values
-        setEditName(data.profile.name || '');
-        setEditIdentification(data.profile.identification || '');
-        setEditEmail(data.profile.email || '');
-        setEditAddress(data.profile.address || '');
-        setEditReferredBy(data.profile.referred_by || '');
-      } else {
-        const errorMsg = data?.error || t('failedToLoadUserDetails');
-        console.error('❌ User details load failed:', errorMsg);
-        Alert.alert(t('error'), errorMsg);
-      }
-    } catch (error: any) {
-      console.error('❌ Exception in loadUserDetails:', error);
-      Alert.alert(t('error'), error.message || t('failedToLoadUserDetails'));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLinkReferral = async () => {
     if (!linkReferralEmail.trim() || !linkReferralCode.trim()) {
@@ -635,9 +578,7 @@ export default function AdminScreen() {
                   key={u.id}
                   style={styles.userCard}
                   onPress={() => {
-                    setSelectedUser(u);
-                    loadUserDetails(u.id);
-                    setShowUserModal(true);
+                    router.push('/admin-users-table');
                   }}
                 >
                   <View style={styles.userInfo}>
@@ -779,8 +720,7 @@ export default function AdminScreen() {
                   key={kyc.id}
                   style={styles.kycCard}
                   onPress={() => {
-                    setSelectedKYC(kyc);
-                    setShowKYCModal(true);
+                    console.log('KYC submission selected:', kyc.id);
                   }}
                 >
                   <View style={styles.kycInfo}>
@@ -853,9 +793,7 @@ export default function AdminScreen() {
                     msg.status === 'pending' && styles.messageCardPending
                   ]}
                   onPress={() => {
-                    setSelectedMessage(msg);
-                    setMessageResponse(msg.response || '');
-                    setShowMessageModal(true);
+                    console.log('Message selected:', msg.id);
                   }}
                 >
                   <View style={styles.messageHeader}>
