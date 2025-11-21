@@ -1,3 +1,4 @@
+
 import React from "react";
 import * as Haptics from "expo-haptics";
 import { Pressable, StyleSheet, useColorScheme, View, Text } from "react-native";
@@ -10,7 +11,6 @@ import Animated, {
 } from "react-native-reanimated";
 import Reanimated from "react-native-reanimated";
 import { appleRed, borderColor } from "@/constants/Colors";
-import { IconCircle } from "./IconCircle";
 import { IconSymbol } from "./IconSymbol";
 
 configureReanimatedLogger({ strict: false });

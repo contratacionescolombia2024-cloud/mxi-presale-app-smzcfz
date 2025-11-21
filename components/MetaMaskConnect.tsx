@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from '@/components/IconSymbol';
-import { colors, buttonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import {
   isMetaMaskInstalled,
   connectMetaMask,
@@ -32,7 +33,7 @@ interface MetaMaskConnectProps {
 export default function MetaMaskConnect({ onConnect, onDisconnect }: MetaMaskConnectProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<string | null>(null);
+  const [_chainId, setChainId] = useState<string | null>(null);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
   const [bnbBalance, setBnbBalance] = useState<string>('0');
   const [usdtBalance, setUsdtBalance] = useState<string>('0');

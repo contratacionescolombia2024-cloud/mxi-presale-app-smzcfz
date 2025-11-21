@@ -1,11 +1,14 @@
 
+
 // Global type declarations for polyfills
 
 import { Buffer } from 'buffer';
 
 declare global {
-  var Buffer: typeof Buffer;
-  var process: NodeJS.Process;
+  // eslint-disable-next-line no-var
+  let Buffer: typeof Buffer;
+  // eslint-disable-next-line no-var
+  let process: NodeJS.Process;
   
   namespace NodeJS {
     interface Process {

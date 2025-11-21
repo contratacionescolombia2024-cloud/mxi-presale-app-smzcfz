@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -25,7 +26,7 @@ import { getBNBBalance } from '@/utils/metamask';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WalletConnectorProps {
-  onConnect: (address: string, walletType: WalletType, provider: any, signer: any) => void;
+  onConnect: (address: string, walletType: WalletType, provider: any, _signer: any) => void;
   onDisconnect: () => void;
 }
 
@@ -39,7 +40,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [provider, setProvider] = useState<any>(null);
-  const [signer, setSigner] = useState<any>(null);
+  const [_signer, setSigner] = useState<any>(null);
   const { t } = useLanguage();
 
   const isWeb = Platform.OS === 'web';
