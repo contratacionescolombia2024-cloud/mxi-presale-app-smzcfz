@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import {
   View,
@@ -26,14 +25,14 @@ import { getBNBBalance } from '@/utils/metamask';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WalletConnectorProps {
-  onConnect: (address: string, walletType: WalletType, provider: any, _signer: any) => void;
+  onConnect: (address: string, walletType: WalletType, provider: any, signer: any) => void;
   onDisconnect: () => void;
 }
 
 export default function WalletConnector({ onConnect, onDisconnect }: WalletConnectorProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [account, setAccount] = useState<string | null>(null);
-  const [walletType, setWalletType] = useState<WalletType | null>(null);
+  const [_walletType, setWalletType] = useState<WalletType | null>(null);
   const [bnbBalance, setBnbBalance] = useState<string>('0');
   const [usdtBalance, setUsdtBalance] = useState<string>('0');
   const [loading, setLoading] = useState(false);
@@ -107,7 +106,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
   };
 
   const handleDisconnect = async () => {
-    if (walletType === 'walletconnect' && provider) {
+    if (_walletType === 'walletconnect' && provider) {
       await disconnectWalletConnect(provider);
     }
 
@@ -280,7 +279,7 @@ export default function WalletConnector({ onConnect, onDisconnect }: WalletConne
         <View style={styles.accountHeader}>
           <View style={styles.accountInfo}>
             <Text style={styles.accountLabel}>
-              {walletType === 'metamask' ? 'MetaMask' : 'WalletConnect'}
+              {_walletType === 'metamask' ? 'MetaMask' : 'WalletConnect'}
             </Text>
             <Text style={styles.accountAddress}>
               {account?.substring(0, 6)}...{account?.substring(account.length - 4)}

@@ -20,7 +20,7 @@ export default function ListItem({ listId }: { listId: string }) {
   const isDark = colorScheme === "dark";
 
   const RightAction = (
-    prog: SharedValue<number>,
+    _prog: SharedValue<number>,
     drag: SharedValue<number>
   ) => {
     const styleAnimation = useAnimatedStyle(() => ({

@@ -23,7 +23,7 @@ interface LeaderboardEntry {
 interface TournamentLeaderboardProps {
   tournamentId: string;
   prizePool: number;
-  _maxPlayers: number;
+  maxPlayers: number;
 }
 
 const styles = StyleSheet.create({
@@ -170,13 +170,15 @@ const styles = StyleSheet.create({
 export default function TournamentLeaderboard({
   tournamentId,
   prizePool,
-  _maxPlayers,
+  maxPlayers,
 }: TournamentLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [highestScore, setHighestScore] = useState(0);
   const channelRef = useRef<any>(null);
+
+  console.log('Tournament max players:', maxPlayers);
 
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -313,7 +315,7 @@ export default function TournamentLeaderboard({
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
         >
-          {leaderboard.map((entry) => (
+          {leaderboard.map((entry, _index) => (
             <View
               key={entry.user_id}
               style={[

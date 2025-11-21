@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext } from "react";
 import { ExtensionStorage } from "@bacons/apple-targets";
 
 // Initialize storage with your group ID
-const _storage = new ExtensionStorage(
+const storage = new ExtensionStorage(
   "group.com.<user_name>.<app_name>"
 );
 
