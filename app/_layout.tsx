@@ -12,7 +12,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PreSaleProvider } from "@/contexts/PreSaleContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { startVestingBackgroundService, stopVestingBackgroundService } from "@/utils/vestingBackgroundService";
-import "react-native-reanimated";
+// Import Reanimated AFTER polyfills but BEFORE navigation
+import 'react-native-reanimated';
 import {
   DarkTheme,
   DefaultTheme,

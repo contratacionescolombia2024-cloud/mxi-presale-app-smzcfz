@@ -41,6 +41,8 @@ module.exports = function (api) {
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
+      // CRITICAL: react-native-reanimated/plugin MUST come before react-native-worklets/plugin
+      "react-native-reanimated/plugin",
       "react-native-worklets/plugin",
     ],
   };
