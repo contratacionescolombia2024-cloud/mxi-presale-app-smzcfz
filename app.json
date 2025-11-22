@@ -1,49 +1,59 @@
+
 {
   "expo": {
-    "name": "Mxi Presale",
-    "slug": "Mxi Presale",
+    "name": "MXI Presale",
+    "slug": "mxi-presale-app-smzcfz",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
+    "icon": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
+    "scheme": "mxipresale",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
+      "image": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1a1a1a"
+      "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Natively",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "bundleIdentifier": "com.mxipresale.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
-        "backgroundColor": "#1a1a1a"
+        "foregroundImage": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
+        "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.mxistrategicholdngs.mxistrategic"
+      "package": "com.mxipresale.app"
     },
     "web": {
-      "favicon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png"
     },
     "plugins": [
-      "expo-font",
       "expo-router",
-      "expo-web-browser",
-      "expo-localization"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          },
+          "ios": {
+            "deploymentTarget": "13.4"
+          }
+        }
+      ]
     ],
-    "scheme": "mxipresale",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id"
+      }
     }
-  },
-  "scheme": "Mxi Presale"
+  }
 }

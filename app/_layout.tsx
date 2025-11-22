@@ -1,4 +1,8 @@
 
+// CRITICAL: Import polyfills FIRST
+import '../polyfills';
+import '../shims';
+
 import React, { useEffect } from "react";
 import { useColorScheme, AppState } from "react-native";
 import * as SplashScreen from "expo-splash-screen";

@@ -4,7 +4,7 @@
 
 console.log('🔧 Loading polyfills...');
 
-// Import statements instead of require()
+// Import required polyfill modules
 import { Buffer } from 'buffer';
 import process from 'process/browser.js';
 import { EventEmitter } from 'events';
@@ -20,7 +20,7 @@ const getGlobal = (): any => {
 
 const globalObj = getGlobal();
 
-// Ensure global object exists
+// Ensure global object exists and is properly configured
 if (typeof global === 'undefined') {
   if (typeof window !== 'undefined') {
     (window as any).global = window;
@@ -33,55 +33,56 @@ if (typeof global === 'undefined') {
 
 console.log('✅ Global object configured');
 
-// Import and configure Buffer
+// Configure Buffer globally - CRITICAL for ethereumjs-util
 try {
   globalObj.Buffer = Buffer;
+  
+  // Also set on window and globalThis for maximum compatibility
   if (typeof window !== 'undefined') {
     (window as any).Buffer = Buffer;
   }
   if (typeof globalThis !== 'undefined') {
     (globalThis as any).Buffer = Buffer;
   }
+  
+  // Verify Buffer is accessible
+  if (typeof globalObj.Buffer === 'undefined') {
+    throw new Error('Buffer not set on global object');
+  }
+  
   console.log('✅ Buffer module loaded and injected globally');
+  console.log('✅ Buffer.from available:', typeof Buffer.from === 'function');
 } catch (error) {
-  console.error('❌ Failed to load buffer module:', error);
-  // Create a minimal Buffer polyfill as fallback
-  const MinimalBuffer = class Buffer {
-    static from(data: any): any {
-      return data;
-    }
-    static alloc(size: number): any {
-      return new Uint8Array(size);
-    }
-    static isBuffer(obj: any): boolean {
-      return obj instanceof Uint8Array;
-    }
-  };
-  globalObj.Buffer = MinimalBuffer;
-  console.log('⚠️ Using minimal Buffer polyfill');
+  console.error('❌ CRITICAL: Failed to load buffer module:', error);
+  throw error; // Don't continue if Buffer fails to load
 }
 
-// Import and configure process
+// Configure process globally
 try {
   if (!globalObj.process) {
     globalObj.process = process;
   }
+  
   // Ensure process.env exists
   if (!globalObj.process.env) {
     globalObj.process.env = {};
   }
+  
   // Set NODE_ENV
   if (!globalObj.process.env.NODE_ENV) {
     globalObj.process.env.NODE_ENV = 'production';
   }
+  
   // Add browser flag
   globalObj.process.browser = true;
+  
   // Add nextTick if missing
   if (!globalObj.process.nextTick) {
     globalObj.process.nextTick = (fn: (...args: any[]) => void, ...args: any[]) => {
       setTimeout(() => fn(...args), 0);
     };
   }
+  
   // Set process on window/globalThis
   if (typeof window !== 'undefined') {
     (window as any).process = globalObj.process;
@@ -89,6 +90,7 @@ try {
   if (typeof globalThis !== 'undefined') {
     (globalThis as any).process = globalObj.process;
   }
+  
   console.log('✅ Process module loaded and configured');
 } catch (error) {
   console.error('❌ Failed to load process module:', error);
@@ -105,7 +107,7 @@ try {
   console.log('⚠️ Using minimal process polyfill');
 }
 
-// Import and configure EventEmitter
+// Configure EventEmitter globally
 try {
   globalObj.EventEmitter = EventEmitter;
   if (typeof window !== 'undefined') {
@@ -117,36 +119,6 @@ try {
   console.log('✅ EventEmitter module loaded');
 } catch (error) {
   console.error('❌ Failed to load events module:', error);
-  // Create a minimal EventEmitter polyfill as fallback
-  const MinimalEventEmitter = class EventEmitter {
-    private events: Map<string, Array<(...args: any[]) => void>> = new Map();
-    
-    on(event: string, listener: (...args: any[]) => void) {
-      if (!this.events.has(event)) {
-        this.events.set(event, []);
-      }
-      this.events.get(event)!.push(listener);
-    }
-    
-    emit(event: string, ...args: any[]) {
-      const listeners = this.events.get(event);
-      if (listeners) {
-        listeners.forEach(listener => listener(...args));
-      }
-    }
-    
-    removeListener(event: string, listener: (...args: any[]) => void) {
-      const listeners = this.events.get(event);
-      if (listeners) {
-        const index = listeners.indexOf(listener);
-        if (index > -1) {
-          listeners.splice(index, 1);
-        }
-      }
-    }
-  };
-  globalObj.EventEmitter = MinimalEventEmitter;
-  console.log('⚠️ Using minimal EventEmitter polyfill');
 }
 
 // Polyfill setImmediate/clearImmediate
@@ -162,19 +134,6 @@ if (typeof globalObj.clearImmediate === 'undefined') {
   };
 }
 console.log('✅ setImmediate/clearImmediate configured');
-
-// Verify polyfills are loaded
-console.log('');
-console.log('🔍 Polyfill Verification:');
-console.log('========================');
-console.log('✅ Buffer:', typeof globalObj.Buffer !== 'undefined' ? 'OK' : 'MISSING');
-console.log('✅ process:', typeof globalObj.process !== 'undefined' ? 'OK' : 'MISSING');
-console.log('✅ process.env:', typeof globalObj.process?.env !== 'undefined' ? 'OK' : 'MISSING');
-console.log('✅ EventEmitter:', typeof globalObj.EventEmitter !== 'undefined' ? 'OK' : 'MISSING');
-console.log('✅ setImmediate:', typeof globalObj.setImmediate !== 'undefined' ? 'OK' : 'MISSING');
-console.log('========================');
-console.log('');
-console.log('✅ Polyfills loaded successfully!');
 
 // Crypto polyfills for ethers.js
 if (typeof globalObj.crypto === 'undefined') {
@@ -196,6 +155,21 @@ if (typeof globalObj.crypto === 'undefined') {
   };
   console.log('✅ Crypto.getRandomValues polyfill added');
 }
+
+// Verify polyfills are loaded
+console.log('');
+console.log('🔍 Polyfill Verification:');
+console.log('========================');
+console.log('✅ Buffer:', typeof globalObj.Buffer !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('✅ Buffer.from:', typeof globalObj.Buffer?.from === 'function' ? 'OK' : '❌ MISSING');
+console.log('✅ process:', typeof globalObj.process !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('✅ process.env:', typeof globalObj.process?.env !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('✅ EventEmitter:', typeof globalObj.EventEmitter !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('✅ setImmediate:', typeof globalObj.setImmediate !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('✅ crypto:', typeof globalObj.crypto !== 'undefined' ? 'OK' : '❌ MISSING');
+console.log('========================');
+console.log('');
+console.log('✅ Polyfills loaded successfully!');
 
 // Export empty object to make this a module
 export {};

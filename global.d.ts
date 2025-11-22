@@ -1,44 +1,16 @@
 
-// Global type declarations for polyfills
-
-import { Buffer } from 'buffer';
+// Global type definitions for polyfills
 
 declare global {
-  const Buffer: typeof Buffer;
-  const process: NodeJS.Process;
-  
-  namespace NodeJS {
-    interface Process {
-      env: {
-        [key: string]: string | undefined;
-        NODE_ENV?: string;
-      };
-      version: string;
-      versions: {
-        node?: string;
-        [key: string]: string | undefined;
-      };
-      platform: string;
-      browser?: boolean;
-      nextTick: (callback: (...args: unknown[]) => void, ...args: unknown[]) => void;
-    }
-    
-    interface Global {
-      Buffer: typeof Buffer;
-      process: Process;
-    }
-  }
+  var Buffer: typeof import('buffer').Buffer;
+  var process: NodeJS.Process;
+  var EventEmitter: typeof import('events').EventEmitter;
   
   interface Window {
-    Buffer: typeof Buffer;
+    Buffer: typeof import('buffer').Buffer;
     process: NodeJS.Process;
-    global: typeof globalThis;
-    ethereum?: unknown;
+    EventEmitter: typeof import('events').EventEmitter;
   }
-
-  // Fix for setImmediate/clearImmediate
-  function setImmediate(callback: (...args: unknown[]) => void, ...args: unknown[]): number;
-  function clearImmediate(id: number): void;
 }
 
 export {};
