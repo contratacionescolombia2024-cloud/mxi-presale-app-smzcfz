@@ -48,15 +48,6 @@ config.resolver = {
           return { type: 'empty' };
         }
       }
-      
-      // CRITICAL FIX: Block expo-auth-session when it's being imported from Web3 packages
-      // This is necessary because porto connector tries to import it
-      if (moduleName === 'expo-auth-session' || moduleName === 'expo-web-browser') {
-        // We need to check if this is being imported from a Web3 package
-        // Since we can't reliably check the call stack, we'll allow it by default
-        // but log it for debugging
-        console.log(`⚠️ Metro: ${moduleName} import detected on ${platform}`);
-      }
     }
     
     // Handle .js extensions in TypeScript imports

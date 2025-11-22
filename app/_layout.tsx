@@ -17,6 +17,8 @@ SplashScreen.preventAutoHideAsync().catch((error) => {
 });
 
 export default function RootLayout() {
+  console.log('🎨 RootLayout: Initializing...');
+  
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -29,17 +31,21 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      console.log('✅ Fonts loaded, hiding splash screen');
       SplashScreen.hideAsync().catch((hideError) => {
         console.warn('Error hiding splash screen:', hideError);
       });
     }
   }, [loaded]);
 
+  // Don't render anything until fonts are loaded
   if (!loaded && !error) {
+    console.log('⏳ Waiting for fonts to load...');
     return null;
   }
 
   console.log('🚀 RootLayout: Platform =', Platform.OS);
+  console.log('🚀 RootLayout: Fonts loaded =', loaded);
 
   // Core app structure
   const AppStack = (

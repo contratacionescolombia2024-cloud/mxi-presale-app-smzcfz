@@ -45,7 +45,6 @@ module.exports = function (api) {
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      // NO REANIMATED PLUGIN - Removed to prevent WorkletsError
     ],
   };
-}
+};
