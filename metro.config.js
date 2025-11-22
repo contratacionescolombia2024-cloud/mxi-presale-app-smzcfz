@@ -22,6 +22,11 @@ const WEB3_PACKAGES = [
   '@walletconnect',
 ];
 
+// List of native-only packages to block on web
+const NATIVE_ONLY_PACKAGES = [
+  'react-native-gesture-handler',
+];
+
 config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
@@ -57,6 +62,16 @@ config.resolver = {
       for (const pkg of WEB3_PACKAGES) {
         if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
           console.log(`🚫 Metro: Blocking ${moduleName} on ${platform}`);
+          return { type: 'empty' };
+        }
+      }
+    }
+    
+    // CRITICAL: Block native-only packages on web platform
+    if (platform === 'web') {
+      for (const pkg of NATIVE_ONLY_PACKAGES) {
+        if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
+          console.log(`🚫 Metro: Blocking native module ${moduleName} on web`);
           return { type: 'empty' };
         }
       }

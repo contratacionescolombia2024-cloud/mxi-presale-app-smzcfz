@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,13 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  PanResponder,
-  GestureResponderEvent,
-  PanResponderGestureState,
 } from 'react-native';
 import { colors } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const { width, height } = Dimensions.get('window');
 const GAME_DURATION = 30; // 30 seconds
-const SWIPE_THRESHOLD = 50; // Minimum distance for a swipe
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -30,6 +28,13 @@ const DIRECTION_ARROWS: Record<Direction, string> = {
   down: '↓',
   left: '←',
   right: '→',
+};
+
+const DIRECTION_ICONS: Record<Direction, string> = {
+  up: 'arrow-upward',
+  down: 'arrow-downward',
+  left: 'arrow-back',
+  right: 'arrow-forward',
 };
 
 export default function MXISwipeMaster({ miniBattleId, onComplete, onExit }: MXISwipeMasterProps) {
@@ -96,37 +101,28 @@ export default function MXISwipeMaster({ miniBattleId, onComplete, onExit }: MXI
     generateNewDirection();
   };
 
-  // Web-compatible swipe detection using PanResponder
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderRelease: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-        const { dx, dy } = gestureState;
-        
-        // Determine swipe direction based on gesture
-        if (Math.abs(dx) > Math.abs(dy)) {
-          // Horizontal swipe
-          if (Math.abs(dx) > SWIPE_THRESHOLD) {
-            if (dx > 0) {
-              handleSwipe('right');
-            } else {
-              handleSwipe('left');
-            }
-          }
+  const flingGesture = Gesture.Fling()
+    .direction(Gesture.DIRECTION_UP | Gesture.DIRECTION_DOWN | Gesture.DIRECTION_LEFT | Gesture.DIRECTION_RIGHT)
+    .onEnd((event) => {
+      const { velocityX, velocityY } = event;
+      
+      // Determine swipe direction based on velocity
+      if (Math.abs(velocityX) > Math.abs(velocityY)) {
+        // Horizontal swipe
+        if (velocityX > 0) {
+          handleSwipe('right');
         } else {
-          // Vertical swipe
-          if (Math.abs(dy) > SWIPE_THRESHOLD) {
-            if (dy > 0) {
-              handleSwipe('down');
-            } else {
-              handleSwipe('up');
-            }
-          }
+          handleSwipe('left');
         }
-      },
-    })
-  ).current;
+      } else {
+        // Vertical swipe
+        if (velocityY > 0) {
+          handleSwipe('down');
+        } else {
+          handleSwipe('up');
+        }
+      }
+    });
 
   const startGame = () => {
     setGameStarted(true);
@@ -145,21 +141,14 @@ export default function MXISwipeMaster({ miniBattleId, onComplete, onExit }: MXI
   };
 
   const handleExit = () => {
-    if (typeof window !== 'undefined' && window.confirm) {
-      const confirmed = window.confirm('Are you sure you want to exit? Your progress will be lost.');
-      if (confirmed) {
-        onExit();
-      }
-    } else {
-      Alert.alert(
-        'Exit Game?',
-        'Are you sure you want to exit? Your progress will be lost.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Exit', style: 'destructive', onPress: onExit },
-        ]
-      );
-    }
+    Alert.alert(
+      'Exit Game?',
+      'Are you sure you want to exit? Your progress will be lost.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Exit', style: 'destructive', onPress: onExit },
+      ]
+    );
   };
 
   if (!gameStarted) {
@@ -227,7 +216,7 @@ export default function MXISwipeMaster({ miniBattleId, onComplete, onExit }: MXI
   }
 
   return (
-    <View style={styles.gameContainer}>
+    <GestureHandlerRootView style={styles.gameContainer}>
       <View style={styles.header}>
         <View style={styles.scoreContainer}>
           <Text style={styles.scoreLabel}>Score</Text>
@@ -249,17 +238,19 @@ export default function MXISwipeMaster({ miniBattleId, onComplete, onExit }: MXI
         </View>
       )}
 
-      <View style={styles.swipeArea} {...panResponder.panHandlers}>
-        <View style={styles.directionContainer}>
-          <Text style={styles.directionArrow}>{DIRECTION_ARROWS[currentDirection]}</Text>
-          <Text style={styles.directionText}>Swipe {currentDirection}!</Text>
-        </View>
+      <GestureDetector gesture={flingGesture}>
+        <View style={styles.swipeArea}>
+          <View style={styles.directionContainer}>
+            <Text style={styles.directionArrow}>{DIRECTION_ARROWS[currentDirection]}</Text>
+            <Text style={styles.directionText}>Swipe {currentDirection}!</Text>
+          </View>
 
-        <View style={styles.instructionContainer}>
-          <Text style={styles.instructionText}>Swipe in the direction shown</Text>
+          <View style={styles.instructionContainer}>
+            <Text style={styles.instructionText}>Swipe in the direction shown</Text>
+          </View>
         </View>
-      </View>
-    </View>
+      </GestureDetector>
+    </GestureHandlerRootView>
   );
 }
 
