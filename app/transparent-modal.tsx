@@ -1,18 +1,63 @@
-import { StyleSheet, Text, Pressable } from 'react-native';
+
+import { StyleSheet, Text, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '@react-navigation/native';
 
 export default function TransparentModal() {
   const theme = useTheme();
+  
+  // Create glass effect using standard React Native styling
+  const glassBackgroundColor = theme.dark 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(255, 255, 255, 0.8)';
+  
+  const glassBorderColor = theme.dark 
+    ? 'rgba(255, 255, 255, 0.2)' 
+    : 'rgba(0, 0, 0, 0.1)';
 
   return (
     <Pressable style={styles.backdrop} onPress={() => router.back()}>
       <Pressable onPress={(e) => e.stopPropagation()}>
-        <GlassView style={styles.modal} glassEffectStyle="regular">
+        <View 
+          style={[
+            styles.modal, 
+            { 
+              backgroundColor: glassBackgroundColor,
+              borderWidthNow I'll fix the file by removing the `expo-glass-effect` dependency and replacing it with a standard React Native `View` component with styling that simulates a glass effect:
+
+<write file="app/transparent-modal.tsx">
+import { StyleSheet, Text, Pressable, View } from 'react-native';
+import { router } from 'expo-router';
+import { useTheme } from '@react-navigation/native';
+
+export default function TransparentModal() {
+  const theme = useTheme();
+  
+  // Create glass effect using standard React Native styling
+  const glassBackgroundColor = theme.dark 
+    ? 'rgba(255, 255, 255, 0.1)' 
+    : 'rgba(255, 255, 255, 0.8)';
+  
+  const glassBorderColor = theme.dark 
+    ? 'rgba(255, 255, 255, 0.2)' 
+    : 'rgba(0, 0, 0, 0.1)';
+
+  return (
+    <Pressable style={styles.backdrop} onPress={() => router.back()}>
+      <Pressable onPress={(e) => e.stopPropagation()}>
+        <View 
+          style={[
+            styles.modal, 
+            { 
+              backgroundColor: glassBackgroundColor,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: glassBorderColor,
+            }
+          ]}
+        >
           <Text style={[styles.title, { color: theme.colors.text }]}>Transparent Modal</Text>
           <Text style={[styles.text, { color: theme.colors.text }]}>Tap outside to dismiss</Text>
-        </GlassView>
+        </View>
       </Pressable>
     </Pressable>
   );
@@ -31,16 +76,22 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 12,
-    // color handled dynamically
   },
   text: {
     fontSize: 16,
     textAlign: 'center',
-    // color handled dynamically
   },
 });
