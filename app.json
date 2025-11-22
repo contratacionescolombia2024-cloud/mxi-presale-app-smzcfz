@@ -30,19 +30,7 @@
       "favicon": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-build-properties",
-        {
-          "android": {
-            "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
-          },
-          "ios": {
-            "deploymentTarget": "13.4"
-          }
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
