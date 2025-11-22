@@ -29,6 +29,7 @@ if (typeof global === 'undefined') {
 console.log('✅ Global object configured');
 
 // Polyfill process FIRST (before any imports)
+// Use simple, serializable objects only
 try {
   if (!globalObj.process) {
     globalObj.process = {

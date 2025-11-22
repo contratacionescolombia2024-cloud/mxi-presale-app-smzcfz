@@ -31,41 +31,46 @@ export default function RootLayout() {
 
   console.log('🚀 RootLayout: Platform =', Platform.OS);
 
-  // Core app content without Web3
-  const AppContent = (
+  // Stack navigation structure
+  const AppStack = (
+    <Stack>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="ecosystem" options={{ headerShown: false }} />
+      <Stack.Screen name="games" options={{ headerShown: false }} />
+      <Stack.Screen name="mini-battle-game" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="modal"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="formsheet"
+        options={{
+          presentation: 'formSheet',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="transparent-modal"
+        options={{
+          presentation: 'transparentModal',
+          headerShown: false,
+          animation: 'fade',
+        }}
+      />
+    </Stack>
+  );
+
+  // Core app providers (always present)
+  const CoreProviders = (
     <AuthProvider>
       <LanguageProvider>
         <PreSaleProvider>
           <WalletProvider>
-            <Stack>
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="ecosystem" options={{ headerShown: false }} />
-              <Stack.Screen name="games" options={{ headerShown: false }} />
-              <Stack.Screen name="mini-battle-game" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="modal"
-                options={{
-                  presentation: 'modal',
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="formsheet"
-                options={{
-                  presentation: 'formSheet',
-                  headerShown: false,
-                }}
-              />
-              <Stack.Screen
-                name="transparent-modal"
-                options={{
-                  presentation: 'transparentModal',
-                  headerShown: false,
-                  animation: 'fade',
-                }}
-              />
-            </Stack>
+            {AppStack}
           </WalletProvider>
         </PreSaleProvider>
       </LanguageProvider>
@@ -73,11 +78,12 @@ export default function RootLayout() {
   );
 
   // Only wrap with Web3Provider on web platform
+  // This prevents any Web3-related code from being loaded on native
   if (Platform.OS === 'web') {
     console.log('🌐 RootLayout: Wrapping with Web3Provider for web');
-    return <Web3Provider>{AppContent}</Web3Provider>;
+    return <Web3Provider>{CoreProviders}</Web3Provider>;
   }
 
   console.log('📱 RootLayout: Native platform, skipping Web3Provider');
-  return AppContent;
+  return CoreProviders;
 }

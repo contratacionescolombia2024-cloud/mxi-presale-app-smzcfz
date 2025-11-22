@@ -25,6 +25,7 @@ export function useWallet() {
 }
 
 // Native implementation - Web3Modal is not supported on native platforms
+// This implementation uses ONLY serializable primitives to avoid worklets errors
 export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('💼 WalletProvider: Native implementation loaded');
 
@@ -36,6 +37,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  // All functions are simple arrow functions with no closures over complex objects
   const connectWallet = async (type: string) => {
     console.log('⚠️ WalletProvider: Connect wallet called on native platform');
     showWebOnlyAlert();
@@ -56,20 +58,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     throw new Error('Payment is only available on web');
   };
 
+  // Context value uses ONLY primitive types and simple functions
+  // No complex objects, no hooks, no external dependencies
+  const contextValue: WalletContextType = {
+    isConnected: false,
+    walletType: null,
+    address: null,
+    usdtBalance: null,
+    isLoading: false,
+    connectWallet,
+    disconnectWallet,
+    refreshBalance,
+    sendPayment,
+  };
+
   return (
-    <WalletContext.Provider
-      value={{
-        isConnected: false,
-        walletType: null,
-        address: null,
-        usdtBalance: null,
-        isLoading: false,
-        connectWallet,
-        disconnectWallet,
-        refreshBalance,
-        sendPayment,
-      }}
-    >
+    <WalletContext.Provider value={contextValue}>
       {children}
     </WalletContext.Provider>
   );

@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { useAccount, useDisconnect, useWalletClient } from 'wagmi';
 import { BrowserProvider, Contract, parseUnits, formatUnits } from 'ethers';
 import { 
@@ -53,7 +53,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [isConnected, address, chain]);
 
   // Refresh USDT balance
-  const refreshBalance = async () => {
+  const refreshBalance = useCallback(async () => {
     if (!address || !isConnected) {
       console.log('⚠️ Cannot refresh balance: not connected');
       return;
@@ -81,7 +81,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [address, isConnected]);
 
   // Auto-refresh balance when connected
   useEffect(() => {
@@ -93,7 +93,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const interval = setInterval(refreshBalance, 30000);
       return () => clearInterval(interval);
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, refreshBalance]);
 
   // Detect wallet type
   useEffect(() => {
@@ -116,13 +116,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [isConnected]);
 
-  const connectWallet = async (type: string) => {
+  const connectWallet = useCallback(async (type: string) => {
     console.log('🔗 Connecting wallet:', type);
     // Web3Modal handles the connection automatically
     // The user just needs to click the <w3m-button /> component
-  };
+  }, []);
 
-  const disconnectWallet = async () => {
+  const disconnectWallet = useCallback(async () => {
     try {
       console.log('🔌 Disconnecting wallet...');
       disconnect();
@@ -132,9 +132,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('❌ Error disconnecting wallet:', error);
     }
-  };
+  }, [disconnect]);
 
-  const sendPayment = async (amountUSDT: number): Promise<string> => {
+  const sendPayment = useCallback(async (amountUSDT: number): Promise<string> => {
     if (!isConnected || !address) {
       throw new Error('Wallet not connected');
     }
@@ -202,22 +202,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isConnected, address, chain, refreshBalance]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  // This is critical for worklets compatibility
+  const contextValue = useMemo<WalletContextType>(() => ({
+    isConnected,
+    walletType,
+    address: address || null,
+    usdtBalance,
+    isLoading,
+    connectWallet,
+    disconnectWallet,
+    refreshBalance,
+    sendPayment,
+  }), [isConnected, walletType, address, usdtBalance, isLoading, connectWallet, disconnectWallet, refreshBalance, sendPayment]);
 
   return (
-    <WalletContext.Provider
-      value={{
-        isConnected,
-        walletType,
-        address: address || null,
-        usdtBalance,
-        isLoading,
-        connectWallet,
-        disconnectWallet,
-        refreshBalance,
-        sendPayment,
-      }}
-    >
+    <WalletContext.Provider value={contextValue}>
       {children}
     </WalletContext.Provider>
   );
