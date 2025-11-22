@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Modal,
   RefreshControl,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,6 +109,7 @@ export default function AdminScreen() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showKYCModal, setShowKYCModal] = useState(false);
+  const [resettingPresaleDay, setResettingPresaleDay] = useState(false);
 
   // Form states
   const [referralLevel, setReferralLevel] = useState('1');
@@ -125,6 +127,11 @@ export default function AdminScreen() {
   const [editEmail, setEditEmail] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editReferredBy, setEditReferredBy] = useState('');
+
+  // Settings edit states
+  const [editMinPurchase, setEditMinPurchase] = useState('');
+  const [editMaxPurchase, setEditMaxPurchase] = useState('');
+  const [editVestingRate, setEditVestingRate] = useState('');
 
   const loadMetrics = useCallback(async () => {
     try {
@@ -251,6 +258,11 @@ export default function AdminScreen() {
 
       console.log('✅ Platform settings loaded:', data);
       setPlatformSettings(data);
+      if (data) {
+        setEditMinPurchase(data.min_purchase_usd.toString());
+        setEditMaxPurchase(data.max_purchase_usd.toString());
+        setEditVestingRate((data.monthly_vesting_rate * 100).toString());
+      }
     } catch (error) {
       console.error('❌ Error in loadPlatformSettings:', error);
     }
@@ -703,6 +715,25 @@ export default function AdminScreen() {
   const handleUpdatePlatformSettings = async () => {
     if (!platformSettings) return;
 
+    const minPurchase = parseFloat(editMinPurchase);
+    const maxPurchase = parseFloat(editMaxPurchase);
+    const vestingRate = parseFloat(editVestingRate) / 100;
+
+    if (isNaN(minPurchase) || isNaN(maxPurchase) || isNaN(vestingRate)) {
+      Alert.alert(t('error'), 'Please enter valid numbers');
+      return;
+    }
+
+    if (minPurchase <= 0 || maxPurchase <= 0 || vestingRate <= 0) {
+      Alert.alert(t('error'), 'All values must be positive');
+      return;
+    }
+
+    if (minPurchase >= maxPurchase) {
+      Alert.alert(t('error'), 'Minimum purchase must be less than maximum purchase');
+      return;
+    }
+
     setLoading(true);
     try {
       console.log('⚙️ Updating platform settings...');
@@ -710,9 +741,9 @@ export default function AdminScreen() {
       const { error } = await supabase
         .from('platform_settings')
         .update({
-          min_purchase_usd: platformSettings.min_purchase_usd,
-          max_purchase_usd: platformSettings.max_purchase_usd,
-          monthly_vesting_rate: platformSettings.monthly_vesting_rate,
+          min_purchase_usd: minPurchase,
+          max_purchase_usd: maxPurchase,
+          monthly_vesting_rate: vestingRate,
           updated_at: new Date().toISOString(),
         })
         .eq('id', platformSettings.id);
@@ -731,6 +762,89 @@ export default function AdminScreen() {
       Alert.alert(t('error'), error.message || 'Failed to update settings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResetPresaleDay = () => {
+    console.log('🔴 Reset Presale Day button pressed - handleResetPresaleDay called');
+    
+    Alert.alert(
+      t('resetPresaleDay'),
+      `${t('presaleDayResetConfirm')}\n\n${t('resetVestingRewardsToZero')}\n${t('resetSoldMXIToZero')}\n\n${t('thisActionCannotBeUndone')}`,
+      [
+        {
+          text: t('no'),
+          style: 'cancel',
+          onPress: () => {
+            console.log('🔴 User cancelled reset');
+          }
+        },
+        {
+          text: t('yes'),
+          style: 'destructive',
+          onPress: () => {
+            console.log('🔴 User confirmed reset, calling executeResetPresaleDay...');
+            executeResetPresaleDay();
+          }
+        }
+      ]
+    );
+  };
+
+  const executeResetPresaleDay = async () => {
+    console.log('🔴 executeResetPresaleDay function called - Starting execution');
+    
+    setResettingPresaleDay(true);
+    try {
+      console.log('🔴 Calling supabase.rpc("admin_reset_presale_day")');
+      
+      const { data, error } = await supabase.rpc('admin_reset_presale_day');
+
+      console.log('🔴 RPC call completed');
+      console.log('🔴 Response data:', data);
+      console.log('🔴 Response error:', error);
+
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        Alert.alert(t('error'), `${t('presaleDayResetFailed')}: ${error.message}`);
+        throw error;
+      }
+
+      console.log('📦 Reset response:', data);
+
+      if (data && data.success) {
+        console.log('✅ Presale day reset successfully');
+        
+        const message = `${t('presaleDayResetSuccess')}\n\n` +
+          `Vesting users affected: ${data.affected_vesting_users}\n` +
+          `Total rewards reset: ${parseFloat(data.total_rewards_reset || '0').toFixed(4)} MXI\n` +
+          `Stages affected: ${data.affected_stages}\n` +
+          `Total sold reset: ${parseFloat(data.total_sold_reset || '0').toFixed(2)} MXI`;
+        
+        Alert.alert(
+          t('success'),
+          message,
+          [
+            {
+              text: t('ok'),
+              onPress: async () => {
+                console.log('🔄 Reloading all data after reset');
+                await loadAllData();
+              }
+            }
+          ]
+        );
+      } else {
+        const errorMsg = data?.error || t('presaleDayResetFailed');
+        console.error('❌ Reset failed:', errorMsg);
+        Alert.alert(t('error'), errorMsg);
+      }
+    } catch (error: any) {
+      console.error('❌ Exception in executeResetPresaleDay:', error);
+      Alert.alert(t('error'), error.message || t('presaleDayResetFailed'));
+    } finally {
+      console.log('🔴 executeResetPresaleDay completed, setting resettingPresaleDay to false');
+      setResettingPresaleDay(false);
     }
   };
 
@@ -777,11 +891,13 @@ export default function AdminScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick Access Buttons */}
       <View style={styles.quickAccessContainer}>
         <TouchableOpacity 
           style={styles.quickAccessButton}
-          onPress={() => router.push('/admin-users-table')}
+          onPress={() => {
+            console.log('📊 Navigating to admin-users-table');
+            router.push('/admin-users-table');
+          }}
         >
           <IconSymbol 
             ios_icon_name="tablecells.fill" 
@@ -800,7 +916,10 @@ export default function AdminScreen() {
         
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.secondary }]}
-          onPress={() => router.push('/balance-management')}
+          onPress={() => {
+            console.log('💰 Navigating to balance-management');
+            router.push('/balance-management');
+          }}
         >
           <IconSymbol 
             ios_icon_name="dollarsign.circle.fill" 
@@ -819,7 +938,10 @@ export default function AdminScreen() {
 
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.accent }]}
-          onPress={() => router.push('/phase-control-admin')}
+          onPress={() => {
+            console.log('🎮 Navigating to phase-control-admin');
+            router.push('/phase-control-admin');
+          }}
         >
           <IconSymbol 
             ios_icon_name="slider.horizontal.3" 
@@ -835,6 +957,38 @@ export default function AdminScreen() {
             color={colors.card} 
           />
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.quickAccessButton, { backgroundColor: colors.error }]}
+          onPress={() => {
+            console.log('🔴 Reset Presale Day button pressed - onPress triggered');
+            handleResetPresaleDay();
+          }}
+          disabled={resettingPresaleDay}
+        >
+          {resettingPresaleDay ? (
+            <View style={styles.resetButtonContent}>
+              <ActivityIndicator size="small" color={colors.card} />
+              <Text style={styles.quickAccessButtonText}>{t('loading')}</Text>
+            </View>
+          ) : (
+            <View style={styles.resetButtonContent}>
+              <IconSymbol 
+                ios_icon_name="arrow.counterclockwise.circle.fill" 
+                android_material_icon_name="restart_alt" 
+                size={24} 
+                color={colors.card} 
+              />
+              <Text style={styles.quickAccessButtonText}>{t('resetPresaleDay')}</Text>
+              <IconSymbol 
+                ios_icon_name="chevron.right" 
+                android_material_icon_name="chevron_right" 
+                size={20} 
+                color={colors.card} 
+              />
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabBar}>
@@ -842,7 +996,10 @@ export default function AdminScreen() {
           <TouchableOpacity
             key={tab.id}
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
-            onPress={() => setActiveTab(tab.id as any)}
+            onPress={() => {
+              console.log('🔥 TAB CLICKED:', tab.id);
+              setActiveTab(tab.id as any);
+            }}
           >
             <IconSymbol 
               ios_icon_name={tab.iosIcon as any} 
@@ -863,11 +1020,10 @@ export default function AdminScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={loadAllData} />
         }
       >
-        {/* METRICS TAB */}
         {activeTab === 'metrics' && (
-          <React.Fragment>
+          <View>
             {metrics ? (
-              <React.Fragment>
+              <View>
                 <View style={styles.metricsGrid}>
                   <View style={[commonStyles.card, styles.metricCard]}>
                     <IconSymbol 
@@ -947,20 +1103,457 @@ export default function AdminScreen() {
                     {((metrics.totalMXISold / 25000000) * 100).toFixed(2)}% of 25M total
                   </Text>
                 </View>
-              </React.Fragment>
+              </View>
             ) : (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.loadingText}>Loading metrics...</Text>
               </View>
             )}
-          </React.Fragment>
+          </View>
         )}
 
-        {/* Other tabs remain the same... */}
-        {/* For brevity, I'm not including all the other tab content here */}
-        {/* The rest of the component remains unchanged */}
+        {activeTab === 'users' && (
+          <View>
+            <View style={commonStyles.card}>
+              <Text style={styles.cardTitle}>User Management</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search users by name or email..."
+                placeholderTextColor={colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            {filteredUsers.map((u, index) => (
+              <TouchableOpacity
+                key={index}
+                style={commonStyles.card}
+                onPress={() => {
+                  setSelectedUser(u);
+                  loadUserDetails(u.id);
+                  setShowUserModal(true);
+                }}
+              >
+                <View style={styles.userCardHeader}>
+                  <View>
+                    <Text style={styles.userName}>{u.name}</Text>
+                    <Text style={styles.userEmail}>{u.email}</Text>
+                  </View>
+                  <IconSymbol 
+                    ios_icon_name="chevron.right" 
+                    android_material_icon_name="chevron_right" 
+                    size={24} 
+                    color={colors.textSecondary} 
+                  />
+                </View>
+                <View style={styles.userCardFooter}>
+                  <Text style={styles.userDetail}>Code: {u.referral_code}</Text>
+                  <Text style={[styles.userDetail, { color: u.kyc_status === 'approved' ? colors.success : colors.warning }]}>
+                    KYC: {u.kyc_status}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {activeTab === 'link-referral' && (
+          <View style={commonStyles.card}>
+            <Text style={styles.cardTitle}>Link User to Referrer</Text>
+            <Text style={styles.cardDescription}>
+              Manually link a user to a referrer by entering their email and the referrer's code.
+            </Text>
+
+            <Text style={styles.inputLabel}>User Email</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter user email..."
+              placeholderTextColor={colors.textSecondary}
+              value={linkReferralEmail}
+              onChangeText={setLinkReferralEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!loading}
+            />
+
+            <Text style={styles.inputLabel}>Referrer Code</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter referrer code..."
+              placeholderTextColor={colors.textSecondary}
+              value={linkReferralCode}
+              onChangeText={setLinkReferralCode}
+              autoCapitalize="characters"
+              editable={!loading}
+            />
+
+            <TouchableOpacity
+              style={[commonStyles.button, loading && styles.buttonDisabled]}
+              onPress={handleLinkReferral}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.card} />
+              ) : (
+                <Text style={styles.buttonText}>Link Referral</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {activeTab === 'kyc' && (
+          <View>
+            <View style={commonStyles.card}>
+              <Text style={styles.cardTitle}>Pending KYC Submissions ({kycSubmissions.length})</Text>
+            </View>
+
+            {kycSubmissions.length > 0 ? (
+              kycSubmissions.map((kyc, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={commonStyles.card}
+                  onPress={() => {
+                    setSelectedKYC(kyc);
+                    setShowKYCModal(true);
+                  }}
+                >
+                  <View style={styles.kycCardHeader}>
+                    <View>
+                      <Text style={styles.userName}>{kyc.name}</Text>
+                      <Text style={styles.userEmail}>{kyc.email}</Text>
+                    </View>
+                    <IconSymbol 
+                      ios_icon_name="chevron.right" 
+                      android_material_icon_name="chevron_right" 
+                      size={24} 
+                      color={colors.textSecondary} 
+                    />
+                  </View>
+                  <Text style={styles.kycDate}>
+                    Submitted: {new Date(kyc.created_at).toLocaleDateString()}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={commonStyles.card}>
+                <Text style={styles.emptyText}>No pending KYC submissions</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {activeTab === 'messages' && (
+          <View>
+            <View style={commonStyles.card}>
+              <Text style={styles.cardTitle}>User Messages ({messages.length})</Text>
+            </View>
+
+            {messages.length > 0 ? (
+              messages.map((msg, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    commonStyles.card,
+                    msg.status === 'pending' && styles.messageCardPending
+                  ]}
+                  onPress={() => {
+                    setSelectedMessage(msg);
+                    setMessageResponse(msg.response || '');
+                    setShowMessageModal(true);
+                  }}
+                >
+                  <View style={styles.messageCardHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.userName}>{msg.user_name}</Text>
+                      <Text style={styles.messageDate}>
+                        {new Date(msg.created_at).toLocaleString()}
+                      </Text>
+                    </View>
+                    <View style={[
+                      styles.messageStatusBadge,
+                      msg.status === 'answered' && styles.messageStatusAnswered
+                    ]}>
+                      <Text style={styles.messageStatusText}>
+                        {msg.status === 'pending' ? 'Pending' : 'Answered'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.messageText} numberOfLines={3}>
+                    {msg.message}
+                  </Text>
+                  {msg.response && (
+                    <View style={styles.messageResponse}>
+                      <Text style={styles.messageResponseLabel}>Response:</Text>
+                      <Text style={styles.messageResponseText} numberOfLines={2}>
+                        {msg.response}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={commonStyles.card}>
+                <Text style={styles.emptyText}>No messages</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {activeTab === 'settings' && platformSettings && (
+          <View style={commonStyles.card}>
+            <Text style={styles.cardTitle}>Platform Settings</Text>
+
+            <Text style={styles.inputLabel}>Minimum Purchase (USD)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter minimum purchase..."
+              placeholderTextColor={colors.textSecondary}
+              value={editMinPurchase}
+              onChangeText={setEditMinPurchase}
+              keyboardType="decimal-pad"
+              editable={!loading}
+            />
+
+            <Text style={styles.inputLabel}>Maximum Purchase (USD)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter maximum purchase..."
+              placeholderTextColor={colors.textSecondary}
+              value={editMaxPurchase}
+              onChangeText={setEditMaxPurchase}
+              keyboardType="decimal-pad"
+              editable={!loading}
+            />
+
+            <Text style={styles.inputLabel}>Monthly Vesting Rate (%)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter vesting rate..."
+              placeholderTextColor={colors.textSecondary}
+              value={editVestingRate}
+              onChangeText={setEditVestingRate}
+              keyboardType="decimal-pad"
+              editable={!loading}
+            />
+
+            <TouchableOpacity
+              style={[commonStyles.button, loading && styles.buttonDisabled]}
+              onPress={handleUpdatePlatformSettings}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.card} />
+              ) : (
+                <Text style={styles.buttonText}>Update Settings</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
+
+      <Modal
+        visible={showUserModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowUserModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>User Details</Text>
+              <TouchableOpacity onPress={() => setShowUserModal(false)}>
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel" 
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {selectedUser && selectedUserDetails && (
+              <ScrollView>
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalUserName}>{selectedUser.name}</Text>
+                  <Text style={styles.modalUserEmail}>{selectedUser.email}</Text>
+                </View>
+
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Balance Overview</Text>
+                  <View style={styles.balanceGrid}>
+                    <View style={styles.balanceItem}>
+                      <Text style={styles.balanceItemLabel}>Total MXI</Text>
+                      <Text style={styles.balanceItemValue}>
+                        {selectedUserDetails.vesting.total_mxi.toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={styles.balanceItem}>
+                      <Text style={styles.balanceItemLabel}>Vesting Rewards</Text>
+                      <Text style={styles.balanceItemValue}>
+                        {selectedUserDetails.vesting.current_rewards.toFixed(4)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>Account Actions</Text>
+                  <TouchableOpacity
+                    style={[
+                      commonStyles.button,
+                      selectedUser.account_blocked ? styles.buttonSuccess : styles.buttonError
+                    ]}
+                    onPress={() => handleToggleAccountBlock(!selectedUser.account_blocked)}
+                  >
+                    <Text style={styles.buttonText}>
+                      {selectedUser.account_blocked ? 'Unblock Account' : 'Block Account'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showKYCModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowKYCModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>KYC Review</Text>
+              <TouchableOpacity onPress={() => setShowKYCModal(false)}>
+                <IconSymbol 
+                  ios_icon_name="xmark.circle.fill" 
+                  android_material_icon_name="cancel" 
+                  size={28} 
+                  color={colors.textSecondary} 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {selectedKYC && (
+              <ScrollView>
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalUserName}>{selectedKYC.name}</Text>
+                  <Text style={styles.modalUserEmail}>{selectedKYC.email}</Text>
+                </View>
+
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>KYC Information</Text>
+                  <Text style={styles.kycInfo}>ID: {selectedKYC.identification}</Text>
+                  <Text style={styles.kycInfo}>Address: {selectedKYC.address}</Text>
+                  <Text style={styles.kycInfo}>
+                    Documents: {selectedKYC.kyc_documents?.length || 0} uploaded
+                  </Text>
+                </View>
+
+                <View style={styles.modalSection}>
+                  <View style={styles.kycActions}>
+                    <TouchableOpacity
+                      style={[commonStyles.button, styles.buttonSuccess]}
+                      onPress={() => handleKYCDecision('approved')}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color={colors.card} />
+                      ) : (
+                        <Text style={styles.buttonText}>Approve</Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[commonStyles.button, styles.buttonError]}
+                      onPress={() => handleKYCDecision('rejected')}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color={colors.card} />
+                      ) : (
+                        <Text style={styles.buttonText}>Reject</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showMessageModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMessageModal(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Message Details</Text>
+                <TouchableOpacity onPress={() => setShowMessageModal(false)}>
+                  <IconSymbol 
+                    ios_icon_name="xmark.circle.fill" 
+                    android_material_icon_name="cancel" 
+                    size={28} 
+                    color={colors.textSecondary} 
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {selectedMessage && (
+                <ScrollView>
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalUserName}>{selectedMessage.user_name}</Text>
+                    <Text style={styles.messageDate}>
+                      {new Date(selectedMessage.created_at).toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>User Message</Text>
+                    <Text style={styles.messageFullText}>{selectedMessage.message}</Text>
+                  </View>
+
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>Your Response</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder="Enter your response..."
+                      placeholderTextColor={colors.textSecondary}
+                      value={messageResponse}
+                      onChangeText={setMessageResponse}
+                      multiline
+                      numberOfLines={4}
+                      editable={!loading}
+                    />
+                    <TouchableOpacity
+                      style={[commonStyles.button, loading && styles.buttonDisabled]}
+                      onPress={handleRespondToMessage}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color={colors.card} />
+                      ) : (
+                        <Text style={styles.buttonText}>Send Response</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              )}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1002,6 +1595,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
+  },
+  resetButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
   },
   tabBar: {
     paddingHorizontal: 20,
@@ -1070,6 +1669,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
+  cardDescription: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
   stageItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1118,5 +1723,221 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
+  },
+  searchInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    color: colors.text,
+  },
+  userCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  userCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  userDetail: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    color: colors.text,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.card,
+  },
+  buttonSuccess: {
+    backgroundColor: colors.success,
+  },
+  buttonError: {
+    backgroundColor: colors.error,
+  },
+  kycCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  kycDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  messageCardPending: {
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  messageCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  messageDate: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  messageStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: colors.warning,
+  },
+  messageStatusAnswered: {
+    backgroundColor: colors.success,
+  },
+  messageStatusText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.card,
+  },
+  messageText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 20,
+  },
+  messageResponse: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+  },
+  messageResponseLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  messageResponseText: {
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 18,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    padding: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalSection: {
+    marginBottom: 24,
+  },
+  modalUserName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  modalUserEmail: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  balanceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  balanceItem: {
+    width: '48%',
+    backgroundColor: colors.background,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  balanceItemLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  balanceItemValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  kycInfo: {
+    fontSize: 14,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  kycActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  messageFullText: {
+    fontSize: 15,
+    color: colors.text,
+    lineHeight: 22,
   },
 });
