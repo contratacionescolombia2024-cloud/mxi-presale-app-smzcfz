@@ -1,4 +1,6 @@
 
+export type SupportedLanguage = 'en' | 'es' | 'pt';
+
 export const translations = {
   en: {
     // App name
@@ -130,15 +132,24 @@ export const translations = {
     // Vesting
     vesting: 'Vesting',
     vestingRewards: 'Vesting Rewards',
+    vestingRewardsTitle: 'Vesting Rewards',
     currentRewards: 'Current Rewards',
     monthlyRate: 'Monthly Rate',
     totalMXI: 'Total MXI',
     purchasedMXI: 'Purchased MXI',
     commissionMXI: 'Commission MXI',
     projections: 'Projections',
+    projectedEarnings: 'Projected Earnings',
     days7: '7 Days',
     days15: '15 Days',
     days30: '30 Days',
+    sevenDays: '7 Days',
+    fifteenDays: '15 Days',
+    thirtyDays: '30 Days',
+    live: 'LIVE',
+    updatingEverySecond: 'Updating every second',
+    calculatedOnPurchased: '💡 Calculated only on purchased MXI',
+    purchasedMXIBase: 'Purchased MXI (Base)',
     
     // Referrals
     referrals: 'Referrals',
@@ -148,6 +159,8 @@ export const translations = {
     level1: 'Level 1',
     level2: 'Level 2',
     level3: 'Level 3',
+    level: 'Level',
+    refs: 'refs',
     mxiEarned: 'MXI Earned',
     
     // Admin
@@ -182,6 +195,30 @@ export const translations = {
     chooseWalletToConnect: 'Choose your preferred wallet',
     browserExtensionWallet: 'Browser extension wallet',
     trustWalletAndMore: 'Trust Wallet, Rainbow, and more',
+    
+    // Home Screen
+    welcome: 'Welcome',
+    yourMXIDashboard: 'Your MXI Dashboard',
+    mxiTokenLaunch: 'MXI Token Launch',
+    countdownToLaunch: 'Countdown to Launch',
+    days: 'Days',
+    hours: 'Hours',
+    minutes: 'Minutes',
+    seconds: 'Seconds',
+    totalMXIBalance: 'Total MXI Balance',
+    mxiPurchased: 'MXI Purchased',
+    referralCommissions: 'Referral Commissions',
+    tournamentWinnings: 'Tournament Winnings',
+    currentPhaseStatus: 'Current Phase Status',
+    totalMXIInDistribution: 'Total MXI in Distribution',
+    globalVestingRewards: 'Global Vesting Rewards',
+    currentPhasePrice: 'Current Phase Price',
+    overallProgress: 'Overall Progress',
+    complete: 'Complete',
+    phaseEndsIn: 'Phase Ends In',
+    endDate: 'End Date',
+    phase: 'Phase',
+    kycVerification: 'KYC Verification',
   },
   es: {
     // App name
@@ -313,15 +350,24 @@ export const translations = {
     // Vesting
     vesting: 'Vesting',
     vestingRewards: 'Recompensas de vesting',
+    vestingRewardsTitle: 'Recompensas de Vesting',
     currentRewards: 'Recompensas actuales',
     monthlyRate: 'Tasa mensual',
     totalMXI: 'MXI total',
     purchasedMXI: 'MXI comprado',
     commissionMXI: 'MXI de comisión',
     projections: 'Proyecciones',
+    projectedEarnings: 'Ganancias Proyectadas',
     days7: '7 días',
     days15: '15 días',
     days30: '30 días',
+    sevenDays: '7 Días',
+    fifteenDays: '15 Días',
+    thirtyDays: '30 Días',
+    live: 'EN VIVO',
+    updatingEverySecond: 'Actualizando cada segundo',
+    calculatedOnPurchased: '💡 Calculado solo en MXI comprado',
+    purchasedMXIBase: 'MXI Comprado (Base)',
     
     // Referrals
     referrals: 'Referidos',
@@ -331,6 +377,8 @@ export const translations = {
     level1: 'Nivel 1',
     level2: 'Nivel 2',
     level3: 'Nivel 3',
+    level: 'Nivel',
+    refs: 'refs',
     mxiEarned: 'MXI ganado',
     
     // Admin
@@ -365,6 +413,30 @@ export const translations = {
     chooseWalletToConnect: 'Elija su billetera preferida',
     browserExtensionWallet: 'Billetera de extensión del navegador',
     trustWalletAndMore: 'Trust Wallet, Rainbow y más',
+    
+    // Home Screen
+    welcome: 'Bienvenido',
+    yourMXIDashboard: 'Tu Panel MXI',
+    mxiTokenLaunch: 'Lanzamiento del Token MXI',
+    countdownToLaunch: 'Cuenta Regresiva para el Lanzamiento',
+    days: 'Días',
+    hours: 'Horas',
+    minutes: 'Minutos',
+    seconds: 'Segundos',
+    totalMXIBalance: 'Saldo Total de MXI',
+    mxiPurchased: 'MXI Comprado',
+    referralCommissions: 'Comisiones de Referidos',
+    tournamentWinnings: 'Ganancias de Torneos',
+    currentPhaseStatus: 'Estado de la Fase Actual',
+    totalMXIInDistribution: 'Total de MXI en Distribución',
+    globalVestingRewards: 'Recompensas Globales de Vesting',
+    currentPhasePrice: 'Precio de la Fase Actual',
+    overallProgress: 'Progreso General',
+    complete: 'Completo',
+    phaseEndsIn: 'La Fase Termina En',
+    endDate: 'Fecha de Finalización',
+    phase: 'Fase',
+    kycVerification: 'Verificación KYC',
   },
   pt: {
     // App name
@@ -496,15 +568,24 @@ export const translations = {
     // Vesting
     vesting: 'Vesting',
     vestingRewards: 'Recompensas de vesting',
+    vestingRewardsTitle: 'Recompensas de Vesting',
     currentRewards: 'Recompensas atuais',
     monthlyRate: 'Taxa mensal',
     totalMXI: 'MXI total',
     purchasedMXI: 'MXI comprado',
     commissionMXI: 'MXI de comissão',
     projections: 'Projeções',
+    projectedEarnings: 'Ganhos Projetados',
     days7: '7 dias',
     days15: '15 dias',
     days30: '30 dias',
+    sevenDays: '7 Dias',
+    fifteenDays: '15 Dias',
+    thirtyDays: '30 Dias',
+    live: 'AO VIVO',
+    updatingEverySecond: 'Atualizando a cada segundo',
+    calculatedOnPurchased: '💡 Calculado apenas em MXI comprado',
+    purchasedMXIBase: 'MXI Comprado (Base)',
     
     // Referrals
     referrals: 'Indicações',
@@ -514,6 +595,8 @@ export const translations = {
     level1: 'Nível 1',
     level2: 'Nível 2',
     level3: 'Nível 3',
+    level: 'Nível',
+    refs: 'refs',
     mxiEarned: 'MXI ganho',
     
     // Admin
@@ -548,5 +631,29 @@ export const translations = {
     chooseWalletToConnect: 'Escolha sua carteira preferida',
     browserExtensionWallet: 'Carteira de extensão do navegador',
     trustWalletAndMore: 'Trust Wallet, Rainbow e mais',
+    
+    // Home Screen
+    welcome: 'Bem-vindo',
+    yourMXIDashboard: 'Seu Painel MXI',
+    mxiTokenLaunch: 'Lançamento do Token MXI',
+    countdownToLaunch: 'Contagem Regressiva para o Lançamento',
+    days: 'Dias',
+    hours: 'Horas',
+    minutes: 'Minutos',
+    seconds: 'Segundos',
+    totalMXIBalance: 'Saldo Total de MXI',
+    mxiPurchased: 'MXI Comprado',
+    referralCommissions: 'Comissões de Indicação',
+    tournamentWinnings: 'Ganhos de Torneios',
+    currentPhaseStatus: 'Status da Fase Atual',
+    totalMXIInDistribution: 'Total de MXI em Distribuição',
+    globalVestingRewards: 'Recompensas Globais de Vesting',
+    currentPhasePrice: 'Preço da Fase Atual',
+    overallProgress: 'Progresso Geral',
+    complete: 'Completo',
+    phaseEndsIn: 'A Fase Termina Em',
+    endDate: 'Data de Término',
+    phase: 'Fase',
+    kycVerification: 'Verificação KYC',
   },
 };
