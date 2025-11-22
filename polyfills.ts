@@ -33,30 +33,16 @@ if (typeof global === 'undefined') {
 
 console.log('✅ Global object configured');
 
-// Import and configure Buffer - CRITICAL for ethereumjs-util
+// Import and configure Buffer
 try {
-  // Set Buffer on all possible global objects
   globalObj.Buffer = Buffer;
-  
-  if (typeof global !== 'undefined') {
-    (global as any).Buffer = Buffer;
-  }
-  
   if (typeof window !== 'undefined') {
     (window as any).Buffer = Buffer;
   }
-  
   if (typeof globalThis !== 'undefined') {
     (globalThis as any).Buffer = Buffer;
   }
-  
-  if (typeof self !== 'undefined') {
-    (self as any).Buffer = Buffer;
-  }
-  
   console.log('✅ Buffer module loaded and injected globally');
-  console.log('   Buffer.from:', typeof Buffer.from);
-  console.log('   Buffer.alloc:', typeof Buffer.alloc);
 } catch (error) {
   console.error('❌ Failed to load buffer module:', error);
   // Create a minimal Buffer polyfill as fallback

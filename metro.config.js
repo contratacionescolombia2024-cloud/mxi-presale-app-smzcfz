@@ -9,14 +9,4 @@ config.cacheStores = [
     new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
   ];
 
-// Add resolver configuration for node polyfills
-config.resolver = {
-  ...config.resolver,
-  extraNodeModules: {
-    buffer: require.resolve('buffer'),
-    process: require.resolve('process/browser.js'),
-    events: require.resolve('events'),
-  },
-};
-
 module.exports = config;
