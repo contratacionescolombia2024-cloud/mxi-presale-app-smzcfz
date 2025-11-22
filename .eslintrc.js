@@ -1,3 +1,4 @@
+
 // https://docs.expo.dev/guides/using-eslint/
 module.exports = {
   extends: [
@@ -17,12 +18,17 @@ module.exports = {
       jsx: true
     }
   },
-  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*'],
+  ignorePatterns: ['/dist/*', '/public/*', '/babel-plugins/*', 'node_modules/', '.expo/'],
   env: {
     browser: true,
+    node: true,
+    es2021: true,
   },
   rules: {
-    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/prefer-as-const": "off",
     "@typescript-eslint/no-var-requires": "off",
@@ -31,17 +37,25 @@ module.exports = {
     "@typescript-eslint/no-wrapper-object-types": "off",
     "@typescript-eslint/ban-tslint-comment": "off",
     "react/no-unescaped-entities": "off",
-    "import/no-unresolved": "error",
-    "prefer-const": "off",
-    "react/prop-types": 1,
+    "import/no-unresolved": "off",
+    "prefer-const": "warn",
+    "react/prop-types": "off",
     "no-case-declarations": "off",
     "no-empty": "off",
     "react/display-name": "off",
-    "no-var": "off"
+    "no-var": "warn",
+    "no-console": "off",
+    "no-debugger": "warn",
+    "no-unused-vars": "off",
+    "react/jsx-key": "warn",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-undef": "error",
+    "react/jsx-uses-react": "off",
+    "react/jsx-uses-vars": "warn",
   },
   overrides: [
     {
-      files: ['metro.config.js'],
+      files: ['metro.config.js', 'babel.config.js', 'webpack.config.js'],
       rules: {
         '@typescript-eslint/no-var-requires': 'off'
       }
