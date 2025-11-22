@@ -43,7 +43,7 @@ module.exports = {
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-empty-object-type": "off",
     "@typescript-eslint/no-wrapper-object-types": "off",
-    "@typescript-eslint/ban-tslint-comment": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-function": "off",
     "react/react-in-jsx-scope": "off",
     "react/no-unescaped-entities": "off",

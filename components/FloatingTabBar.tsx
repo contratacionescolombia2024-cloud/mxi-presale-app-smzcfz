@@ -1,7 +1,7 @@
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter, Href } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from './IconSymbol';
 import { BlurView } from 'expo-blur';
@@ -22,10 +22,9 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // CRITICAL: Memoize the active tab calculation to prevent unnecessary re-renders
-  const activeTab = useMemo(() => {
+  // CRITICAL: Extract active tab name as a primitive string
+  const activeTabName = useMemo(() => {
     const currentPath = pathname || '';
-    console.log('📍 Current pathname:', currentPath);
     
     // Find the matching tab
     for (const tab of tabs) {
@@ -38,51 +37,44 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
     return '(home)';
   }, [pathname, tabs]);
 
-  // CRITICAL: Memoize the tab press handler to ensure it's stable
-  const handleTabPress = useMemo(() => {
-    return (route: string) => {
-      console.log('🔄 Navigating to:', route);
-      try {
-        router.push(route as any);
-      } catch (error) {
-        console.error('❌ Navigation error:', error);
-      }
-    };
+  // CRITICAL: Create stable handler outside of map
+  const handleTabPress = useCallback((route: string) => {
+    console.log('🔄 Navigating to:', route);
+    try {
+      router.push(route as Href);
+    } catch (error) {
+      console.error('❌ Navigation error:', error);
+    }
   }, [router]);
-
-  // CRITICAL: Memoize the tab items to prevent re-renders
-  const tabItems = useMemo(() => {
-    return tabs.map((tab) => {
-      const isActive = activeTab === tab.name;
-      
-      return (
-        <TouchableOpacity
-          key={tab.name}
-          style={styles.tab}
-          onPress={() => handleTabPress(tab.route)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
-            <IconSymbol
-              ios_icon_name={tab.iosIcon}
-              android_material_icon_name={tab.androidIcon}
-              size={24}
-              color={isActive ? colors.primary : colors.textSecondary}
-            />
-          </View>
-          <Text style={[styles.label, isActive && styles.activeLabel]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      );
-    });
-  }, [tabs, activeTab, handleTabPress]);
 
   return (
     <View style={styles.container}>
       <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
         <View style={styles.tabBar}>
-          {tabItems}
+          {tabs.map((tab) => {
+            const isActive = activeTabName === tab.name;
+            
+            return (
+              <TouchableOpacity
+                key={tab.name}
+                style={styles.tab}
+                onPress={() => handleTabPress(tab.route)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
+                  <IconSymbol
+                    ios_icon_name={tab.iosIcon}
+                    android_material_icon_name={tab.androidIcon}
+                    size={24}
+                    color={isActive ? colors.primary : colors.textSecondary}
+                  />
+                </View>
+                <Text style={[styles.label, isActive && styles.activeLabel]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </BlurView>
     </View>

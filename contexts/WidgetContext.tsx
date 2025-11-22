@@ -1,43 +1,39 @@
 
-import { createContext, useCallback, useContext, useEffect } from "react";
-import { ExtensionStorage } from "@bacons/apple-targets";
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
-// Initialize storage with your group ID
-const _storage = new ExtensionStorage(
-  "group.com.<user_name>.<app_name>"
-);
-
+// CRITICAL: Simple context with only primitive callback
 type WidgetContextType = {
+  refreshTrigger: number;
   refreshWidget: () => void;
 };
 
-const WidgetContext = createContext<WidgetContextType | null>(null);
+const WidgetContext = createContext<WidgetContextType | undefined>(undefined);
+
+export function useWidget() {
+  const context = useContext(WidgetContext);
+  if (!context) {
+    throw new Error('useWidget must be used within a WidgetProvider');
+  }
+  return context;
+}
 
 export function WidgetProvider({ children }: { children: React.ReactNode }) {
-  // Update widget state whenever what we want to show changes
-  useEffect(() => {
-    // set widget_state to null if we want to reset the widget
-    // _storage.set("widget_state", null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-    // Refresh widget
-    ExtensionStorage.reloadWidget();
-  }, []);
-
+  // CRITICAL: Stable callback that only updates a number
   const refreshWidget = useCallback(() => {
-    ExtensionStorage.reloadWidget();
+    setRefreshTrigger(prev => prev + 1);
   }, []);
+
+  // CRITICAL: Memoize the context value with only primitives
+  const value = useMemo<WidgetContextType>(() => ({
+    refreshTrigger,
+    refreshWidget,
+  }), [refreshTrigger, refreshWidget]);
 
   return (
-    <WidgetContext.Provider value={{ refreshWidget }}>
+    <WidgetContext.Provider value={value}>
       {children}
     </WidgetContext.Provider>
   );
 }
-
-export const useWidget = () => {
-  const context = useContext(WidgetContext);
-  if (!context) {
-    throw new Error("useWidget must be used within a WidgetProvider");
-  }
-  return context;
-};

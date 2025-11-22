@@ -37,11 +37,11 @@ try {
       versions: { node: '16.0.0' },
       platform: 'browser',
       browser: true,
-      nextTick: (callback: Function, ...args: any[]) => {
-        setTimeout(() => { callback(...args); }, 0);
+      nextTick: (callback: (...args: any[]) => void, ...args: any[]) => {
+        setTimeout(() => callback(...args), 0);
       },
       cwd: () => '/',
-      chdir: () => {},
+      chdir: () => { /* no-op */ },
       umask: () => 0,
     };
   }
@@ -57,8 +57,8 @@ try {
   globalObj.process.browser = true;
   
   if (!globalObj.process.nextTick) {
-    globalObj.process.nextTick = (callback: Function, ...args: any[]) => {
-      setTimeout(() => { callback(...args); }, 0);
+    globalObj.process.nextTick = (callback: (...args: any[]) => void, ...args: any[]) => {
+      setTimeout(() => callback(...args), 0);
     };
   }
   
@@ -125,8 +125,8 @@ try {
 
 // CRITICAL: Polyfill setImmediate/clearImmediate
 if (typeof globalObj.setImmediate === 'undefined') {
-  globalObj.setImmediate = (callback: Function, ...args: any[]) => {
-    return setTimeout(() => { callback(...args); }, 0);
+  globalObj.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
+    return setTimeout(() => callback(...args), 0);
   };
 }
 

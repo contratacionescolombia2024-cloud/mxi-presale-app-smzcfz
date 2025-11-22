@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { PreSaleProvider } from '@/contexts/PreSaleContext';
 import { WalletProvider } from '@/contexts/WalletContext';
+import { WidgetProvider } from '@/contexts/WidgetContext';
 import { Web3Provider } from '@/components/Web3Provider';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -33,31 +34,28 @@ export default function RootLayout() {
 
   // CRITICAL: Stack navigation structure
   const AppStack = (
-    <Stack>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="ecosystem" options={{ headerShown: false }} />
-      <Stack.Screen name="games" options={{ headerShown: false }} />
-      <Stack.Screen name="mini-battle-game" options={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="ecosystem" />
+      <Stack.Screen name="games" />
+      <Stack.Screen name="mini-battle-game" />
       <Stack.Screen
         name="modal"
         options={{
           presentation: 'modal',
-          headerShown: false,
         }}
       />
       <Stack.Screen
         name="formsheet"
         options={{
           presentation: 'formSheet',
-          headerShown: false,
         }}
       />
       <Stack.Screen
         name="transparent-modal"
         options={{
           presentation: 'transparentModal',
-          headerShown: false,
           animation: 'fade',
         }}
       />
@@ -70,7 +68,9 @@ export default function RootLayout() {
       <LanguageProvider>
         <PreSaleProvider>
           <WalletProvider>
-            {AppStack}
+            <WidgetProvider>
+              {AppStack}
+            </WidgetProvider>
           </WalletProvider>
         </PreSaleProvider>
       </LanguageProvider>
