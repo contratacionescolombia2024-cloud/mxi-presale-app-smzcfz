@@ -1,8 +1,7 @@
-
 {
   "expo": {
     "name": "Mxi Presale",
-    "slug": "mxi-presale-app",
+    "slug": "Mxi Presale",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -51,5 +50,6 @@
     "experiments": {
       "typedRoutes": true
     }
-  }
+  },
+  "scheme": "Mxi Presale"
 }
