@@ -11,7 +11,7 @@ interface PreSaleContextType {
   vestingData: VestingData | null;
   referralStats: ReferralStats | null;
   isLoading: boolean;
-  purchaseMXI: (amount: number, paymentMethod: 'cryptomus') => Promise<void>;
+  purchaseMXI: (amount: number) => Promise<void>;
   refreshData: () => Promise<void>;
   forceReloadReferrals: () => Promise<void>;
 }
@@ -26,7 +26,6 @@ export function usePreSale() {
   return context;
 }
 
-// Helper function to safely convert database numeric values to JavaScript numbers
 function safeNumeric(value: any): number {
   if (value === null || value === undefined) {
     return 0;
@@ -162,7 +161,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           tournamentsBalance: tournamentsBalance,
           commissionBalance: commissionBalance,
           projections: {
-            // Projections based ONLY on purchased_mxi
             days7: purchasedMXI * monthlyRate * (7 / 30),
             days15: purchasedMXI * monthlyRate * (15 / 30),
             days30: purchasedMXI * monthlyRate,
@@ -200,21 +198,12 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('👥 ========================================');
-      console.log('👥 LOADING REFERRAL STATS FOR USER:', user.id);
-      console.log('👥 ========================================');
+      console.log('👥 Loading referral stats for user:', user.id);
       
-      // FIXED: Use commission_mxi field consistently
       const { data: rawReferrals, error: referralsError } = await supabase
         .from('referrals')
         .select('*')
         .eq('referrer_id', user.id);
-
-      console.log('👥 Raw query result:', {
-        error: referralsError,
-        dataCount: rawReferrals?.length || 0,
-        rawData: JSON.stringify(rawReferrals, null, 2),
-      });
 
       if (referralsError) {
         console.error('❌ Error loading referrals:', referralsError);
@@ -222,7 +211,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!rawReferrals || rawReferrals.length === 0) {
-        console.log('⚠️ NO REFERRALS FOUND IN DATABASE');
+        console.log('⚠️ No referrals found');
         const emptyStats = {
           totalReferrals: 0,
           level1Count: 0,
@@ -238,9 +227,8 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('✅ REFERRALS FOUND:', rawReferrals.length);
+      console.log('✅ Referrals found:', rawReferrals.length);
 
-      // FIXED: Process each referral using commission_mxi field
       let level1MXI = 0;
       let level2MXI = 0;
       let level3MXI = 0;
@@ -248,17 +236,9 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       let level2Count = 0;
       let level3Count = 0;
 
-      rawReferrals.forEach((referral, index) => {
+      rawReferrals.forEach((referral) => {
         const level = referral.level;
-        // FIXED: Use commission_mxi as the primary source
         const commissionMXI = safeNumeric(referral.commission_mxi);
-
-        console.log(`👥 Referral ${index + 1}:`, {
-          id: referral.id,
-          level: level,
-          commission_mxi: commissionMXI,
-          referred_id: referral.referred_id,
-        });
 
         if (level === 1) {
           level1Count++;
@@ -274,14 +254,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
 
       const totalEarned = level1MXI + level2MXI + level3MXI;
 
-      console.log('👥 ========================================');
-      console.log('👥 CALCULATED REFERRAL STATS (USING commission_mxi):');
-      console.log('👥 Level 1:', { count: level1Count, mxi: level1MXI });
-      console.log('👥 Level 2:', { count: level2Count, mxi: level2MXI });
-      console.log('👥 Level 3:', { count: level3Count, mxi: level3MXI });
-      console.log('👥 Total Earned:', totalEarned);
-      console.log('👥 ========================================');
-
       const newStats = {
         totalReferrals: rawReferrals.length,
         level1Count: level1Count,
@@ -294,7 +266,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         referrals: rawReferrals,
       };
 
-      console.log('✅ SETTING REFERRAL STATS:', newStats);
+      console.log('✅ Referral stats calculated:', newStats);
       setReferralStats(newStats);
     } catch (error) {
       console.error('❌ Failed to load referral stats:', error);
@@ -309,13 +281,12 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         totalMXIEarned: 0,
         referrals: [],
       };
-      console.log('⚠️ Setting empty referral stats due to error');
       setReferralStats(emptyStats);
     }
   }, [user?.id]);
 
   const forceReloadReferrals = useCallback(async () => {
-    console.log('🔥 FORCE RELOAD REFERRALS TRIGGERED');
+    console.log('🔥 Force reload referrals triggered');
     await loadReferralStats();
     await loadVestingData();
   }, [loadReferralStats, loadVestingData]);
@@ -341,7 +312,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, user, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
 
-  // Initial data load - wait for auth to complete
   useEffect(() => {
     if (authLoading) {
       console.log('⏳ Waiting for auth to complete...');
@@ -376,15 +346,13 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     loadData();
   }, [user?.id, isAuthenticated, authLoading, loadCurrentStage, loadUserPurchases, loadVestingData, loadReferralStats]);
 
-  // Real-time subscription for referrals
   useEffect(() => {
     if (!isAuthenticated || !user?.id || !dataLoaded) {
       return;
     }
 
-    console.log('🔔 Setting up real-time subscription for referrals and vesting');
+    console.log('🔔 Setting up real-time subscriptions');
 
-    // Subscribe to changes in the referrals table
     const referralsSubscription = supabase
       .channel('referrals-changes')
       .on(
@@ -398,12 +366,11 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         (payload) => {
           console.log('🔔 Referral change detected:', payload);
           loadReferralStats();
-          loadVestingData(); // Reload vesting data when referrals change
+          loadVestingData();
         }
       )
       .subscribe();
 
-    // Subscribe to changes in vesting table
     const vestingSubscription = supabase
       .channel('vesting-changes')
       .on(
@@ -421,7 +388,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
-    // Subscribe to changes in users_profiles (for referral linking)
     const profilesSubscription = supabase
       .channel('profiles-changes')
       .on(
@@ -447,14 +413,12 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id, isAuthenticated, dataLoaded, loadReferralStats, loadVestingData]);
 
-  // Calculate vesting rewards on the server when user opens the app
   const calculateServerVestingRewards = useCallback(async () => {
     if (!user?.id) return;
 
     try {
       console.log('🔄 Calculating server-side vesting rewards for user:', user.id);
       
-      // Call the database function to calculate and update vesting rewards
       const { data, error } = await supabase.rpc('calculate_and_update_vesting_rewards', {
         p_user_id: user.id,
       });
@@ -472,7 +436,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           secondsElapsed: result.seconds_elapsed,
         });
         
-        // Reload vesting data to get the updated values
         await loadVestingData();
       }
     } catch (error) {
@@ -480,21 +443,17 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id, loadVestingData]);
 
-  // Calculate vesting rewards when app opens or comes to foreground
   useEffect(() => {
     if (!isAuthenticated || !user?.id || !dataLoaded) {
       return;
     }
 
-    // Calculate rewards immediately when app opens
     calculateServerVestingRewards();
 
-    // Set up periodic server-side updates (every 30 seconds)
     const interval = setInterval(() => {
       calculateServerVestingRewards();
     }, 30000);
 
-    // Listen for app state changes (foreground/background)
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
         console.log('📱 App came to foreground, calculating vesting rewards...');
@@ -508,15 +467,12 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id, isAuthenticated, dataLoaded, calculateServerVestingRewards]);
 
-  // Real-time vesting updates - CLIENT-SIDE DISPLAY ONLY
-  // This provides smooth UI updates between server syncs
   useEffect(() => {
     if (!isAuthenticated || !user || !vestingData?.purchasedMXI || !dataLoaded) {
       return;
     }
 
     console.log('⏱️ Starting real-time vesting display updates for user:', user.id);
-    console.log('💰 Vesting calculated ONLY on purchased MXI:', vestingData.purchasedMXI);
 
     const interval = setInterval(() => {
       setVestingData((prev) => {
@@ -525,9 +481,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         const monthlyRate = prev.monthlyRate || 0.03;
         const secondlyRate = monthlyRate / (30 * 24 * 60 * 60);
         
-        // IMPORTANT: Calculate rewards ONLY on purchased_mxi, NOT total_mxi
         const increment = prev.purchasedMXI * secondlyRate;
-
         const newRewards = (prev.currentRewards || 0) + increment;
 
         return {
@@ -535,7 +489,6 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           currentRewards: newRewards,
           lastUpdate: new Date().toISOString(),
           projections: {
-            // Projections also based ONLY on purchased_mxi
             days7: prev.purchasedMXI * monthlyRate * (7 / 30),
             days15: prev.purchasedMXI * monthlyRate * (15 / 30),
             days30: prev.purchasedMXI * monthlyRate,
@@ -550,7 +503,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, isAuthenticated, vestingData?.purchasedMXI, dataLoaded]);
 
-  const purchaseMXI = async (amount: number, paymentMethod: 'cryptomus') => {
+  const purchaseMXI = async (amount: number) => {
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -560,11 +513,10 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('💳 Processing purchase:', { amount, paymentMethod, userId: user.id });
+      console.log('💳 Processing purchase:', { amount, userId: user.id });
 
       const mxiAmount = amount / currentStage.price;
 
-      // Create purchase record
       const { data: purchase, error: purchaseError } = await supabase
         .from('purchases')
         .insert({
@@ -572,8 +524,8 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
           stage_id: currentStage.stage,
           amount_usd: amount,
           mxi_amount: mxiAmount,
-          payment_method: paymentMethod,
-          status: 'completed',
+          payment_method: 'manual',
+          status: 'pending',
         })
         .select()
         .single();
@@ -583,63 +535,7 @@ export function PreSaleProvider({ children }: { children: React.ReactNode }) {
         throw purchaseError;
       }
 
-      console.log('✅ Purchase created:', purchase);
-
-      // Update or create vesting record - now tracking purchased_mxi separately
-      const { data: existingVesting } = await supabase
-        .from('vesting')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingVesting) {
-        const newTotal = safeNumeric(existingVesting.total_mxi) + mxiAmount;
-        const newPurchased = safeNumeric(existingVesting.purchased_mxi) + mxiAmount;
-        const { error: vestingError } = await supabase
-          .from('vesting')
-          .update({
-            total_mxi: newTotal,
-            purchased_mxi: newPurchased,
-            last_update: new Date().toISOString(),
-          })
-          .eq('user_id', user.id);
-
-        if (vestingError) {
-          console.error('❌ Vesting update error:', vestingError);
-          throw vestingError;
-        }
-      } else {
-        const { error: vestingError } = await supabase
-          .from('vesting')
-          .insert({
-            user_id: user.id,
-            total_mxi: mxiAmount,
-            purchased_mxi: mxiAmount,
-            current_rewards: 0,
-            monthly_rate: 0.03,
-            last_update: new Date().toISOString(),
-          });
-
-        if (vestingError) {
-          console.error('❌ Vesting creation error:', vestingError);
-          throw vestingError;
-        }
-      }
-
-      // Update presale stage sold amount
-      const { error: stageError } = await supabase
-        .from('presale_stages')
-        .update({
-          sold_mxi: currentStage.soldMXI + mxiAmount,
-        })
-        .eq('stage', currentStage.stage);
-
-      if (stageError) {
-        console.error('❌ Stage update error:', stageError);
-        throw stageError;
-      }
-
-      console.log('✅ Purchase completed successfully');
+      console.log('✅ Purchase request created:', purchase);
       await refreshData();
     } catch (error) {
       console.error('❌ Purchase failed:', error);

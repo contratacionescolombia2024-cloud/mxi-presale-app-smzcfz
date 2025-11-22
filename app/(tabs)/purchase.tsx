@@ -253,7 +253,7 @@ export default function PurchaseScreen() {
 
     setLoading(true);
     try {
-      await purchaseMXI(amountNum, 'manual');
+      await purchaseMXI(amountNum);
       Alert.alert(
         t('purchaseInitiated'),
         'Your purchase request has been recorded. Please contact the administrator to complete the payment process.',
@@ -314,10 +314,9 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.noticeCard}>
-          <Text style={styles.noticeTitle}>⚠️ Payment Notice</Text>
+          <Text style={styles.noticeTitle}>⚠️ {t('paymentNotice')}</Text>
           <Text style={styles.noticeText}>
-            To purchase MXI tokens, please enter the amount below and submit your request. 
-            Our team will contact you with payment instructions and complete your purchase.
+            {t('paymentNoticeDescription')}
           </Text>
         </View>
 
@@ -384,12 +383,12 @@ export default function PurchaseScreen() {
           )}
 
           <View style={styles.paymentInfo}>
-            <Text style={styles.paymentInfoTitle}>ℹ️ How to Purchase</Text>
-            <Text style={styles.paymentInfoText}>• Enter the amount you wish to purchase</Text>
-            <Text style={styles.paymentInfoText}>• Submit your purchase request</Text>
-            <Text style={styles.paymentInfoText}>• Our team will contact you with payment details</Text>
-            <Text style={styles.paymentInfoText}>• Complete the payment as instructed</Text>
-            <Text style={styles.paymentInfoText}>• Your MXI tokens will be credited after confirmation</Text>
+            <Text style={styles.paymentInfoTitle}>ℹ️ {t('howToPurchase')}</Text>
+            <Text style={styles.paymentInfoText}>• {t('enterAmountToPurchase')}</Text>
+            <Text style={styles.paymentInfoText}>• {t('submitPurchaseRequest')}</Text>
+            <Text style={styles.paymentInfoText}>• {t('teamWillContactYou')}</Text>
+            <Text style={styles.paymentInfoText}>• {t('completePaymentAsInstructed')}</Text>
+            <Text style={styles.paymentInfoText}>• {t('mxiCreditedAfterConfirmation')}</Text>
           </View>
 
           <TouchableOpacity
@@ -401,7 +400,7 @@ export default function PurchaseScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.purchaseButtonText}>
-                Submit Purchase Request
+                {t('submitPurchaseRequest')}
               </Text>
             )}
           </TouchableOpacity>
