@@ -176,5 +176,26 @@ console.log('========================');
 console.log('');
 console.log('✅ Polyfills loaded successfully!');
 
+// Crypto polyfills for ethers.js
+if (typeof globalObj.crypto === 'undefined') {
+  globalObj.crypto = {
+    getRandomValues: (arr: any) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256);
+      }
+      return arr;
+    },
+  } as any;
+  console.log('✅ Crypto polyfill added');
+} else if (typeof globalObj.crypto.getRandomValues === 'undefined') {
+  globalObj.crypto.getRandomValues = (arr: any) => {
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = Math.floor(Math.random() * 256);
+    }
+    return arr;
+  };
+  console.log('✅ Crypto.getRandomValues polyfill added');
+}
+
 // Export empty object to make this a module
 export {};
