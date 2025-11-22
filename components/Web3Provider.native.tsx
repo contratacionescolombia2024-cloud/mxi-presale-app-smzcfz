@@ -1,8 +1,8 @@
 
 import React from 'react';
 
-// Native fallback - no Web3 functionality
+// Native platforms don't support Web3Modal
+// This is a stub that just renders children
 export function Web3Provider({ children }: { children: React.ReactNode }) {
-  console.log('Web3Provider: Native platform detected, skipping Web3 initialization');
   return <>{children}</>;
 }

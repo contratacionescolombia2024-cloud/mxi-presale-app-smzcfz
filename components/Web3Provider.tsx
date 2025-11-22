@@ -2,8 +2,11 @@
 import React from 'react';
 import { Platform } from 'react-native';
 
-// Native fallback - no Web3 functionality
+// Default export for platforms without specific implementation
 export function Web3Provider({ children }: { children: React.ReactNode }) {
-  console.log('Web3Provider: Native platform detected, skipping Web3 initialization');
+  if (Platform.OS === 'web') {
+    // This should not be reached due to .web.tsx file
+    console.warn('Web3Provider: Using fallback for web platform');
+  }
   return <>{children}</>;
 }

@@ -14,9 +14,7 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      // Export namespace plugin
       "@babel/plugin-proposal-export-namespace-from",
-      // Module resolver should come after export namespace
       [
         "module-resolver",
         {
@@ -46,7 +44,6 @@ module.exports = function (api) {
           },
         },
       ],
-      // Editable components (dev only)
       ...EDITABLE_COMPONENTS,
     ],
   };

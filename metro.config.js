@@ -5,7 +5,7 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Use turborepo to restore the cache when possible
+// Use file cache for better performance
 config.cacheStores = [
   new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
 ];
