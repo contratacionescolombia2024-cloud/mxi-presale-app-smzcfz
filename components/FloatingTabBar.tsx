@@ -1,6 +1,6 @@
 
 import { useMemo, useCallback } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from './IconSymbol';

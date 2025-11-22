@@ -50,6 +50,16 @@ config.resolver = {
       }
     }
 
+    // Block Reanimated and Worklets on all platforms to prevent serialization errors
+    if (moduleName.includes('react-native-reanimated') || 
+        moduleName.includes('react-native-worklets') ||
+        moduleName.includes('expo-blur')) {
+      console.log(`[Metro] Blocking ${moduleName} - causes worklet serialization errors`);
+      return {
+        type: 'empty',
+      };
+    }
+
     // Handle porto connector - return empty module on all platforms
     if (moduleName.includes('../porto.js') || 
         moduleName.includes('porto.js') || 

@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "MXI Presale",
-    "slug": "mxi-presale-app-smzcfz",
+    "name": "Mxi Presale",
+    "slug": "Mxi Presale",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -54,5 +53,6 @@
         "projectId": "your-project-id"
       }
     }
-  }
+  },
+  "scheme": "Mxi Presale"
 }
