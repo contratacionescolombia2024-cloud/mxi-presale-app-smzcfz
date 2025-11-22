@@ -26,6 +26,8 @@ export function useWallet() {
 
 // Native implementation - Web3Modal is not supported on native platforms
 export function WalletProvider({ children }: { children: ReactNode }) {
+  console.log('💼 WalletProvider: Native implementation loaded');
+
   const showWebOnlyAlert = () => {
     Alert.alert(
       'Web Only Feature',
@@ -35,19 +37,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   };
 
   const connectWallet = async (type: string) => {
+    console.log('⚠️ WalletProvider: Connect wallet called on native platform');
     showWebOnlyAlert();
     throw new Error('Wallet connection is only available on web');
   };
 
   const disconnectWallet = async () => {
-    console.log('Wallet features not available on native');
+    console.log('⚠️ WalletProvider: Disconnect wallet called on native platform');
   };
 
   const refreshBalance = async () => {
-    console.log('Wallet features not available on native');
+    console.log('⚠️ WalletProvider: Refresh balance called on native platform');
   };
 
   const sendPayment = async (amountUSDT: number): Promise<string> => {
+    console.log('⚠️ WalletProvider: Send payment called on native platform');
     showWebOnlyAlert();
     throw new Error('Payment is only available on web');
   };

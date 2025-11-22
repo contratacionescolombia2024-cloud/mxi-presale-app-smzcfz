@@ -32,6 +32,8 @@ export function useWallet() {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
+  console.log('💼 WalletProvider: Web implementation loaded');
+
   const [usdtBalance, setUsdtBalance] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [walletType, setWalletType] = useState<string | null>(null);
@@ -41,10 +43,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const { disconnect } = useDisconnect();
   const { data: walletClient } = useWalletClient();
 
+  // Log connection status
+  useEffect(() => {
+    console.log('🔗 Wallet connection status:', {
+      isConnected,
+      address,
+      chain: chain?.name,
+    });
+  }, [isConnected, address, chain]);
+
   // Refresh USDT balance
   const refreshBalance = async () => {
     if (!address || !isConnected) {
-      console.log('Cannot refresh balance: not connected');
+      console.log('⚠️ Cannot refresh balance: not connected');
       return;
     }
 
@@ -75,6 +86,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   // Auto-refresh balance when connected
   useEffect(() => {
     if (isConnected && address) {
+      console.log('🔄 Auto-refreshing balance...');
       refreshBalance();
       
       // Refresh every 30 seconds
@@ -90,10 +102,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const ethereum = (window as any).ethereum;
         if (ethereum?.isMetaMask) {
           setWalletType('metamask');
+          console.log('🦊 MetaMask detected');
         } else if (ethereum?.isTrust) {
           setWalletType('trustwallet');
+          console.log('🛡️ Trust Wallet detected');
         } else {
           setWalletType('walletconnect');
+          console.log('🔗 WalletConnect detected');
         }
       }
     } else {

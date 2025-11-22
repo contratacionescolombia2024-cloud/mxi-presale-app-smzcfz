@@ -1,7 +1,12 @@
 
+// Web-only Web3Modal configuration
+// This file is ONLY loaded on web platform
+
 import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 import { bsc } from 'wagmi/chains';
+
+console.log('🌐 Loading Web3 configuration for web platform...');
 
 // WalletConnect Project ID - Replace with your actual project ID
 export const WALLETCONNECT_PROJECT_ID = 'YOUR_WALLETCONNECT_PROJECT_ID';
@@ -51,31 +56,54 @@ const metadata = {
   icons: ['https://mxistrategic.live/icon.png'],
 };
 
+console.log('⚙️ Creating Wagmi config...');
+
 export const wagmiConfig = defaultWagmiConfig({
   chains: [bsc],
   projectId: WALLETCONNECT_PROJECT_ID,
   metadata,
 });
 
+console.log('✅ Wagmi config created');
+
 // Create Web3Modal instance
 let web3Modal: any = null;
 
 export function initWeb3Modal() {
   if (typeof window !== 'undefined' && !web3Modal) {
-    web3Modal = createWeb3Modal({
-      wagmiConfig,
-      projectId: WALLETCONNECT_PROJECT_ID,
-      chains: [bsc],
-      themeMode: 'dark',
-      themeVariables: {
-        '--w3m-accent': '#8B5CF6',
-        '--w3m-border-radius-master': '12px',
-      },
-    });
+    console.log('🚀 Initializing Web3Modal...');
+    
+    try {
+      web3Modal = createWeb3Modal({
+        wagmiConfig,
+        projectId: WALLETCONNECT_PROJECT_ID,
+        chains: [bsc],
+        themeMode: 'dark',
+        themeVariables: {
+          '--w3m-accent': '#8B5CF6',
+          '--w3m-border-radius-master': '12px',
+        },
+      });
+      
+      console.log('✅ Web3Modal initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize Web3Modal:', error);
+    }
   }
   return web3Modal;
 }
 
 // Query client for React Query
 import { QueryClient } from '@tanstack/react-query';
-export const queryClient = new QueryClient();
+
+console.log('📦 Creating QueryClient...');
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+console.log('✅ Web3 configuration loaded successfully');

@@ -29,7 +29,9 @@ export default function RootLayout() {
     return null;
   }
 
-  // Only wrap with Web3Provider on web platform
+  console.log('🚀 RootLayout: Platform =', Platform.OS);
+
+  // Core app content without Web3
   const AppContent = (
     <AuthProvider>
       <LanguageProvider>
@@ -70,10 +72,12 @@ export default function RootLayout() {
     </AuthProvider>
   );
 
-  // Wrap with Web3Provider only on web
+  // Only wrap with Web3Provider on web platform
   if (Platform.OS === 'web') {
+    console.log('🌐 RootLayout: Wrapping with Web3Provider for web');
     return <Web3Provider>{AppContent}</Web3Provider>;
   }
 
+  console.log('📱 RootLayout: Native platform, skipping Web3Provider');
   return AppContent;
 }

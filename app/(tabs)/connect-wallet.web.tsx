@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useWallet } from '@/contexts/WalletContext';
@@ -12,15 +12,28 @@ export default function ConnectWalletScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isConnected, address, walletType, usdtBalance, isLoading, disconnectWallet, refreshBalance } = useWallet();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('🌐 ConnectWalletScreen (Web): Mounted');
+    
     if (isConnected) {
-      refreshBalance();
+      console.log('✅ Wallet already connected, refreshing balance...');
+      refreshBalance().catch((err) => {
+        console.error('❌ Failed to refresh balance:', err);
+        setError('Failed to refresh balance');
+      });
     }
   }, [isConnected]);
 
   const handleDisconnect = async () => {
-    await disconnectWallet();
+    try {
+      setError(null);
+      await disconnectWallet();
+    } catch (err: any) {
+      console.error('❌ Disconnect error:', err);
+      setError(err.message || 'Failed to disconnect wallet');
+    }
   };
 
   const handlePurchase = () => {
@@ -53,6 +66,18 @@ export default function ConnectWalletScreen() {
       </LinearGradient>
 
       <View style={styles.content}>
+        {error && (
+          <View style={styles.errorBox}>
+            <IconSymbol
+              ios_icon_name="exclamationmark.triangle.fill"
+              android_material_icon_name="error"
+              size={24}
+              color={colors.error}
+            />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
         {!isConnected ? (
           <View style={styles.connectSection}>
             <Text style={styles.sectionTitle}>{t('chooseWallet')}</Text>
@@ -179,6 +204,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: colors.text,
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.error + '20',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 14,
+    color: colors.error,
+    lineHeight: 20,
   },
   connectSection: {
     marginTop: 20,

@@ -18,8 +18,37 @@ config.resolver = {
   sourceExts: [...(config.resolver?.sourceExts || []), 'mjs', 'cjs'],
   
   resolveRequest: (context, moduleName, platform) => {
+    // CRITICAL: Block ALL Web3-related imports on native platforms
+    const web3Packages = [
+      'porto',
+      '@wagmi/connectors',
+      '@web3modal/wagmi',
+      '@web3modal/base',
+      'wagmi',
+      'viem',
+      'ox/',
+      'elliptic',
+      'bn.js',
+      'brorand',
+      'hash.js',
+      'hmac-drbg',
+      'minimalistic-assert',
+      'minimalistic-crypto-utils',
+    ];
+
+    // If on native platform, block all Web3 packages
+    if (platform !== 'web') {
+      for (const pkg of web3Packages) {
+        if (moduleName.includes(pkg)) {
+          console.log(`[Metro] Blocking ${moduleName} on ${platform}`);
+          return {
+            type: 'empty',
+          };
+        }
+      }
+    }
+
     // Handle porto connector - return empty module on all platforms
-    // Porto is a web-only connector that's not needed for this app
     if (moduleName.includes('../porto.js') || 
         moduleName.includes('porto.js') || 
         moduleName === 'porto' ||
@@ -31,6 +60,31 @@ config.resolver = {
     
     // Handle ox package imports (dependency of porto)
     if (moduleName.includes('ox/') || moduleName.includes('ox\\')) {
+      return {
+        type: 'empty',
+      };
+    }
+
+    // Handle elliptic and crypto dependencies
+    if (platform === 'web' && (
+      moduleName.includes('elliptic') ||
+      moduleName.includes('bn.js') ||
+      moduleName.includes('brorand') ||
+      moduleName.includes('hash.js')
+    )) {
+      // Let web handle these normally
+      return context.resolveRequest(context, moduleName, platform);
+    }
+
+    // Block crypto libraries on native
+    if (platform !== 'web' && (
+      moduleName.includes('elliptic') ||
+      moduleName.includes('bn.js') ||
+      moduleName.includes('brorand') ||
+      moduleName.includes('hash.js') ||
+      moduleName.includes('hmac-drbg') ||
+      moduleName.includes('minimalistic-')
+    )) {
       return {
         type: 'empty',
       };
