@@ -7,7 +7,7 @@ import {
   PROJECT_WALLET_ADDRESS, 
   USDT_ABI,
   BSC_CHAIN_ID 
-} from '@/config/web3Config';
+} from '@/config/web3Config.web';
 
 interface WalletContextType {
   isConnected: boolean;

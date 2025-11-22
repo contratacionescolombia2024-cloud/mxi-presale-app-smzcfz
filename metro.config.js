@@ -1,33 +1,61 @@
 
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
+
+// List of Web3 packages to block on native platforms
+const WEB3_PACKAGES = [
+  'porto',
+  '@wagmi/connectors',
+  '@wagmi/core',
+  '@web3modal/wagmi',
+  '@web3modal/base',
+  '@web3modal/scaffold',
+  '@web3modal/ui',
+  '@web3modal/core',
+  '@web3modal/siwe',
+  'wagmi',
+  'viem',
+  'ox',
+  '@reown',
+  '@walletconnect',
+];
 
 config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
   unstable_conditionNames: ['react-native', 'browser', 'require'],
-  sourceExts: [...(config.resolver?.sourceExts || []), 'mjs', 'cjs'],
+  // Ensure platform-specific extensions are resolved correctly
+  sourceExts: [
+    'web.tsx',
+    'web.ts',
+    'web.jsx',
+    'web.js',
+    ...(config.resolver?.sourceExts || []),
+    'mjs',
+    'cjs',
+  ],
   
   resolveRequest: (context, moduleName, platform) => {
-    // Block Web3 packages on native platforms only
-    const web3Packages = [
-      'porto',
-      '@wagmi/connectors',
-      '@web3modal/wagmi',
-      '@web3modal/base',
-      '@web3modal/scaffold',
-      '@web3modal/ui',
-      'wagmi',
-      'viem',
-      'ox/',
-    ];
-
+    // CRITICAL: Block Web3 packages on native platforms FIRST
+    // This prevents metro from trying to resolve their dependencies
     if (platform !== 'web') {
-      for (const pkg of web3Packages) {
-        if (moduleName.includes(pkg)) {
+      // Check if this is a Web3 package or a subpath of one
+      for (const pkg of WEB3_PACKAGES) {
+        if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
+          console.log(`🚫 Metro: Blocking ${moduleName} on ${platform}`);
           return { type: 'empty' };
         }
+      }
+      
+      // CRITICAL FIX: Block expo-auth-session when it's being imported from Web3 packages
+      // This is necessary because porto connector tries to import it
+      if (moduleName === 'expo-auth-session' || moduleName === 'expo-web-browser') {
+        // We need to check if this is being imported from a Web3 package
+        // Since we can't reliably check the call stack, we'll allow it by default
+        // but log it for debugging
+        console.log(`⚠️ Metro: ${moduleName} import detected on ${platform}`);
       }
     }
     

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { wagmiConfig, queryClient, initWeb3Modal } from '@/config/web3Config';
+import { wagmiConfig, queryClient, initWeb3Modal } from '@/config/web3Config.web';
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
