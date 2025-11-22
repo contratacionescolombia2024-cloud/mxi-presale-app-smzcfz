@@ -1,20 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
   Platform,
   ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/app/integrations/supabase/client';
 
@@ -29,10 +28,16 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 24,
     alignItems: 'center',
+    marginBottom: 32,
   },
-  successIcon: {
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   title: {
@@ -46,60 +51,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 24,
   },
-  transactionCard: {
+  statusCard: {
     ...commonStyles.card,
     padding: 20,
-    marginBottom: 16,
-  },
-  transactionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  transactionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+    marginBottom: 24,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.warning,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
+  statusBadgeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#fff',
   },
-  infoRow: {
+  statusText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  detailsCard: {
+    ...commonStyles.card,
+    padding: 20,
+    marginBottom: 24,
+  },
+  detailsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+  },
+  detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  infoLabel: {
+  detailLabel: {
     fontSize: 14,
     color: colors.textSecondary,
   },
-  infoValue: {
-    fontSize: 14,
+  detailValue: {
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    maxWidth: '60%',
-    textAlign: 'right',
-  },
-  txHashRow: {
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: colors.background,
-    borderRadius: 8,
-  },
-  txHashLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 4,
   },
   txHashValue: {
     fontSize: 12,
@@ -107,260 +112,254 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
-  viewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 12,
-    padding: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 12,
   },
-  viewButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
+  button: {
+    ...buttonStyles.primary,
+    marginTop: 16,
+  },
+  buttonText: {
+    ...buttonStyles.primaryText,
+  },
+  secondaryButton: {
+    ...buttonStyles.primary,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    marginTop: 12,
+  },
+  secondaryButtonText: {
+    ...buttonStyles.primaryText,
+    color: colors.primary,
   },
   infoCard: {
     ...commonStyles.card,
     padding: 20,
     marginBottom: 24,
-    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.info,
   },
   infoTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.text,
+    color: colors.info,
     marginBottom: 12,
   },
   infoText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.text,
     lineHeight: 22,
     marginBottom: 8,
-  },
-  button: {
-    ...buttonStyles.primary,
-    marginBottom: 12,
-  },
-  buttonText: {
-    ...buttonStyles.primaryText,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginTop: 16,
   },
 });
 
 export default function PurchaseConfirmationScreen() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { user } = useAuth();
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const params = useLocalSearchParams();
+  const [status, setStatus] = useState(params.status as string || 'pending');
+  const [confirmations, setConfirmations] = useState(0);
 
+  const txHash = params.txHash as string;
+  const usdtAmount = parseFloat(params.usdtAmount as string || '0');
+  const mxiAmount = parseFloat(params.mxiAmount as string || '0');
+
+  // Poll for transaction status
   useEffect(() => {
-    loadTransactions();
-  }, []);
+    if (status === 'pending') {
+      const interval = setInterval(async () => {
+        try {
+          const { data, error } = await supabase
+            .from('metamask_transactions')
+            .select('status, confirmed_at')
+            .eq('transaction_hash', txHash)
+            .single();
 
-  const loadTransactions = async () => {
-    if (!user?.id) return;
+          if (data) {
+            setStatus(data.status);
+            if (data.status === 'confirmed') {
+              clearInterval(interval);
+            }
+          }
+        } catch (error) {
+          console.error('Error polling transaction status:', error);
+        }
+      }, 5000); // Poll every 5 seconds
 
-    try {
-      console.log('📊 Loading transactions for user:', user.id);
-      const { data, error } = await supabase
-        .from('metamask_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('❌ Error loading transactions:', error);
-        throw error;
-      }
-
-      console.log('✅ Transactions loaded:', data?.length || 0);
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('❌ Failed to load transactions:', error);
-    } finally {
-      setLoading(false);
+      return () => clearInterval(interval);
     }
-  };
+  }, [status, txHash]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return colors.success;
-      case 'pending':
-        return colors.warning;
-      case 'failed':
-        return colors.error;
-      default:
-        return colors.textSecondary;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return t('confirmed');
-      case 'pending':
-        return t('pending');
-      case 'failed':
-        return t('failed');
-      default:
-        return status;
-    }
-  };
-
-  const formatAddress = (addr: string) => {
-    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  const openBscScan = (txHash: string) => {
+  const openBscScan = () => {
     const url = `https://bscscan.com/tx/${txHash}`;
     Linking.openURL(url);
   };
 
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>{t('loadingTransactions')}</Text>
+  const getStatusIcon = () => {
+    if (status === 'confirmed') {
+      return (
+        <View style={[styles.iconContainer, { backgroundColor: colors.success }]}>
+          <IconSymbol
+            ios_icon_name="checkmark.circle.fill"
+            android_material_icon_name="check_circle"
+            size={48}
+            color="#fff"
+          />
         </View>
-      </SafeAreaView>
-    );
-  }
+      );
+    } else if (status === 'failed') {
+      return (
+        <View style={[styles.iconContainer, { backgroundColor: colors.error }]}>
+          <IconSymbol
+            ios_icon_name="xmark.circle.fill"
+            android_material_icon_name="cancel"
+            size={48}
+            color="#fff"
+          />
+        </View>
+      );
+    } else {
+      return (
+        <View style={[styles.iconContainer, { backgroundColor: colors.warning }]}>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      );
+    }
+  };
+
+  const getStatusBadge = () => {
+    if (status === 'confirmed') {
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: colors.success }]}>
+          <IconSymbol
+            ios_icon_name="checkmark.circle.fill"
+            android_material_icon_name="check_circle"
+            size={16}
+            color="#fff"
+          />
+          <Text style={styles.statusBadgeText}>Confirmed</Text>
+        </View>
+      );
+    } else if (status === 'failed') {
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: colors.error }]}>
+          <IconSymbol
+            ios_icon_name="xmark.circle.fill"
+            android_material_icon_name="cancel"
+            size={16}
+            color="#fff"
+          />
+          <Text style={styles.statusBadgeText}>Failed</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: colors.warning }]}>
+          <ActivityIndicator size="small" color="#fff" />
+          <Text style={styles.statusBadgeText}>Pending Confirmation</Text>
+        </View>
+      );
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.successIcon}>
-            <IconSymbol
-              ios_icon_name="checkmark.circle.fill"
-              android_material_icon_name="check_circle"
-              size={80}
-              color={colors.success}
-            />
-          </View>
-          <Text style={styles.title}>{t('purchaseHistory')}</Text>
-          <Text style={styles.subtitle}>{t('viewYourTransactions')}</Text>
+          {getStatusIcon()}
+          <Text style={styles.title}>
+            {status === 'confirmed' ? 'Payment Confirmed!' : 
+             status === 'failed' ? 'Payment Failed' : 
+             'Payment Processing'}
+          </Text>
+          <Text style={styles.subtitle}>
+            {status === 'confirmed' ? 'Your MXI tokens have been credited to your account' : 
+             status === 'failed' ? 'There was an issue with your payment' : 
+             'Your payment is being processed on the blockchain'}
+          </Text>
         </View>
 
-        {transactions.length === 0 ? (
-          <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>ℹ️ {t('noTransactions')}</Text>
-            <Text style={styles.infoText}>{t('noTransactionsDescription')}</Text>
+        {/* Status Card */}
+        <View style={styles.statusCard}>
+          {getStatusBadge()}
+          <Text style={styles.statusText}>
+            {status === 'confirmed' ? 
+              'Transaction has been confirmed with 3+ blockchain confirmations. Your MXI balance has been updated.' : 
+             status === 'failed' ? 
+              'The transaction failed. Please try again or contact support.' : 
+              'Waiting for 3 blockchain confirmations. This usually takes 1-2 minutes.'}
+          </Text>
+        </View>
+
+        {/* Transaction Details */}
+        <View style={styles.detailsCard}>
+          <Text style={styles.detailsTitle}>Transaction Details</Text>
+          
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>USDT Paid:</Text>
+            <Text style={styles.detailValue}>{usdtAmount.toFixed(2)} USDT</Text>
           </View>
-        ) : (
-          <React.Fragment>
-            {transactions.map((tx, index) => (
-              <View key={tx.id || index} style={styles.transactionCard}>
-                <View style={styles.transactionHeader}>
-                  <Text style={styles.transactionTitle}>
-                    {t('transaction')} #{transactions.length - index}
-                  </Text>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      { backgroundColor: getStatusColor(tx.status) },
-                    ]}
-                  >
-                    <Text style={styles.statusText}>{getStatusText(tx.status)}</Text>
-                  </View>
-                </View>
 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('amount')}:</Text>
-                  <Text style={styles.infoValue}>{tx.amount_usd} USDT</Text>
-                </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>MXI Received:</Text>
+            <Text style={styles.detailValue}>{mxiAmount.toFixed(2)} MXI</Text>
+          </View>
 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('mxiAmount')}:</Text>
-                  <Text style={styles.infoValue}>{tx.mxi_amount.toFixed(2)} MXI</Text>
-                </View>
+          <View style={styles.divider} />
 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('wallet')}:</Text>
-                  <Text style={styles.infoValue}>
-                    {formatAddress(tx.wallet_address)}
-                  </Text>
-                </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Transaction Hash:</Text>
+          </View>
+          <Text style={styles.txHashValue}>
+            {txHash.slice(0, 20)}...{txHash.slice(-20)}
+          </Text>
 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>{t('date')}:</Text>
-                  <Text style={styles.infoValue}>{formatDate(tx.created_at)}</Text>
-                </View>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={openBscScan}
+          >
+            <Text style={styles.secondaryButtonText}>View on BscScan</Text>
+          </TouchableOpacity>
+        </View>
 
-                <View style={styles.txHashRow}>
-                  <Text style={styles.txHashLabel}>{t('transactionHash')}:</Text>
-                  <Text style={styles.txHashValue}>{tx.transaction_hash}</Text>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.viewButton}
-                  onPress={() => openBscScan(tx.transaction_hash)}
-                >
-                  <IconSymbol
-                    ios_icon_name="arrow.up.right.square"
-                    android_material_icon_name="open_in_new"
-                    size={20}
-                    color="#fff"
-                  />
-                  <Text style={styles.viewButtonText}>{t('viewOnBscScan')}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </React.Fragment>
+        {/* Info Card */}
+        {status === 'pending' && (
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>ℹ️ What&apos;s Next?</Text>
+            <Text style={styles.infoText}>
+              • Your transaction is being confirmed on the BSC blockchain
+            </Text>
+            <Text style={styles.infoText}>
+              • We require 3 confirmations for security
+            </Text>
+            <Text style={styles.infoText}>
+              • This usually takes 1-2 minutes
+            </Text>
+            <Text style={styles.infoText}>
+              • You can close this screen and check your balance later
+            </Text>
+          </View>
         )}
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>ℹ️ {t('verificationProcess')}</Text>
-          <Text style={styles.infoText}>
-            • {t('transactionsVerifiedAutomatically')}
-          </Text>
-          <Text style={styles.infoText}>
-            • {t('requires3Confirmations')}
-          </Text>
-          <Text style={styles.infoText}>
-            • {t('mxiCreditedAfterVerification')}
-          </Text>
-          <Text style={styles.infoText}>
-            • {t('checkBalanceInVesting')}
-          </Text>
-        </View>
-
+        {/* Action Buttons */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/(tabs)/purchase-crypto')}
+          onPress={() => router.push('/(tabs)/(home)')}
         >
-          <Text style={styles.buttonText}>{t('makeAnotherPurchase')}</Text>
+          <Text style={styles.buttonText}>Go to Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.card }]}
-          onPress={() => router.push('/(tabs)/')}
-        >
-          <Text style={[styles.buttonText, { color: colors.text }]}>
-            {t('backToHome')}
-          </Text>
-        </TouchableOpacity>
+        {status === 'confirmed' && (
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push('/vesting')}
+          >
+            <Text style={styles.secondaryButtonText}>View Vesting Rewards</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -1095,6 +1095,19 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity 
+            style={[styles.actionCard, styles.actionCardPurchase]}
+            onPress={() => router.push('/connect-wallet')}
+          >
+            <IconSymbol 
+              ios_icon_name="wallet.pass"
+              android_material_icon_name="account_balance_wallet"
+              size={32} 
+              color={colors.primary}
+            />
+            <Text style={styles.actionLabel}>Crypto Payment</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardVesting]}
             onPress={() => router.push('/vesting')}
           >

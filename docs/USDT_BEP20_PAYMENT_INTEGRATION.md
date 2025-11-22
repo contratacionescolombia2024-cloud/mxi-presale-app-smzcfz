@@ -1,261 +1,269 @@
 
-# USDT BEP20 Payment Integration
+# USDT BEP20 Payment Integration with Web3Modal v3
 
-This document describes the USDT BEP20 payment integration for the MXI presale app.
+This document describes the complete integration of Web3Modal v3 for crypto wallet connections and USDT BEP20 payments in the MXI Presale app.
 
 ## Overview
 
-Users can now purchase MXI tokens using USDT BEP20 on Binance Smart Chain (BSC) through MetaMask, Trust Wallet, or any WalletConnect-compatible wallet.
+The integration allows users to:
+- Connect their crypto wallets (MetaMask, Trust Wallet, WalletConnect v2)
+- Pay with USDT BEP20 on Binance Smart Chain (BSC)
+- Have transactions automatically validated and credited
 
 ## Architecture
 
-### Frontend Components
+### Frontend (React Native + Expo)
 
-1. **WalletContext** (`contexts/WalletContext.tsx`)
+1. **Web3Modal v3 Integration**
+   - Uses `@web3modal/wagmi` for wallet connection UI
+   - Supports MetaMask, Trust Wallet, and WalletConnect v2
+   - Only available on web platform (not native mobile)
+
+2. **Wallet Context** (`contexts/WalletContext.tsx`)
    - Manages wallet connection state
-   - Handles wallet connection/disconnection
-   - Manages USDT balance
-   - Sends USDT payments
-
-2. **Wallet Connection Utilities** (`utils/walletConnection.ts`)
-   - MetaMask connection
-   - WalletConnect integration
-   - BSC network switching
-   - USDT contract interaction
-   - Payment processing
+   - Handles USDT balance queries
+   - Sends USDT payments using ethers.js
 
 3. **Screens**
-   - `connect-wallet.tsx` - Wallet connection screen
-   - `purchase-crypto.tsx` - Crypto purchase screen
-   - `purchase-confirmation.tsx` - Transaction history and confirmation
+   - `/connect-wallet` - Connect wallet screen with Web3Modal button
+   - `/purchase-crypto` - USDT payment screen
+   - `/purchase-confirmation` - Transaction confirmation and status
 
-### Backend Components
+### Backend (Supabase Edge Function)
 
-1. **Edge Function** (`verify-usdt-transaction`)
-   - Verifies transactions on BSC blockchain
-   - Checks transaction confirmations (minimum 3)
-   - Validates USDT transfer to project wallet
-   - Credits MXI tokens to user's vesting account
-   - Updates presale stage sold MXI counter
+**Function:** `validate-usdt-payment`
 
-2. **Database**
-   - `metamask_transactions` table stores all crypto transactions
-   - Tracks transaction status (pending, confirmed, failed)
-   - Links transactions to users and presale stages
+Validates USDT BEP20 transactions by:
+1. Fetching transaction receipt from BSC blockchain
+2. Verifying transaction status (success/failed)
+3. Confirming contract address is USDT BEP20
+4. Verifying sender wallet address
+5. Checking recipient is project wallet
+6. Validating transfer amount
+7. Requiring 3 blockchain confirmations
+8. Updating user's MXI balance after confirmation
 
 ## Configuration
 
-### Fixed Values
+### 1. WalletConnect Project ID
 
-- **Network**: BSC Mainnet (Chain ID: 56)
-- **USDT Contract**: `0x55d398326f99059fF775485246999027B3197955`
-- **Project Wallet**: `0x68F0d7c607617DA0b1a0dC7b72885E11ddFec623`
-- **RPC URL**: `https://bsc-dataseed.binance.org/`
-- **Min Confirmations**: 3 blocks
+You need to get a WalletConnect Project ID from https://cloud.walletconnect.com/
 
-### Purchase Limits
+Update in `config/web3Config.ts`:
+```typescript
+export const WALLETCONNECT_PROJECT_ID = 'YOUR_PROJECT_ID_HERE';
+```
 
-- **Minimum**: 20 USDT
-- **Maximum**: 50,000 USDT
+### 2. Contract Addresses
+
+**USDT BEP20 Contract:**
+```
+0x55d398326f99059fF775485246999027B3197955
+```
+
+**Project Wallet (Recipient):**
+```
+0x68F0d7c607617DA0b1a0dC7b72885E11ddFec623
+```
+
+### 3. BSC Network
+
+- Chain ID: 56
+- RPC URL: https://bsc-dataseed.binance.org/
+- Block Explorer: https://bscscan.com
 
 ## User Flow
 
 ### 1. Connect Wallet
 
 1. User navigates to "Connect Wallet" screen
-2. Selects wallet type (MetaMask or WalletConnect)
-3. Approves connection in wallet
-4. App verifies BSC network (switches if needed)
-5. Displays wallet address and USDT balance
+2. Clicks Web3Modal button
+3. Selects wallet (MetaMask, Trust Wallet, or WalletConnect)
+4. Approves connection in wallet
+5. App displays wallet address and USDT balance
 
-### 2. Purchase MXI
+### 2. Purchase MXI with USDT
 
-1. User navigates to "Purchase with Crypto" screen
-2. Enters USDT amount to spend
-3. App calculates MXI tokens to receive
-4. User clicks "Purchase with USDT"
+1. User navigates to "Purchase with Crypto"
+2. Enters USDT amount (min: 20, max: 50,000)
+3. App calculates MXI amount based on current stage price
+4. User clicks "Pay with USDT"
 5. Wallet prompts for transaction approval
-6. User approves transaction
+6. User confirms transaction
 7. Transaction is sent to blockchain
-8. App saves transaction to database with "pending" status
 
-### 3. Verification
+### 3. Transaction Validation
 
-1. Backend edge function monitors pending transactions
-2. Fetches transaction receipt from BSC
-3. Waits for 3 confirmations
-4. Verifies:
-   - Transaction succeeded
-   - USDT token contract
-   - Destination is project wallet
-   - Amount matches purchase
-5. Updates transaction status to "confirmed"
-6. Credits MXI to user's vesting account
-7. Updates presale stage sold MXI counter
+1. Frontend submits transaction hash to backend
+2. Backend validates transaction on BSC blockchain:
+   - Checks transaction exists and succeeded
+   - Verifies USDT contract address
+   - Confirms sender and recipient addresses
+   - Validates transfer amount
+   - Waits for 3 confirmations
+3. Backend saves transaction to `metamask_transactions` table
+4. After 3 confirmations, backend updates user's vesting balance
+5. User sees confirmation screen with transaction details
 
-### 4. Confirmation
+## Database Schema
 
-1. User can view transaction history
-2. See transaction status (pending/confirmed/failed)
-3. View transaction on BscScan
-4. Check MXI balance in vesting section
+### `metamask_transactions` Table
+
+```sql
+CREATE TABLE metamask_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  wallet_address TEXT NOT NULL,
+  transaction_hash TEXT UNIQUE NOT NULL,
+  amount_usd NUMERIC NOT NULL,
+  mxi_amount NUMERIC NOT NULL,
+  payment_currency TEXT CHECK (payment_currency IN ('USDT', 'BNB')),
+  stage INTEGER REFERENCES presale_stages(stage),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'failed')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  confirmed_at TIMESTAMPTZ
+);
+```
 
 ## Security Features
 
-1. **Transaction Verification**
-   - All transactions verified on-chain
-   - Minimum 3 block confirmations required
-   - Amount validation with 1% tolerance
-   - Destination address verification
+1. **Transaction Validation**
+   - All transactions are verified on the blockchain
+   - Cannot fake or manipulate transaction data
+   - Requires 3 confirmations before crediting
 
-2. **Smart Contract Interaction**
-   - Direct interaction with USDT BEP20 contract
-   - No intermediary contracts
-   - User maintains full custody until payment
+2. **Amount Verification**
+   - Backend verifies exact USDT amount transferred
+   - Checks recipient is project wallet
+   - Validates sender matches connected wallet
 
-3. **Backend Validation**
-   - Server-side transaction verification
-   - Prevents double-spending
-   - Validates all transaction parameters
+3. **Duplicate Prevention**
+   - Transaction hashes are unique
+   - Cannot reuse the same transaction
+
+4. **RLS Policies**
+   - Users can only view their own transactions
+   - Admin can view all transactions
 
 ## Error Handling
 
 ### Common Errors
 
-1. **MetaMask Not Installed**
-   - Error: "MetaMask is not installed"
-   - Solution: Install MetaMask browser extension
+1. **"Wallet not connected"**
+   - User needs to connect wallet first
 
-2. **Wrong Network**
-   - Error: "Please connect to BSC network"
-   - Solution: App automatically prompts to switch network
+2. **"Insufficient USDT balance"**
+   - User doesn't have enough USDT
 
-3. **Insufficient USDT**
-   - Error: "Insufficient USDT balance"
-   - Solution: Add USDT to wallet
+3. **"Insufficient BNB for gas fees"**
+   - User needs BNB to pay transaction fees
 
-4. **Insufficient BNB**
-   - Error: "Insufficient BNB for gas fees"
-   - Solution: Add BNB to wallet for gas
+4. **"Transaction rejected by user"**
+   - User cancelled transaction in wallet
 
-5. **Transaction Rejected**
-   - Error: "Transaction was rejected by user"
-   - Solution: User must approve transaction in wallet
+5. **"Please switch to BSC network"**
+   - Wallet is on wrong network
 
-6. **Amount Mismatch**
-   - Error: "Amount mismatch"
-   - Solution: Contact support (rare, indicates blockchain issue)
+6. **"Transaction not found"**
+   - Transaction hash doesn't exist on blockchain
+
+7. **"Amount mismatch"**
+   - Transferred amount doesn't match expected amount
 
 ## Testing
 
 ### Test on BSC Testnet
 
-To test on BSC Testnet:
+For testing, you can use BSC Testnet:
+- Chain ID: 97
+- RPC URL: https://data-seed-prebsc-1-s1.binance.org:8545/
+- Faucet: https://testnet.binance.org/faucet-smart
 
-1. Update configuration:
-   ```typescript
-   export const BSC_CHAIN_ID = 97; // Testnet
-   export const BSC_CHAIN_ID_HEX = '0x61';
-   export const BSC_RPC_URL = 'https://data-seed-prebsc-1-s1.binance.org:8545/';
-   ```
+Update contract addresses for testnet USDT.
 
-2. Get testnet BNB from faucet
-3. Deploy test USDT contract or use existing testnet USDT
-4. Update contract addresses
+### Manual Testing Steps
 
-### Manual Testing Checklist
-
-- [ ] Connect MetaMask wallet
-- [ ] Connect WalletConnect wallet
-- [ ] Switch to BSC network
-- [ ] View USDT balance
-- [ ] Purchase MXI with USDT
-- [ ] Approve transaction in wallet
-- [ ] View transaction in history
-- [ ] Verify transaction on BscScan
-- [ ] Check MXI credited in vesting
-- [ ] Disconnect wallet
+1. Connect MetaMask to BSC Mainnet
+2. Get some USDT BEP20 tokens
+3. Connect wallet in app
+4. Try purchasing MXI with different amounts
+5. Verify transaction on BscScan
+6. Check balance updates after 3 confirmations
 
 ## Monitoring
 
-### Transaction Monitoring
+### Transaction Status
 
 Monitor transactions in Supabase:
-
 ```sql
--- View pending transactions
-SELECT * FROM metamask_transactions 
-WHERE status = 'pending' 
-ORDER BY created_at DESC;
-
--- View confirmed transactions
-SELECT * FROM metamask_transactions 
-WHERE status = 'confirmed' 
-ORDER BY confirmed_at DESC;
-
--- View failed transactions
-SELECT * FROM metamask_transactions 
-WHERE status = 'failed' 
+SELECT 
+  user_id,
+  wallet_address,
+  transaction_hash,
+  amount_usd,
+  mxi_amount,
+  status,
+  created_at,
+  confirmed_at
+FROM metamask_transactions
 ORDER BY created_at DESC;
 ```
 
-### Edge Function Logs
+### Failed Transactions
 
-View edge function logs in Supabase dashboard:
-- Navigate to Edge Functions
-- Select `verify-usdt-transaction`
-- View logs for verification details
+Check for failed transactions:
+```sql
+SELECT * FROM metamask_transactions
+WHERE status = 'failed'
+ORDER BY created_at DESC;
+```
 
 ## Troubleshooting
 
-### Transaction Stuck in Pending
+### Web3Modal not showing
 
-1. Check transaction on BscScan
-2. Verify transaction succeeded on blockchain
-3. Check number of confirmations
-4. Manually trigger verification edge function if needed
+- Make sure you're on web platform (not native)
+- Check WalletConnect Project ID is set
+- Verify Web3Provider is wrapping the app
 
-### MXI Not Credited
+### Transaction not confirming
 
-1. Verify transaction is confirmed in database
-2. Check vesting table for user
-3. Verify MXI amount was added to purchased_mxi
-4. Check edge function logs for errors
+- Check transaction on BscScan
+- Verify transaction succeeded on blockchain
+- Check Edge Function logs in Supabase
+- Ensure 3 confirmations have passed
 
-### Wallet Connection Issues
+### Balance not updating
 
-1. Clear browser cache
-2. Disconnect wallet from app
-3. Reconnect wallet
-4. Ensure correct network (BSC)
-5. Check wallet has BNB for gas
+- Check `metamask_transactions` table for transaction status
+- Verify Edge Function successfully updated vesting table
+- Check for errors in Edge Function logs
 
 ## Future Enhancements
 
-1. **Multi-Token Support**
-   - Add support for BNB payments
-   - Add support for other BEP20 tokens
+1. **Support for other tokens**
+   - Add BNB payment option
+   - Support other stablecoins (BUSD, USDC)
 
-2. **Automatic Verification**
-   - Implement webhook for automatic verification
-   - Real-time transaction monitoring
-
-3. **Gas Estimation**
+2. **Gas estimation**
    - Show estimated gas fees before transaction
-   - Optimize gas usage
+   - Warn if insufficient BNB for gas
 
-4. **Transaction History**
-   - Enhanced transaction history UI
+3. **Transaction history**
+   - Show all user's crypto transactions
    - Export transaction history
-   - Email notifications
 
-5. **Referral Integration**
-   - Automatic referral commission for crypto purchases
-   - Multi-level commission tracking
+4. **Automatic retries**
+   - Retry failed validations
+   - Handle network issues gracefully
+
+5. **Email notifications**
+   - Send email when transaction confirmed
+   - Alert on failed transactions
 
 ## Support
 
 For issues or questions:
-- Check transaction on BscScan: https://bscscan.com
+- Check Edge Function logs in Supabase Dashboard
+- Verify transaction on BscScan
 - Contact support with transaction hash
-- Provide wallet address and timestamp

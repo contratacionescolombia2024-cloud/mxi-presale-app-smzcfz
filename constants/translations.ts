@@ -218,6 +218,22 @@ export const translations = {
     browserExtensionWallet: 'Browser extension wallet',
     trustWalletAndMore: 'Trust Wallet, Rainbow, and more',
     
+    // Crypto Payment
+    purchaseWithCrypto: 'Purchase with Crypto',
+    payWithUSDT: 'Pay with USDT',
+    usdtBalance: 'USDT Balance',
+    insufficientBalance: 'Insufficient Balance',
+    transactionHash: 'Transaction Hash',
+    confirmations: 'Confirmations',
+    waitingForConfirmation: 'Waiting for Confirmation',
+    paymentConfirmed: 'Payment Confirmed',
+    paymentFailed: 'Payment Failed',
+    paymentProcessing: 'Payment Processing',
+    viewOnBscScan: 'View on BscScan',
+    transactionDetails: 'Transaction Details',
+    usdtPaid: 'USDT Paid',
+    mxiReceived: 'MXI Received',
+    
     // Home Screen
     welcome: 'Welcome',
     yourMXIDashboard: 'Your MXI Dashboard',
@@ -459,6 +475,22 @@ export const translations = {
     browserExtensionWallet: 'Billetera de extensión del navegador',
     trustWalletAndMore: 'Trust Wallet, Rainbow y más',
     
+    // Crypto Payment
+    purchaseWithCrypto: 'Comprar con Cripto',
+    payWithUSDT: 'Pagar con USDT',
+    usdtBalance: 'Saldo USDT',
+    insufficientBalance: 'Saldo Insuficiente',
+    transactionHash: 'Hash de Transacción',
+    confirmations: 'Confirmaciones',
+    waitingForConfirmation: 'Esperando Confirmación',
+    paymentConfirmed: 'Pago Confirmado',
+    paymentFailed: 'Pago Fallido',
+    paymentProcessing: 'Procesando Pago',
+    viewOnBscScan: 'Ver en BscScan',
+    transactionDetails: 'Detalles de Transacción',
+    usdtPaid: 'USDT Pagado',
+    mxiReceived: 'MXI Recibido',
+    
     // Home Screen
     welcome: 'Bienvenido',
     yourMXIDashboard: 'Tu Panel MXI',
@@ -699,6 +731,22 @@ export const translations = {
     chooseWalletToConnect: 'Escolha sua carteira preferida',
     browserExtensionWallet: 'Carteira de extensão do navegador',
     trustWalletAndMore: 'Trust Wallet, Rainbow e mais',
+    
+    // Crypto Payment
+    purchaseWithCrypto: 'Comprar com Cripto',
+    payWithUSDT: 'Pagar com USDT',
+    usdtBalance: 'Saldo USDT',
+    insufficientBalance: 'Saldo Insuficiente',
+    transactionHash: 'Hash da Transação',
+    confirmations: 'Confirmações',
+    waitingForConfirmation: 'Aguardando Confirmação',
+    paymentConfirmed: 'Pagamento Confirmado',
+    paymentFailed: 'Pagamento Falhou',
+    paymentProcessing: 'Processando Pagamento',
+    viewOnBscScan: 'Ver no BscScan',
+    transactionDetails: 'Detalhes da Transação',
+    usdtPaid: 'USDT Pago',
+    mxiReceived: 'MXI Recebido',
     
     // Home Screen
     welcome: 'Bem-vindo',
