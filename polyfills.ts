@@ -1,69 +1,92 @@
 
-// CRITICAL: Minimal polyfills - only what's absolutely necessary
-// Avoid importing large packages that could cause bundling issues
+// CRITICAL: Ultra-minimal polyfills
+// This file must NOT import or use ANY native modules
+// It runs BEFORE the React Native bridge is initialized
 
-import { Platform } from 'react-native';
+console.log('🔧 ========== POLYFILLS LOADING ==========');
 
-// URL polyfill for React Native
-import 'react-native-url-polyfill/auto';
+// URL polyfill - this is safe, pure JavaScript
+try {
+  console.log('📦 Loading URL polyfill...');
+  import('react-native-url-polyfill/auto');
+  console.log('✅ URL polyfill loaded');
+} catch (error) {
+  console.error('❌ Error loading URL polyfill:', error);
+}
 
-// Only add Buffer and process if they don't exist
+// Buffer polyfill - safe, pure JavaScript
 if (typeof global.Buffer === 'undefined') {
   try {
-    global.Buffer = require('buffer').Buffer;
+    console.log('📦 Loading Buffer polyfill...');
+    const { Buffer } = require('buffer');
+    global.Buffer = Buffer;
+    console.log('✅ Buffer polyfill loaded');
   } catch (e) {
-    console.warn('Buffer polyfill not available');
+    console.warn('⚠️ Buffer polyfill not available:', e);
   }
 }
 
+// Process polyfill - safe, pure JavaScript
 if (typeof global.process === 'undefined') {
   try {
+    console.log('📦 Loading Process polyfill...');
     global.process = require('process');
+    console.log('✅ Process polyfill loaded');
   } catch (e) {
-    console.warn('Process polyfill not available');
+    console.warn('⚠️ Process polyfill not available:', e);
   }
 }
 
+// Ensure process.version exists
 if (typeof global.process !== 'undefined' && typeof global.process.version === 'undefined') {
   global.process.version = 'v16.0.0';
+  console.log('✅ Process version set');
 }
 
-// CRITICAL FIX: Add window polyfill for React Native
-// This prevents "window.addEventListener is not a function" errors
-if (Platform.OS !== 'web') {
-  // Create a minimal window object if it doesn't exist
+// CRITICAL: Detect platform WITHOUT importing React Native
+// We check for web-specific globals instead
+const isWeb = typeof window !== 'undefined' && 
+              typeof window.document !== 'undefined' && 
+              typeof window.navigator !== 'undefined';
+
+console.log('🌍 Platform detected:', isWeb ? 'web' : 'native');
+
+if (!isWeb) {
+  console.log('📱 Adding native platform polyfills...');
+  
+  // Create minimal window object if needed
   if (typeof window === 'undefined') {
+    console.log('🔧 Creating window object...');
     (global as any).window = global;
   }
 
-  // Add addEventListener polyfill if it doesn't exist
-  if (typeof (global as any).window.addEventListener === 'undefined') {
-    console.log('🔧 Adding window.addEventListener polyfill for native platform');
-    
-    const listeners: { [key: string]: Array<(event: any) => void> } = {};
+  // Minimal event system - pure JavaScript, no native modules
+  if (typeof (global as any).window.addEventListener !== 'function') {
+    console.log('🔧 Adding event system...');
+    const eventListeners: { [key: string]: Array<(event: any) => void> } = {};
     
     (global as any).window.addEventListener = function(type: string, listener: (event: any) => void) {
-      if (!listeners[type]) {
-        listeners[type] = [];
+      if (!eventListeners[type]) {
+        eventListeners[type] = [];
       }
-      listeners[type].push(listener);
-      console.log(`✅ addEventListener: ${type} listener added`);
+      if (!eventListeners[type].includes(listener)) {
+        eventListeners[type].push(listener);
+      }
     };
     
     (global as any).window.removeEventListener = function(type: string, listener: (event: any) => void) {
-      if (listeners[type]) {
-        const index = listeners[type].indexOf(listener);
+      if (eventListeners[type]) {
+        const index = eventListeners[type].indexOf(listener);
         if (index > -1) {
-          listeners[type].splice(index, 1);
-          console.log(`✅ removeEventListener: ${type} listener removed`);
+          eventListeners[type].splice(index, 1);
         }
       }
     };
     
     (global as any).window.dispatchEvent = function(event: any) {
       const type = event.type || event;
-      if (listeners[type]) {
-        listeners[type].forEach(listener => {
+      if (eventListeners[type]) {
+        eventListeners[type].forEach(listener => {
           try {
             listener(event);
           } catch (error) {
@@ -73,13 +96,15 @@ if (Platform.OS !== 'web') {
       }
       return true;
     };
+    
+    console.log('✅ Event system added');
   }
 
-  // Add location polyfill if it doesn't exist
+  // Minimal location polyfill
   if (typeof (global as any).window.location === 'undefined') {
-    console.log('🔧 Adding window.location polyfill for native platform');
+    console.log('🔧 Adding location polyfill...');
     (global as any).window.location = {
-      href: '',
+      href: 'https://localhost/',
       protocol: 'https:',
       host: 'localhost',
       hostname: 'localhost',
@@ -88,20 +113,28 @@ if (Platform.OS !== 'web') {
       search: '',
       hash: '',
       origin: 'https://localhost',
+      assign: () => {},
+      reload: () => {},
+      replace: () => {},
     };
+    console.log('✅ Location polyfill added');
   }
 
-  // Add document polyfill if it doesn't exist
+  // Minimal document polyfill
   if (typeof (global as any).document === 'undefined') {
-    console.log('🔧 Adding document polyfill for native platform');
+    console.log('🔧 Adding document polyfill...');
     (global as any).document = {
       addEventListener: (global as any).window.addEventListener,
       removeEventListener: (global as any).window.removeEventListener,
       dispatchEvent: (global as any).window.dispatchEvent,
       createElement: () => ({}),
       createEvent: () => ({ type: '', initEvent: () => {} }),
+      documentElement: {},
+      body: {},
+      head: {},
     };
+    console.log('✅ Document polyfill added');
   }
 }
 
-console.log('✅ Polyfills loaded successfully');
+console.log('✅ ========== POLYFILLS LOADED SUCCESSFULLY ==========');

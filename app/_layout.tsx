@@ -1,6 +1,6 @@
 
-import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, View, Text, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -13,8 +13,50 @@ import { Web3Provider } from '@/components/Web3Provider';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch((error) => {
-  console.warn('Error preventing splash screen auto-hide:', error);
+  console.warn('⚠️ Error preventing splash screen auto-hide:', error);
 });
+
+// Error Boundary Component
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const errorHandler = (event: ErrorEvent) => {
+      console.error('❌ Global error caught:', event.error);
+      setHasError(true);
+      setError(event.error);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', errorHandler);
+      return () => window.removeEventListener('error', errorHandler);
+    }
+  }, []);
+
+  if (hasError) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#1a1a2e' }}>
+        <Text style={{ color: '#ff6b6b', fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+          ⚠️ Application Error
+        </Text>
+        <Text style={{ color: '#fff', fontSize: 14, textAlign: 'center', marginBottom: 10 }}>
+          {error?.message || 'An unexpected error occurred'}
+        </Text>
+        {error?.stack && (
+          <Text style={{ color: '#666', fontSize: 10, textAlign: 'center', marginTop: 10 }}>
+            {error.stack.split('\n').slice(0, 3).join('\n')}
+          </Text>
+        )}
+        <Text style={{ color: '#888', fontSize: 12, marginTop: 20, textAlign: 'center' }}>
+          Please restart the app
+        </Text>
+      </View>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   console.log('🎨 RootLayout: Initializing...');
@@ -33,16 +75,24 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       console.log('✅ Fonts loaded, hiding splash screen');
-      SplashScreen.hideAsync().catch((hideError) => {
-        console.warn('Error hiding splash screen:', hideError);
-      });
+      // Add a small delay to ensure everything is ready
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch((hideError) => {
+          console.warn('⚠️ Error hiding splash screen:', hideError);
+        });
+      }, 100);
     }
   }, [loaded]);
 
-  // Don't render anything until fonts are loaded
+  // Show loading indicator while fonts are loading
   if (!loaded && !error) {
     console.log('⏳ Waiting for fonts to load...');
-    return null;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
+        <ActivityIndicator size="large" color="#4ecdc4" />
+        <Text style={{ color: '#fff', marginTop: 20 }}>Loading...</Text>
+      </View>
+    );
   }
 
   console.log('🚀 RootLayout: Fonts loaded =', loaded);
@@ -61,19 +111,21 @@ export default function RootLayout() {
     </Stack>
   );
 
-  // Core providers
+  // Core providers wrapped in error boundary
   const CoreProviders = (
-    <AuthProvider>
-      <LanguageProvider>
-        <PreSaleProvider>
-          <WalletProvider>
-            <WidgetProvider>
-              {AppStack}
-            </WidgetProvider>
-          </WalletProvider>
-        </PreSaleProvider>
-      </LanguageProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <LanguageProvider>
+          <PreSaleProvider>
+            <WalletProvider>
+              <WidgetProvider>
+                {AppStack}
+              </WidgetProvider>
+            </WalletProvider>
+          </PreSaleProvider>
+        </LanguageProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 
   // Only wrap with Web3Provider on web

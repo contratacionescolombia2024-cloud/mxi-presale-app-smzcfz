@@ -14,6 +14,7 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
+      // Module resolver should come first
       [
         "module-resolver",
         {
@@ -43,8 +44,10 @@ module.exports = function (api) {
           },
         },
       ],
-      ...EDITABLE_COMPONENTS,
+      // Export namespace plugin
       "@babel/plugin-proposal-export-namespace-from",
+      // Editable components (dev only)
+      ...EDITABLE_COMPONENTS,
     ],
   };
 };

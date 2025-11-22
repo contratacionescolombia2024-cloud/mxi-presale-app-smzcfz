@@ -1,6 +1,5 @@
 
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
@@ -38,6 +37,7 @@ config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
   unstable_conditionNames: ['react-native', 'browser', 'require'],
+  
   // Ensure platform-specific extensions are resolved correctly
   sourceExts: [
     'native.tsx',
@@ -62,10 +62,8 @@ config.resolver = {
   ],
   
   resolveRequest: (context, moduleName, platform) => {
-    // CRITICAL: Block Web3 packages on native platforms FIRST
-    // This prevents metro from trying to resolve their dependencies
+    // Block Web3 packages on native platforms
     if (platform !== 'web') {
-      // Check if this is a Web3 package or a subpath of one
       for (const pkg of WEB3_PACKAGES) {
         if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
           console.log(`🚫 Metro: Blocking ${moduleName} on ${platform}`);
@@ -74,7 +72,7 @@ config.resolver = {
       }
     }
     
-    // CRITICAL: Block native-only packages on web platform
+    // Block native-only packages on web platform
     if (platform === 'web') {
       for (const pkg of NATIVE_ONLY_PACKAGES) {
         if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
@@ -88,24 +86,6 @@ config.resolver = {
         if (moduleName === module) {
           console.log(`🚫 Metro: Blocking native-only internal module ${moduleName} on web`);
           return { type: 'empty' };
-        }
-      }
-    }
-    
-    // Handle .js extensions in TypeScript imports
-    if (moduleName.endsWith('.js')) {
-      const withoutExtension = moduleName.replace(/\.js$/, '');
-      try {
-        return context.resolveRequest(context, withoutExtension, platform);
-      } catch (e) {
-        try {
-          return context.resolveRequest(context, withoutExtension + '.ts', platform);
-        } catch (e2) {
-          try {
-            return context.resolveRequest(context, withoutExtension + '.tsx', platform);
-          } catch (e3) {
-            // Fall through to default resolution
-          }
         }
       }
     }

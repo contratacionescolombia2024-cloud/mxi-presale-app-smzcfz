@@ -1,15 +1,21 @@
 
-// CRITICAL: Absolute minimal entry point
-// This file should do NOTHING except start expo-router
+// CRITICAL: Ultra-minimal entry point
+// This file must do NOTHING except load polyfills and start expo-router
+// NO imports of app code, NO side effects, NO native module access
 
-console.log('🚀 MXI Presale App - Entry Point');
-console.log('📦 Loading polyfills...');
+console.log('🚀 ========== APP STARTING ==========');
+console.log('📍 Entry point: index.ts');
+console.log('⏰ Time:', new Date().toISOString());
 
-// Load polyfills FIRST - this must happen before anything else
+// Step 1: Load polyfills (pure JavaScript, no native modules)
+console.log('📦 Step 1: Loading polyfills...');
 import './polyfills';
+console.log('✅ Step 1 Complete: Polyfills loaded');
 
-console.log('✅ Polyfills loaded');
-console.log('🎯 Starting Expo Router...');
-
-// Start expo-router - this is the ONLY thing this file should do after polyfills
+// Step 2: Start Expo Router (this initializes React Native)
+console.log('🎯 Step 2: Starting Expo Router...');
+console.log('⚠️  If the app crashes here, the issue is in expo-router initialization');
 import 'expo-router/entry';
+console.log('✅ Step 2 Complete: Expo Router started');
+
+console.log('🚀 ========== APP STARTED SUCCESSFULLY ==========');
