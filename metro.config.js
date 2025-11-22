@@ -17,16 +17,20 @@ config.resolver = {
   unstable_conditionNames: ['react-native', 'browser', 'require'],
   sourceExts: [...(config.resolver?.sourceExts || []), 'mjs', 'cjs'],
   
-  // Blacklist problematic packages on native platforms
-  blockList: [
-    // Block porto connector on native platforms (it only works on web)
-    /node_modules\/porto\/.*/,
-    /node_modules\/@wagmi\/connectors\/dist\/esm\/porto\.js/,
-  ],
-  
   resolveRequest: (context, moduleName, platform) => {
-    // Skip porto imports on native platforms
-    if (platform !== 'web' && (moduleName.includes('porto') || moduleName.includes('ox/'))) {
+    // Handle porto connector - return empty module on all platforms
+    // Porto is a web-only connector that's not needed for this app
+    if (moduleName.includes('../porto.js') || 
+        moduleName.includes('porto.js') || 
+        moduleName === 'porto' ||
+        moduleName.includes('@wagmi/connectors/dist/esm/porto')) {
+      return {
+        type: 'empty',
+      };
+    }
+    
+    // Handle ox package imports (dependency of porto)
+    if (moduleName.includes('ox/') || moduleName.includes('ox\\')) {
       return {
         type: 'empty',
       };
