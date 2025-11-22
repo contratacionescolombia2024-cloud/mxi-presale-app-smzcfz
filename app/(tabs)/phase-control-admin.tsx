@@ -112,31 +112,61 @@ export default function PhaseControlAdminScreen() {
           onPress: async () => {
             setResetting(true);
             try {
-              console.log('🔄 Resetting global vesting rewards...');
+              console.log('🔄 ========== RESET VESTING REWARDS STARTED ==========');
+              console.log('🔄 Calling admin_reset_global_vesting_rewards RPC function...');
               
+              // Call the RPC function - it returns JSONB directly
               const { data, error } = await supabase.rpc('admin_reset_global_vesting_rewards');
 
+              console.log('📊 RPC Response:', { data, error });
+
               if (error) {
-                console.error('❌ Error resetting vesting rewards:', error);
-                throw error;
+                console.error('❌ RPC Error:', error);
+                console.error('❌ Error details:', JSON.stringify(error, null, 2));
+                throw new Error(`Database error: ${error.message || 'Unknown error'}`);
               }
 
-              console.log('✅ Vesting rewards reset response:', data);
+              // The data IS the JSONB object returned by the function
+              console.log('✅ RPC call successful, response data:', data);
 
-              if (data && data.success) {
-                Alert.alert(
-                  t('success'),
-                  `${t('vestingResetSuccess')}\n\n` +
-                  `Users affected: ${data.affected_users}\n` +
-                  `Total rewards reset: ${data.total_rewards_reset} MXI`
-                );
-                await loadData();
+              // Check if the response indicates success
+              if (data && typeof data === 'object') {
+                if (data.success === true) {
+                  console.log('✅ Vesting rewards reset successfully!');
+                  console.log('📊 Affected users:', data.affected_users);
+                  console.log('📊 Total rewards reset:', data.total_rewards_reset);
+                  
+                  Alert.alert(
+                    t('success'),
+                    `${t('vestingResetSuccess')}\n\n` +
+                    `Users affected: ${data.affected_users || 0}\n` +
+                    `Total rewards reset: ${parseFloat(data.total_rewards_reset || 0).toFixed(4)} MXI`
+                  );
+                  
+                  // Reload data to reflect changes
+                  await loadData();
+                } else {
+                  // Function returned success: false
+                  console.error('❌ Function returned failure:', data);
+                  throw new Error(data.error || data.message || 'Failed to reset vesting rewards');
+                }
               } else {
-                throw new Error(data?.error || 'Failed to reset vesting rewards');
+                // Unexpected response format
+                console.error('❌ Unexpected response format:', data);
+                throw new Error('Unexpected response from server');
               }
+              
+              console.log('✅ ========== RESET VESTING REWARDS COMPLETED ==========');
             } catch (error: any) {
-              console.error('❌ Exception resetting vesting rewards:', error);
-              Alert.alert(t('error'), error.message || t('vestingResetFailed'));
+              console.error('❌ ========== RESET VESTING REWARDS FAILED ==========');
+              console.error('❌ Exception:', error);
+              console.error('❌ Error message:', error.message);
+              console.error('❌ Error stack:', error.stack);
+              
+              Alert.alert(
+                t('error'), 
+                error.message || t('vestingResetFailed') || 'Failed to reset vesting rewards. Please try again.'
+              );
             } finally {
               setResetting(false);
             }
