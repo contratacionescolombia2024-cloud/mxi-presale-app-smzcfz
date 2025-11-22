@@ -43,4 +43,10 @@ if (typeof global.process !== 'undefined' && typeof global.process.version === '
   console.log('✅ Process version set');
 }
 
+// Ensure process.env exists
+if (typeof global.process !== 'undefined' && typeof global.process.env === 'undefined') {
+  global.process.env = {};
+  console.log('✅ Process env initialized');
+}
+
 console.log('✅ ========== POLYFILLS LOADED SUCCESSFULLY ==========');

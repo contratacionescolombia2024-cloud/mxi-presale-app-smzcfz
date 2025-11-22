@@ -30,7 +30,12 @@
       "favicon": "./assets/images/natively-dark.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "https://natively.dev"
+        }
+      ],
       [
         "expo-font",
         {

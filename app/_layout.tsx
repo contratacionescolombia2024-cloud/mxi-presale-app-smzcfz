@@ -120,9 +120,7 @@ export default function RootLayout() {
       <Stack.Screen name="ecosystem" />
       <Stack.Screen name="games" />
       <Stack.Screen name="mini-battle-game" />
-      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="formsheet" options={{ presentation: 'formSheet' }} />
-      <Stack.Screen name="transparent-modal" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+      <Stack.Screen name="+not-found" />
     </Stack>
   );
 
