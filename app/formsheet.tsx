@@ -1,6 +1,6 @@
+
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '@react-navigation/native';
 
 export default function FormSheetModal() {
@@ -17,9 +17,20 @@ export default function FormSheetModal() {
       <Text style={[styles.text, { color: theme.colors.text }]}>Drag the grabber to resize!</Text>
 
       <Pressable onPress={() => router.back()}>
-        <GlassView style={styles.button} glassEffectStyle="clear">
+        <View style={[
+          styles.button,
+          {
+            backgroundColor: theme.dark
+              ? 'rgba(255, 255, 255, 0.1)'
+              : 'rgba(0, 0, 0, 0.05)',
+            borderWidth: 1,
+            borderColor: theme.dark
+              ? 'rgba(255, 255, 255, 0.2)'
+              : 'rgba(0, 0, 0, 0.1)',
+          }
+        ]}>
           <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Close Modal</Text>
-        </GlassView>
+        </View>
       </Pressable>
     </View>
   );
