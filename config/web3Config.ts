@@ -1,9 +1,6 @@
 
-import { createWeb3Modal } from '@web3modal/wagmi/react';
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-import { bsc } from 'wagmi/chains';
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// Native (iOS/Android) version - Web3Modal is not supported on native platforms
+// This file provides the constants and types but no actual Web3Modal functionality
 
 // WalletConnect Project ID - Replace with your actual project ID
 export const WALLETCONNECT_PROJECT_ID = 'YOUR_WALLETCONNECT_PROJECT_ID';
@@ -45,38 +42,15 @@ export const USDT_ABI = [
   },
 ];
 
-// Wagmi configuration
-const metadata = {
-  name: 'MXI Presale',
-  description: 'MXI Token Presale Platform',
-  url: 'https://mxistrategic.live',
-  icons: ['https://mxistrategic.live/icon.png'],
-};
+// Dummy wagmi config for native platforms
+export const wagmiConfig = null;
 
-export const wagmiConfig = defaultWagmiConfig({
-  chains: [bsc],
-  projectId: WALLETCONNECT_PROJECT_ID,
-  metadata,
-});
-
-// Create Web3Modal instance
-let web3Modal: any = null;
-
+// Dummy init function for native platforms
 export function initWeb3Modal() {
-  if (typeof window !== 'undefined' && !web3Modal) {
-    web3Modal = createWeb3Modal({
-      wagmiConfig,
-      projectId: WALLETCONNECT_PROJECT_ID,
-      chains: [bsc],
-      themeMode: 'dark',
-      themeVariables: {
-        '--w3m-accent': '#8B5CF6',
-        '--w3m-border-radius-master': '12px',
-      },
-    });
-  }
-  return web3Modal;
+  console.log('Web3Modal is only available on web platform');
+  return null;
 }
 
 // Query client for React Query
+import { QueryClient } from '@tanstack/react-query';
 export const queryClient = new QueryClient();
