@@ -335,49 +335,56 @@ export default function AdminUsersTableScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Sort Options */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortBar}>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'name' && styles.sortChipActive]}
-          onPress={() => handleSort('name')}
+      {/* Sort Options - FIXED: Better spacing and full visibility */}
+      <View style={styles.sortBarContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.sortBar}
+          contentContainerStyle={styles.sortBarContent}
         >
-          <Text style={[styles.sortChipText, sortField === 'name' && styles.sortChipTextActive]}>
-            Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'total_mxi' && styles.sortChipActive]}
-          onPress={() => handleSort('total_mxi')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'total_mxi' && styles.sortChipTextActive]}>
-            Total MXI {sortField === 'total_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'purchased_mxi' && styles.sortChipActive]}
-          onPress={() => handleSort('purchased_mxi')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'purchased_mxi' && styles.sortChipTextActive]}>
-            Purchased {sortField === 'purchased_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'total_deposits' && styles.sortChipActive]}
-          onPress={() => handleSort('total_deposits')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'total_deposits' && styles.sortChipTextActive]}>
-            Deposits {sortField === 'total_deposits' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sortChip, sortField === 'created_at' && styles.sortChipActive]}
-          onPress={() => handleSort('created_at')}
-        >
-          <Text style={[styles.sortChipText, sortField === 'created_at' && styles.sortChipTextActive]}>
-            Date {sortField === 'created_at' && (sortDirection === 'asc' ? '↑' : '↓')}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'name' && styles.sortChipActive]}
+            onPress={() => handleSort('name')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'name' && styles.sortChipTextActive]}>
+              Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'total_mxi' && styles.sortChipActive]}
+            onPress={() => handleSort('total_mxi')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'total_mxi' && styles.sortChipTextActive]}>
+              Total MXI {sortField === 'total_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'purchased_mxi' && styles.sortChipActive]}
+            onPress={() => handleSort('purchased_mxi')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'purchased_mxi' && styles.sortChipTextActive]}>
+              Purchased {sortField === 'purchased_mxi' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'total_deposits' && styles.sortChipActive]}
+            onPress={() => handleSort('total_deposits')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'total_deposits' && styles.sortChipTextActive]}>
+              Deposits {sortField === 'total_deposits' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sortChip, sortField === 'created_at' && styles.sortChipActive]}
+            onPress={() => handleSort('created_at')}
+          >
+            <Text style={[styles.sortChipText, sortField === 'created_at' && styles.sortChipTextActive]}>
+              Date {sortField === 'created_at' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
 
       {/* User Table */}
       <ScrollView 
@@ -407,93 +414,91 @@ export default function AdminUsersTableScreen() {
             )}
           </View>
         ) : (
-          <React.Fragment>
-            {filteredUsers.map((user) => (
-              <TouchableOpacity
-                key={user.id}
-                style={styles.userCard}
-                onPress={() => {
-                  setSelectedUser(user);
-                  setShowUserModal(true);
-                }}
-              >
-                <View style={styles.userCardHeader}>
-                  <View style={styles.userCardHeaderLeft}>
-                    <Text style={styles.userName}>{user.name}</Text>
-                    <View style={[
-                      styles.kycBadge,
-                      user.kyc_status === 'approved' && styles.kycBadgeApproved,
-                      user.kyc_status === 'rejected' && styles.kycBadgeRejected,
-                      user.kyc_status === 'pending' && styles.kycBadgePending,
-                    ]}>
-                      <Text style={styles.kycBadgeText}>{user.kyc_status.toUpperCase()}</Text>
-                    </View>
+          filteredUsers.map((user) => (
+            <TouchableOpacity
+              key={user.id}
+              style={styles.userCard}
+              onPress={() => {
+                setSelectedUser(user);
+                setShowUserModal(true);
+              }}
+            >
+              <View style={styles.userCardHeader}>
+                <View style={styles.userCardHeaderLeft}>
+                  <Text style={styles.userName}>{user.name}</Text>
+                  <View style={[
+                    styles.kycBadge,
+                    user.kyc_status === 'approved' && styles.kycBadgeApproved,
+                    user.kyc_status === 'rejected' && styles.kycBadgeRejected,
+                    user.kyc_status === 'pending' && styles.kycBadgePending,
+                  ]}>
+                    <Text style={styles.kycBadgeText}>{user.kyc_status.toUpperCase()}</Text>
                   </View>
+                </View>
+                <IconSymbol 
+                  ios_icon_name="chevron.right" 
+                  android_material_icon_name="chevron_right" 
+                  size={24} 
+                  color={colors.textSecondary} 
+                />
+              </View>
+
+              <Text style={styles.userEmail}>{user.email}</Text>
+
+              <View style={styles.userStats}>
+                <View style={styles.statItem}>
                   <IconSymbol 
-                    ios_icon_name="chevron.right" 
-                    android_material_icon_name="chevron_right" 
-                    size={24} 
-                    color={colors.textSecondary} 
+                    ios_icon_name="bitcoinsign.circle.fill" 
+                    android_material_icon_name="currency_bitcoin" 
+                    size={16} 
+                    color={colors.primary} 
                   />
+                  <Text style={styles.statLabel}>Total MXI:</Text>
+                  <Text style={styles.statValue}>{user.total_mxi.toFixed(2)}</Text>
                 </View>
-
-                <Text style={styles.userEmail}>{user.email}</Text>
-
-                <View style={styles.userStats}>
-                  <View style={styles.statItem}>
-                    <IconSymbol 
-                      ios_icon_name="bitcoinsign.circle.fill" 
-                      android_material_icon_name="currency_bitcoin" 
-                      size={16} 
-                      color={colors.primary} 
-                    />
-                    <Text style={styles.statLabel}>Total MXI:</Text>
-                    <Text style={styles.statValue}>{user.total_mxi.toFixed(2)}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <IconSymbol 
-                      ios_icon_name="cart.fill" 
-                      android_material_icon_name="shopping_cart" 
-                      size={16} 
-                      color={colors.secondary} 
-                    />
-                    <Text style={styles.statLabel}>Purchased:</Text>
-                    <Text style={styles.statValue}>{user.purchased_mxi.toFixed(2)}</Text>
-                  </View>
+                <View style={styles.statItem}>
+                  <IconSymbol 
+                    ios_icon_name="cart.fill" 
+                    android_material_icon_name="shopping_cart" 
+                    size={16} 
+                    color={colors.secondary} 
+                  />
+                  <Text style={styles.statLabel}>Purchased:</Text>
+                  <Text style={styles.statValue}>{user.purchased_mxi.toFixed(2)}</Text>
                 </View>
+              </View>
 
-                <View style={styles.userStats}>
-                  <View style={styles.statItem}>
-                    <IconSymbol 
-                      ios_icon_name="gift.fill" 
-                      android_material_icon_name="card_giftcard" 
-                      size={16} 
-                      color={colors.accent} 
-                    />
-                    <Text style={styles.statLabel}>Commissions:</Text>
-                    <Text style={styles.statValue}>{user.commission_balance.toFixed(2)}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <IconSymbol 
-                      ios_icon_name="dollarsign.circle.fill" 
-                      android_material_icon_name="attach_money" 
-                      size={16} 
-                      color={colors.success} 
-                    />
-                    <Text style={styles.statLabel}>Deposits:</Text>
-                    <Text style={styles.statValue}>${user.total_deposits.toFixed(2)}</Text>
-                  </View>
+              <View style={styles.userStats}>
+                <View style={styles.statItem}>
+                  <IconSymbol 
+                    ios_icon_name="gift.fill" 
+                    android_material_icon_name="card_giftcard" 
+                    size={16} 
+                    color={colors.accent} 
+                  />
+                  <Text style={styles.statLabel}>Commissions:</Text>
+                  <Text style={styles.statValue}>{user.commission_balance.toFixed(2)}</Text>
                 </View>
+                <View style={styles.statItem}>
+                  <IconSymbol 
+                    ios_icon_name="dollarsign.circle.fill" 
+                    android_material_icon_name="attach_money" 
+                    size={16} 
+                    color={colors.success} 
+                  />
+                  <Text style={styles.statLabel}>Deposits:</Text>
+                  <Text style={styles.statValue}>${user.total_deposits.toFixed(2)}</Text>
+                </View>
+              </View>
 
-                <View style={styles.userFooter}>
-                  <Text style={styles.userCode}>Code: {user.referral_code}</Text>
-                  {user.referred_by && (
-                    <Text style={styles.userReferrer}>Ref: {user.referred_by}</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </React.Fragment>
+              <View style={styles.userFooter}>
+                <Text style={styles.userCode}>Code: {user.referral_code}</Text>
+                {user.referred_by && (
+                  <Text style={styles.userReferrer}>Ref: {user.referred_by}</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
 
@@ -518,7 +523,7 @@ export default function AdminUsersTableScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false}>
               {/* KYC Status Filter */}
               <Text style={styles.filterLabel}>KYC Status</Text>
               <View style={styles.filterOptions}>
@@ -667,7 +672,7 @@ export default function AdminUsersTableScreen() {
             </View>
 
             {selectedUser && (
-              <ScrollView>
+              <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.detailSection}>
                   <Text style={styles.detailName}>{selectedUser.name}</Text>
                   <Text style={styles.detailEmail}>{selectedUser.email}</Text>
@@ -830,22 +835,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.card,
   },
-  sortBar: {
-    paddingHorizontal: 20,
+  sortBarContainer: {
     marginBottom: 16,
+    height: 56,
+  },
+  sortBar: {
+    flexGrow: 0,
+  },
+  sortBarContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    alignItems: 'center',
   },
   sortChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
     backgroundColor: colors.card,
-    marginRight: 8,
+    marginRight: 10,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sortChipActive: {
     backgroundColor: colors.primary,
   },
   sortChipText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.text,
   },
@@ -1004,14 +1020,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     flexWrap: 'wrap',
+    marginBottom: 8,
   },
   filterOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     borderRadius: 20,
     backgroundColor: colors.background,
     borderWidth: 2,
     borderColor: colors.border,
+    minWidth: 80,
+    alignItems: 'center',
   },
   filterOptionActive: {
     backgroundColor: colors.primary,
@@ -1029,6 +1048,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginBottom: 8,
   },
   rangeInput: {
     flex: 1,
@@ -1048,6 +1068,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 24,
+    marginBottom: 20,
   },
   clearButton: {
     flex: 1,

@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { useColorScheme, Alert, AppState, Platform } from "react-native";
+import { useColorScheme, AppState } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useNetworkState } from "expo-network";
@@ -17,10 +17,9 @@ import {
   Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useFonts } from "expo-font";
 import * as Linking from "expo-linking";
-import Head from "expo-router/head";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -132,11 +131,6 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {Platform.OS === 'web' && (
-        <Head>
-          <meta name="cryptomus" content="b621b29c" />
-        </Head>
-      )}
       <LanguageProvider>
         <AuthProvider>
           <PreSaleProvider>

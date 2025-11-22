@@ -4,6 +4,11 @@
 
 console.log('🔧 Loading polyfills...');
 
+// Import statements instead of require()
+import { Buffer } from 'buffer';
+import process from 'process/browser.js';
+import { EventEmitter } from 'events';
+
 // Get reference to the global object
 const getGlobal = (): any => {
   if (typeof globalThis !== 'undefined') return globalThis;
@@ -30,7 +35,6 @@ console.log('✅ Global object configured');
 
 // Import and configure Buffer
 try {
-  const { Buffer } = require('buffer');
   globalObj.Buffer = Buffer;
   if (typeof window !== 'undefined') {
     (window as any).Buffer = Buffer;
@@ -59,7 +63,6 @@ try {
 
 // Import and configure process
 try {
-  const process = require('process/browser.js');
   if (!globalObj.process) {
     globalObj.process = process;
   }
@@ -96,7 +99,7 @@ try {
     versions: {},
     platform: 'browser',
     browser: true,
-    nextTick: (fn: any, ...args: any[]) => setTimeout(() => fn(...args), 0),
+    nextTick: (fn: (...args: any[]) => void, ...args: any[]) => setTimeout(() => fn(...args), 0),
   };
   globalObj.process = minimalProcess;
   console.log('⚠️ Using minimal process polyfill');
@@ -104,7 +107,6 @@ try {
 
 // Import and configure EventEmitter
 try {
-  const { EventEmitter } = require('events');
   globalObj.EventEmitter = EventEmitter;
   if (typeof window !== 'undefined') {
     (window as any).EventEmitter = EventEmitter;
@@ -117,9 +119,9 @@ try {
   console.error('❌ Failed to load events module:', error);
   // Create a minimal EventEmitter polyfill as fallback
   const MinimalEventEmitter = class EventEmitter {
-    private events: Map<string, Function[]> = new Map();
+    private events: Map<string, Array<(...args: any[]) => void>> = new Map();
     
-    on(event: string, listener: Function) {
+    on(event: string, listener: (...args: any[]) => void) {
       if (!this.events.has(event)) {
         this.events.set(event, []);
       }
@@ -133,7 +135,7 @@ try {
       }
     }
     
-    removeListener(event: string, listener: Function) {
+    removeListener(event: string, listener: (...args: any[]) => void) {
       const listeners = this.events.get(event);
       if (listeners) {
         const index = listeners.indexOf(listener);

@@ -14,10 +14,8 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Linking,
 } from 'react-native';
 import React, { useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -135,71 +133,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  paymentMethodsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  paymentMethods: {
-    gap: 16,
-  },
-  paymentButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  paymentButtonSelected: {
-    borderColor: colors.primary,
-  },
-  paymentGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  paymentLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    flex: 1,
-  },
-  paymentIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paymentInfo: {
-    flex: 1,
-  },
-  paymentName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  paymentDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  paymentPrice: {
-    alignItems: 'flex-end',
-  },
-  paymentPriceLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  paymentPriceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
   purchaseButton: {
     ...buttonStyles.primary,
     marginTop: 16,
@@ -252,7 +185,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  cryptomusInfo: {
+  paymentInfo: {
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
@@ -260,17 +193,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  cryptomusInfoTitle: {
+  paymentInfoTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
     marginBottom: 8,
   },
-  cryptomusInfoText: {
+  paymentInfoText: {
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 4,
+  },
+  noticeCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: colors.warning,
+  },
+  noticeTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.warning,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  noticeText: {
+    fontSize: 14,
+    color: colors.text,
+    lineHeight: 22,
+    textAlign: 'center',
   },
 });
 
@@ -278,7 +232,6 @@ export default function PurchaseScreen() {
   const { currentStage, purchaseMXI, isLoading } = usePreSale();
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'cryptomus' | null>(null);
   const [loading, setLoading] = useState(false);
 
   const calculateMXI = () => {
@@ -298,23 +251,17 @@ export default function PurchaseScreen() {
       return;
     }
 
-    if (!paymentMethod) {
-      Alert.alert(t('selectPaymentMethodAlert'), t('pleaseSelectPaymentMethod'));
-      return;
-    }
-
     setLoading(true);
     try {
-      await purchaseMXI(amountNum, paymentMethod);
+      await purchaseMXI(amountNum, 'manual');
       Alert.alert(
         t('purchaseInitiated'),
-        t('cryptomusPurchaseMessage'),
+        'Your purchase request has been recorded. Please contact the administrator to complete the payment process.',
         [
           {
             text: t('ok'),
             onPress: () => {
               setAmount('');
-              setPaymentMethod(null);
             },
           },
         ]
@@ -356,7 +303,7 @@ export default function PurchaseScreen() {
   }
 
   const mxiAmount = calculateMXI();
-  const canPurchase = mxiAmount > 0 && paymentMethod && !loading;
+  const canPurchase = mxiAmount > 0 && !loading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -364,6 +311,14 @@ export default function PurchaseScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>{t('purchaseMXI')}</Text>
           <Text style={styles.subtitle}>{t('buyMXITokens')}</Text>
+        </View>
+
+        <View style={styles.noticeCard}>
+          <Text style={styles.noticeTitle}>⚠️ Payment Notice</Text>
+          <Text style={styles.noticeText}>
+            To purchase MXI tokens, please enter the amount below and submit your request. 
+            Our team will contact you with payment instructions and complete your purchase.
+          </Text>
         </View>
 
         <View style={styles.stageCard}>
@@ -428,51 +383,13 @@ export default function PurchaseScreen() {
             </View>
           )}
 
-          <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
-          <View style={styles.paymentMethods}>
-            <TouchableOpacity
-              style={[
-                styles.paymentButton,
-                paymentMethod === 'cryptomus' && styles.paymentButtonSelected,
-              ]}
-              onPress={() => setPaymentMethod('cryptomus')}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={['#6C5CE7', '#A29BFE']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.paymentGradient}
-              >
-                <View style={styles.paymentLeft}>
-                  <View style={styles.paymentIconContainer}>
-                    <IconSymbol 
-                      ios_icon_name="bitcoinsign.circle.fill" 
-                      android_material_icon_name="currency_bitcoin" 
-                      size={28} 
-                      color="#FFFFFF" 
-                    />
-                  </View>
-                  <View style={styles.paymentInfo}>
-                    <Text style={styles.paymentName}>{t('cryptomus')}</Text>
-                    <Text style={styles.paymentDescription}>{t('cryptomusDescription')}</Text>
-                  </View>
-                </View>
-                <View style={styles.paymentPrice}>
-                  <Text style={styles.paymentPriceLabel}>{t('currentPrice')}</Text>
-                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.cryptomusInfo}>
-            <Text style={styles.cryptomusInfoTitle}>ℹ️ {t('cryptomusInfoTitle')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo1')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo2')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo3')}</Text>
-            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo4')}</Text>
+          <View style={styles.paymentInfo}>
+            <Text style={styles.paymentInfoTitle}>ℹ️ How to Purchase</Text>
+            <Text style={styles.paymentInfoText}>• Enter the amount you wish to purchase</Text>
+            <Text style={styles.paymentInfoText}>• Submit your purchase request</Text>
+            <Text style={styles.paymentInfoText}>• Our team will contact you with payment details</Text>
+            <Text style={styles.paymentInfoText}>• Complete the payment as instructed</Text>
+            <Text style={styles.paymentInfoText}>• Your MXI tokens will be credited after confirmation</Text>
           </View>
 
           <TouchableOpacity
@@ -484,7 +401,7 @@ export default function PurchaseScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.purchaseButtonText}>
-                {paymentMethod ? `${t('completePurchaseVia')} ${t('cryptomus')}` : t('selectPaymentMethodButton')}
+                Submit Purchase Request
               </Text>
             )}
           </TouchableOpacity>

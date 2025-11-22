@@ -49,6 +49,22 @@ export const translations = {
     pleaseTryAgain: 'Please try again.',
     enterBothEmailPassword: 'Please enter both email and password',
     
+    // Wallet
+    connectWallet: 'Connect Wallet',
+    disconnect: 'Disconnect',
+    network: 'Network',
+    availableBalance: 'Available Balance',
+    webOnlyFeature: 'Web Only Feature',
+    cryptoWalletWebOnly: 'Cryptocurrency wallet integration is only available on web browsers.',
+    pleaseUseWebVersion: 'Please use the web version of this app to connect your wallet.',
+    walletConnectedSuccess: 'Wallet Connected Successfully',
+    successfullyConnectedTo: 'Successfully connected to',
+    address: 'Address',
+    connectionFailed: 'Connection Failed',
+    chooseWalletToConnect: 'Choose a wallet to connect',
+    browserExtensionWallet: 'Browser extension wallet',
+    trustWalletAndMore: 'Trust Wallet and more',
+    
     // Home Screen
     yourMXIDashboard: 'Your MXI Dashboard',
     mxiTokenLaunch: 'MXI Token Launch',
@@ -122,7 +138,6 @@ export const translations = {
     accountInformation: 'Account Information',
     referralCode: 'Referral Code',
     identification: 'Identification',
-    address: 'Address',
     memberSince: 'Member Since',
     verified: 'Verified',
     notVerified: 'Not Verified',
@@ -302,6 +317,22 @@ export const translations = {
     pleaseTryAgain: 'Por favor, inténtalo de nuevo.',
     enterBothEmailPassword: 'Por favor ingresa correo y contraseña',
     
+    // Wallet
+    connectWallet: 'Conectar Billetera',
+    disconnect: 'Desconectar',
+    network: 'Red',
+    availableBalance: 'Saldo Disponible',
+    webOnlyFeature: 'Función Solo Web',
+    cryptoWalletWebOnly: 'La integración de billetera de criptomonedas solo está disponible en navegadores web.',
+    pleaseUseWebVersion: 'Por favor usa la versión web de esta aplicación para conectar tu billetera.',
+    walletConnectedSuccess: 'Billetera Conectada Exitosamente',
+    successfullyConnectedTo: 'Conectado exitosamente a',
+    address: 'Dirección',
+    connectionFailed: 'Conexión Fallida',
+    chooseWalletToConnect: 'Elige una billetera para conectar',
+    browserExtensionWallet: 'Billetera de extensión del navegador',
+    trustWalletAndMore: 'Trust Wallet y más',
+    
     // Home Screen
     yourMXIDashboard: 'Tu Panel de MXI',
     mxiTokenLaunch: 'Lanzamiento del Token MXI',
@@ -375,7 +406,6 @@ export const translations = {
     accountInformation: 'Información de la Cuenta',
     referralCode: 'Código de Referido',
     identification: 'Identificación',
-    address: 'Dirección',
     memberSince: 'Miembro Desde',
     verified: 'Verificado',
     notVerified: 'No Verificado',
@@ -555,6 +585,22 @@ export const translations = {
     pleaseTryAgain: 'Por favor, tente novamente.',
     enterBothEmailPassword: 'Por favor, digite e-mail e senha',
     
+    // Wallet
+    connectWallet: 'Conectar Carteira',
+    disconnect: 'Desconectar',
+    network: 'Rede',
+    availableBalance: 'Saldo Disponível',
+    webOnlyFeature: 'Recurso Apenas Web',
+    cryptoWalletWebOnly: 'A integração de carteira de criptomoedas está disponível apenas em navegadores web.',
+    pleaseUseWebVersion: 'Por favor, use a versão web deste aplicativo para conectar sua carteira.',
+    walletConnectedSuccess: 'Carteira Conectada com Sucesso',
+    successfullyConnectedTo: 'Conectado com sucesso a',
+    address: 'Endereço',
+    connectionFailed: 'Falha na Conexão',
+    chooseWalletToConnect: 'Escolha uma carteira para conectar',
+    browserExtensionWallet: 'Carteira de extensão do navegador',
+    trustWalletAndMore: 'Trust Wallet e mais',
+    
     // Home Screen
     yourMXIDashboard: 'Seu Painel MXI',
     mxiTokenLaunch: 'Lançamento do Token MXI',
@@ -628,7 +674,6 @@ export const translations = {
     accountInformation: 'Informações da Conta',
     referralCode: 'Código de Indicação',
     identification: 'Identificação',
-    address: 'Endereço',
     memberSince: 'Membro Desde',
     verified: 'Verificado',
     notVerified: 'Não Verificado',
