@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Mxi Presale",
@@ -44,6 +45,5 @@
     "extra": {
       "router": {}
     }
-  },
-  "scheme": "Mxi Presale"
+  }
 }
