@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Mxi Presale",
@@ -25,7 +26,6 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/natively-dark.png"
     },
     "plugins": [

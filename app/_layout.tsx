@@ -1,6 +1,6 @@
 
-import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, View, Text, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,27 +12,53 @@ import { WidgetProvider } from '@/contexts/WidgetContext';
 import { Web3Provider } from '@/components/Web3Provider';
 
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(console.warn);
 
 export default function RootLayout() {
+  const [appReady, setAppReady] = useState(false);
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
     if (error) {
-      console.error('Font loading error:', error);
+      console.error('❌ Font loading error:', error);
     }
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    async function prepare() {
+      try {
+        // Wait for fonts to load
+        if (loaded || error) {
+          console.log('✅ Fonts loaded, preparing app...');
+          
+          // Give a small delay to ensure everything is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          setAppReady(true);
+          
+          // Hide splash screen
+          await SplashScreen.hideAsync();
+          console.log('✅ App ready, splash screen hidden');
+        }
+      } catch (e) {
+        console.error('❌ Error preparing app:', e);
+        setAppReady(true); // Set ready anyway to prevent infinite loading
+      }
     }
-  }, [loaded]);
 
-  if (!loaded && !error) {
-    return null;
+    prepare();
+  }, [loaded, error]);
+
+  // Show loading screen while preparing
+  if (!appReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
+        <ActivityIndicator size="large" color="#00d4ff" />
+        <Text style={{ color: '#fff', marginTop: 16 }}>Loading MXI Presale...</Text>
+      </View>
+    );
   }
 
   // Core app structure
