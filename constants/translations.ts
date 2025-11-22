@@ -81,6 +81,7 @@ export const translations = {
     
     // Profile
     editProfile: 'Edit Profile',
+    accountInformation: 'Account Information',
     name: 'Name',
     firstName: 'First Name',
     lastName: 'Last Name',
@@ -95,6 +96,16 @@ export const translations = {
     male: 'Male',
     female: 'Female',
     other: 'Other',
+    identification: 'Identification',
+    memberSince: 'Member Since',
+    emailVerified: 'Email Verified',
+    verified: 'Verified',
+    notVerified: 'Not Verified',
+    notSet: 'Not set',
+    kycStatus: 'KYC Status',
+    pending: 'Pending',
+    rejected: 'Rejected',
+    logoutConfirm: 'Are you sure you want to logout?',
     
     // Purchase
     purchaseMXI: 'Purchase MXI',
@@ -219,6 +230,7 @@ export const translations = {
     endDate: 'End Date',
     phase: 'Phase',
     kycVerification: 'KYC Verification',
+    messages: 'Messages',
   },
   es: {
     // App name
@@ -299,6 +311,7 @@ export const translations = {
     
     // Profile
     editProfile: 'Editar perfil',
+    accountInformation: 'Información de la Cuenta',
     name: 'Nombre',
     firstName: 'Nombre',
     lastName: 'Apellido',
@@ -313,6 +326,16 @@ export const translations = {
     male: 'Masculino',
     female: 'Femenino',
     other: 'Otro',
+    identification: 'Identificación',
+    memberSince: 'Miembro Desde',
+    emailVerified: 'Correo Verificado',
+    verified: 'Verificado',
+    notVerified: 'No Verificado',
+    notSet: 'No establecido',
+    kycStatus: 'Estado KYC',
+    pending: 'Pendiente',
+    rejected: 'Rechazado',
+    logoutConfirm: '¿Está seguro de que desea cerrar sesión?',
     
     // Purchase
     purchaseMXI: 'Comprar MXI',
@@ -437,6 +460,7 @@ export const translations = {
     endDate: 'Fecha de Finalización',
     phase: 'Fase',
     kycVerification: 'Verificación KYC',
+    messages: 'Mensajes',
   },
   pt: {
     // App name
@@ -517,6 +541,7 @@ export const translations = {
     
     // Profile
     editProfile: 'Editar Perfil',
+    accountInformation: 'Informações da Conta',
     name: 'Nome',
     firstName: 'Nome',
     lastName: 'Sobrenome',
@@ -531,6 +556,16 @@ export const translations = {
     male: 'Masculino',
     female: 'Feminino',
     other: 'Outro',
+    identification: 'Identificação',
+    memberSince: 'Membro Desde',
+    emailVerified: 'E-mail Verificado',
+    verified: 'Verificado',
+    notVerified: 'Não Verificado',
+    notSet: 'Não definido',
+    kycStatus: 'Status KYC',
+    pending: 'Pendente',
+    rejected: 'Rejeitado',
+    logoutConfirm: 'Tem certeza de que deseja sair?',
     
     // Purchase
     purchaseMXI: 'Comprar MXI',
@@ -655,5 +690,6 @@ export const translations = {
     endDate: 'Data de Término',
     phase: 'Fase',
     kycVerification: 'Verificação KYC',
+    messages: 'Mensagens',
   },
 };
