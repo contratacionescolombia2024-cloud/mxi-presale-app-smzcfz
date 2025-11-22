@@ -1,8 +1,4 @@
 
-// CRITICAL: Import polyfills FIRST
-import '../polyfills';
-import '../shims';
-
 import React, { useEffect } from "react";
 import { useColorScheme, AppState } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
@@ -13,7 +9,6 @@ import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PreSaleProvider } from "@/contexts/PreSaleContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { WalletProvider } from "@/contexts/WalletContext";
 import { startVestingBackgroundService, stopVestingBackgroundService } from "@/utils/vestingBackgroundService";
 import "react-native-reanimated";
 import {
@@ -139,16 +134,14 @@ export default function RootLayout() {
       <LanguageProvider>
         <AuthProvider>
           <PreSaleProvider>
-            <WalletProvider>
-              <ThemeProvider value={colorScheme === "dark" ? customDarkTheme : customLightTheme}>
-                <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
-                <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="(tabs)" />
-                </Stack>
-              </ThemeProvider>
-            </WalletProvider>
+            <ThemeProvider value={colorScheme === "dark" ? customDarkTheme : customLightTheme}>
+              <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
+              <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(tabs)" />
+              </Stack>
+            </ThemeProvider>
           </PreSaleProvider>
         </AuthProvider>
       </LanguageProvider>

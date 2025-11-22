@@ -1,47 +1,49 @@
-
 {
   "expo": {
-    "name": "MXI Presale",
-    "slug": "mxi-presale-app-smzcfz",
+    "name": "Mxi Presale",
+    "slug": "Mxi Presale",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
-    "scheme": "mxipresale",
+    "icon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
+      "image": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a1a1a"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mxipresale.app"
+      "bundleIdentifier": "com.anonymous.Natively",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
+        "backgroundColor": "#1a1a1a"
       },
-      "package": "com.mxipresale.app"
+      "edgeToEdgeEnabled": true,
+      "package": "com.mxistrategicholdngs.mxistrategic"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/effa8fd0-8607-4a97-b8f0-88a8462f2535.png"
+      "favicon": "./assets/images/439b868e-5ae8-4439-8324-ce6876084e5f.png",
+      "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-font",
+      "expo-router",
+      "expo-web-browser",
+      "expo-localization"
     ],
+    "scheme": "mxipresale",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "your-project-id"
-      }
+      "router": {}
     }
-  }
+  },
+  "scheme": "Mxi Presale"
 }
