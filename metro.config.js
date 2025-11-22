@@ -39,7 +39,9 @@ config.resolver = {
   unstable_conditionNames: ['react-native', 'browser', 'require'],
   
   // Ensure platform-specific extensions are resolved correctly
+  // IMPORTANT: Order matters! More specific extensions should come first
   sourceExts: [
+    // Platform-specific extensions (most specific first)
     'native.tsx',
     'native.ts',
     'native.jsx',
@@ -56,19 +58,39 @@ config.resolver = {
     'web.ts',
     'web.jsx',
     'web.js',
+    // Default extensions
     ...(config.resolver?.sourceExts || []),
     'mjs',
     'cjs',
   ],
   
   resolveRequest: (context, moduleName, platform) => {
-    // Block Web3 packages on native platforms
+    // Block Web3 packages on native platforms (iOS and Android)
     if (platform !== 'web') {
+      // Check if the module is a Web3 package or starts with one
       for (const pkg of WEB3_PACKAGES) {
         if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
-          console.log(`🚫 Metro: Blocking ${moduleName} on ${platform}`);
+          console.log(`🚫 Metro: Blocking Web3 package "${moduleName}" on ${platform}`);
           return { type: 'empty' };
         }
+      }
+      
+      // Block any .web.* files from being loaded on native
+      if (moduleName.includes('.web.')) {
+        console.log(`🚫 Metro: Blocking web-specific file "${moduleName}" on ${platform}`);
+        return { type: 'empty' };
+      }
+      
+      // Block web3Config.web specifically
+      if (moduleName.includes('web3Config.web') || moduleName.includes('config/web3Config.web')) {
+        console.log(`🚫 Metro: Blocking web3Config.web on ${platform}`);
+        return { type: 'empty' };
+      }
+      
+      // Block WalletContext.web specifically
+      if (moduleName.includes('WalletContext.web') || moduleName.includes('contexts/WalletContext.web')) {
+        console.log(`🚫 Metro: Blocking WalletContext.web on ${platform}`);
+        return { type: 'empty' };
       }
     }
     
