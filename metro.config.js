@@ -5,6 +5,13 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// List of native-only modules that should be blocked on web
+const NATIVE_ONLY_MODULES = [
+  'react-native/Libraries/Core/InitializeCore',
+  'react-native/Libraries/ReactPrivate/ReactNativePrivateInitializeCore',
+  'react-native/Libraries/Utilities/codegenNativeComponent',
+];
+
 // Use file cache for better performance
 config.cacheStores = [
   new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
@@ -58,6 +65,20 @@ config.resolver = {
     'woff',
     'woff2',
   ],
+  
+  // Custom resolver to block native-only modules on web
+  resolveRequest: (context, moduleName, platform) => {
+    // Block native-only modules on web platform
+    if (platform === 'web' && NATIVE_ONLY_MODULES.includes(moduleName)) {
+      return {
+        type: 'sourceFile',
+        filePath: path.join(context.projectRoot, 'empty-module.js'),
+      };
+    }
+    
+    // Use default resolver for all other cases
+    return context.resolveRequest(context, moduleName, platform);
+  },
 };
 
 // Transformer configuration
