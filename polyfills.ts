@@ -6,7 +6,7 @@ console.log('🔧 Loading polyfills...');
 
 // Import required polyfill modules
 import { Buffer } from 'buffer';
-import process from 'process/browser.js';
+import * as process from 'process';
 import { EventEmitter } from 'events';
 
 // Get reference to the global object

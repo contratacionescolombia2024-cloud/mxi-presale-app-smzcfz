@@ -15,7 +15,7 @@ config.resolver = {
   ...config.resolver,
   extraNodeModules: {
     buffer: require.resolve('buffer/'),
-    process: require.resolve('process/browser.js'),
+    process: require.resolve('process/browser'),
     events: require.resolve('events/'),
     stream: require.resolve('stream-browserify'),
     crypto: require.resolve('crypto-browserify'),
@@ -23,6 +23,10 @@ config.resolver = {
     assert: require.resolve('assert/'),
     util: require.resolve('util/'),
     string_decoder: require.resolve('string_decoder/'),
+  },
+  // Add alias for process to ensure correct resolution
+  alias: {
+    'process': 'process/browser',
   },
 };
 
