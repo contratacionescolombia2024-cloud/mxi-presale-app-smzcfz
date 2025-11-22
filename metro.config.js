@@ -28,6 +28,18 @@ config.resolver = {
   unstable_conditionNames: ['react-native', 'browser', 'require'],
   // Ensure platform-specific extensions are resolved correctly
   sourceExts: [
+    'native.tsx',
+    'native.ts',
+    'native.jsx',
+    'native.js',
+    'ios.tsx',
+    'ios.ts',
+    'ios.jsx',
+    'ios.js',
+    'android.tsx',
+    'android.ts',
+    'android.jsx',
+    'android.js',
     'web.tsx',
     'web.ts',
     'web.jsx',
