@@ -29,12 +29,41 @@ if (typeof global === 'undefined') {
 
 console.log('✅ Global object configured');
 
-// CRITICAL: Polyfill process with ONLY simple, serializable objects
-// Define nextTick function at module level to ensure it's serializable
-const nextTickImpl = (callback: (...args: any[]) => void, ...args: any[]) => {
-  setTimeout(() => callback(...args), 0);
-};
+// CRITICAL: Define all polyfill functions at module level
+// These are simple, serializable functions that don't capture any closures
 
+function nextTickImpl(callback: (...args: any[]) => void, ...args: any[]): void {
+  setTimeout(() => callback(...args), 0);
+}
+
+function cwdImpl(): string {
+  return '/';
+}
+
+function chdirImpl(): void {
+  // no-op
+}
+
+function umaskImpl(): number {
+  return 0;
+}
+
+function setImmediateImpl(callback: (...args: any[]) => void, ...args: any[]): any {
+  return setTimeout(() => callback(...args), 0);
+}
+
+function clearImmediateImpl(id: any): void {
+  clearTimeout(id);
+}
+
+function getRandomValuesImpl(array: any): any {
+  for (let i = 0; i < array.length; i++) {
+    array[i] = Math.floor(Math.random() * 256);
+  }
+  return array;
+}
+
+// CRITICAL: Polyfill process with ONLY simple, serializable objects
 try {
   if (!globalObj.process) {
     globalObj.process = {
@@ -44,9 +73,9 @@ try {
       platform: 'browser',
       browser: true,
       nextTick: nextTickImpl,
-      cwd: () => '/',
-      chdir: () => { /* no-op */ },
-      umask: () => 0,
+      cwd: cwdImpl,
+      chdir: chdirImpl,
+      umask: umaskImpl,
     };
   }
   
@@ -127,14 +156,6 @@ try {
 }
 
 // CRITICAL: Polyfill setImmediate/clearImmediate with serializable functions
-const setImmediateImpl = (callback: (...args: any[]) => void, ...args: any[]) => {
-  return setTimeout(() => callback(...args), 0);
-};
-
-const clearImmediateImpl = (id: any) => {
-  clearTimeout(id);
-};
-
 if (typeof globalObj.setImmediate === 'undefined') {
   globalObj.setImmediate = setImmediateImpl;
 }
@@ -151,13 +172,6 @@ if (typeof window !== 'undefined' && typeof globalObj.crypto === 'undefined') {
 }
 
 // CRITICAL: Polyfill crypto.getRandomValues with serializable function
-const getRandomValuesImpl = (array: any) => {
-  for (let i = 0; i < array.length; i++) {
-    array[i] = Math.floor(Math.random() * 256);
-  }
-  return array;
-};
-
 if (typeof globalObj.crypto !== 'undefined' && typeof globalObj.crypto.getRandomValues === 'undefined') {
   globalObj.crypto.getRandomValues = getRandomValuesImpl;
 }

@@ -33,6 +33,7 @@ export default function RootLayout() {
   console.log('🚀 RootLayout: Platform =', Platform.OS);
 
   // CRITICAL: Stack navigation structure
+  // Define this inline to avoid any closure issues
   const AppStack = (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
@@ -63,6 +64,7 @@ export default function RootLayout() {
   );
 
   // CRITICAL: Core app providers (always present)
+  // Wrap in a single component tree to avoid multiple returns
   const CoreProviders = (
     <AuthProvider>
       <LanguageProvider>

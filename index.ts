@@ -1,6 +1,9 @@
 
 // CRITICAL: Load polyfills FIRST before anything else
+// This ensures all Node.js built-ins are available before any code runs
 import './polyfills';
+
+// Load shims after polyfills
 import './shims';
 
 // Run startup verification in development mode
@@ -20,5 +23,5 @@ if (__DEV__) {
     });
 }
 
-// Now load expo-router
+// Now load expo-router entry point
 import 'expo-router/entry';

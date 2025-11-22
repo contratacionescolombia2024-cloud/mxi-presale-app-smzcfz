@@ -57,7 +57,7 @@ async function sendPaymentNative(_amountUSDT: number): Promise<string> {
 
 // CRITICAL: Create a constant context value with only primitives and module-level functions
 // This object is completely serializable and never changes
-const NATIVE_WALLET_CONTEXT: WalletContextType = {
+const NATIVE_WALLET_CONTEXT: WalletContextType = Object.freeze({
   isConnected: false,
   walletType: null,
   address: null,
@@ -67,13 +67,13 @@ const NATIVE_WALLET_CONTEXT: WalletContextType = {
   disconnectWallet: disconnectWalletNative,
   refreshBalance: refreshBalanceNative,
   sendPayment: sendPaymentNative,
-};
+});
 
 // Native implementation - Web3Modal is not supported on native platforms
 export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('💼 WalletProvider: Native implementation loaded');
 
-  // CRITICAL: Use the constant value to prevent any re-renders or object recreation
+  // CRITICAL: Use the frozen constant value to prevent any re-renders or object recreation
   // This ensures the context value is always the same reference
   return (
     <WalletContext.Provider value={NATIVE_WALLET_CONTEXT}>

@@ -37,13 +37,15 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
     return '(home)';
   }, [currentPath, tabs]);
 
-  // CRITICAL: Create navigation handler that doesn't use any closures
-  // This function is defined at component level but doesn't capture any complex objects
+  // CRITICAL: Create navigation handler that doesn't capture router in worklets
+  // Use a simple callback that only captures the router reference
   const handleTabPress = useCallback((route: string) => {
     console.log('🔄 Tab pressed, navigating to:', route);
     try {
-      // Cast to any to avoid Href type issues
-      router.push(route as any);
+      // Use setTimeout to break out of any potential worklet context
+      setTimeout(() => {
+        router.push(route as any);
+      }, 0);
     } catch (error) {
       console.error('❌ Navigation error:', error);
     }
