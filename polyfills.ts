@@ -6,7 +6,6 @@ console.log('🔧 Loading polyfills...');
 
 // Import statements instead of require()
 import { Buffer } from 'buffer';
-import process from 'process/browser.js';
 import { EventEmitter } from 'events';
 
 // Get reference to the global object
@@ -61,10 +60,18 @@ try {
   console.log('⚠️ Using minimal Buffer polyfill');
 }
 
-// Import and configure process
+// Polyfill process directly (no import needed)
 try {
   if (!globalObj.process) {
-    globalObj.process = process;
+    // Create a minimal process polyfill
+    globalObj.process = {
+      env: { NODE_ENV: 'production' },
+      version: '',
+      versions: {},
+      platform: 'browser',
+      browser: true,
+      nextTick: (fn: (...args: any[]) => void, ...args: any[]) => setTimeout(() => fn(...args), 0),
+    };
   }
   // Ensure process.env exists
   if (!globalObj.process.env) {
@@ -89,20 +96,9 @@ try {
   if (typeof globalThis !== 'undefined') {
     (globalThis as any).process = globalObj.process;
   }
-  console.log('✅ Process module loaded and configured');
+  console.log('✅ Process module polyfilled and configured');
 } catch (error) {
-  console.error('❌ Failed to load process module:', error);
-  // Create a minimal process polyfill as fallback
-  const minimalProcess = {
-    env: { NODE_ENV: 'production' },
-    version: '',
-    versions: {},
-    platform: 'browser',
-    browser: true,
-    nextTick: (fn: (...args: any[]) => void, ...args: any[]) => setTimeout(() => fn(...args), 0),
-  };
-  globalObj.process = minimalProcess;
-  console.log('⚠️ Using minimal process polyfill');
+  console.error('❌ Failed to polyfill process module:', error);
 }
 
 // Import and configure EventEmitter
