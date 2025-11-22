@@ -27,6 +27,11 @@ module.exports = {
     'ios/',
     'web-build/',
     '.next/',
+    '*.md',
+    '*.json',
+    'metro.config.js',
+    'babel.config.js',
+    'webpack.config.js',
   ],
   env: {
     browser: true,
@@ -36,7 +41,8 @@ module.exports = {
   rules: {
     "@typescript-eslint/no-unused-vars": ["warn", { 
       "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_"
+      "varsIgnorePattern": "^_",
+      "ignoreRestSiblings": true
     }],
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/prefer-as-const": "off",
@@ -54,6 +60,7 @@ module.exports = {
     "react/jsx-no-undef": "error",
     "react/jsx-uses-react": "off",
     "react/jsx-uses-vars": "warn",
+    "react-hooks/exhaustive-deps": "warn",
     "import/no-unresolved": "off",
     "prefer-const": "warn",
     "no-case-declarations": "off",

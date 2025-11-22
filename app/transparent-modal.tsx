@@ -23,33 +23,6 @@ export default function TransparentModal() {
             styles.modal, 
             { 
               backgroundColor: glassBackgroundColor,
-              borderWidthNow I'll fix the file by removing the `expo-glass-effect` dependency and replacing it with a standard React Native `View` component with styling that simulates a glass effect:
-
-<write file="app/transparent-modal.tsx">
-import { StyleSheet, Text, Pressable, View } from 'react-native';
-import { router } from 'expo-router';
-import { useTheme } from '@react-navigation/native';
-
-export default function TransparentModal() {
-  const theme = useTheme();
-  
-  // Create glass effect using standard React Native styling
-  const glassBackgroundColor = theme.dark 
-    ? 'rgba(255, 255, 255, 0.1)' 
-    : 'rgba(255, 255, 255, 0.8)';
-  
-  const glassBorderColor = theme.dark 
-    ? 'rgba(255, 255, 255, 0.2)' 
-    : 'rgba(0, 0, 0, 0.1)';
-
-  return (
-    <Pressable style={styles.backdrop} onPress={() => router.back()}>
-      <Pressable onPress={(e) => e.stopPropagation()}>
-        <View 
-          style={[
-            styles.modal, 
-            { 
-              backgroundColor: glassBackgroundColor,
               borderWidth: StyleSheet.hairlineWidth,
               borderColor: glassBorderColor,
             }

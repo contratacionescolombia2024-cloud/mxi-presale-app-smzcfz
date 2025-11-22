@@ -12,20 +12,30 @@ import { WidgetProvider } from '@/contexts/WidgetContext';
 import { Web3Provider } from '@/components/Web3Provider';
 
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((error) => {
+  console.warn('Error preventing splash screen auto-hide:', error);
+});
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
+    if (error) {
+      console.error('❌ Font loading error:', error);
+    }
+  }, [error]);
+
+  useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch((hideError) => {
+        console.warn('Error hiding splash screen:', hideError);
+      });
     }
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded && !error) {
     return null;
   }
 

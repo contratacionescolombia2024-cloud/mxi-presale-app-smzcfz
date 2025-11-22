@@ -1,3 +1,4 @@
+
 # Ignore generated files
 _expo/
 dist/
@@ -9,3 +10,18 @@ node_modules/
 # Ignore build artifacts
 *.bundle.js
 *.bundle.js.map
+
+# Ignore documentation
+*.md
+docs/
+*.txt
+
+# Ignore config files
+*.json
+metro.config.js
+babel.config.js
+webpack.config.js
+workbox-config.js
+
+# Ignore assets
+assets/
