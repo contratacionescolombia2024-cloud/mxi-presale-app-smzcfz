@@ -1,10 +1,9 @@
 
 import { useEffect } from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, Platform } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { colors } from '@/styles/commonStyles';
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -47,28 +46,39 @@ export default function TabLayout() {
 
   console.log('✅ iOS Tab Layout - User is authenticated, showing native tabs');
 
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger key="home" name="(home)">
-        <Icon sf="house.fill" />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="purchase" name="purchase">
-        <Icon sf="cart.fill" />
-        <Label>Buy</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="tournaments" name="tournaments">
-        <Icon sf="trophy.fill" />
-        <Label>Tournaments</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="ecosystem" name="ecosystem">
-        <Icon sf="globe" />
-        <Label>Ecosystem</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger key="profile" name="profile">
-        <Icon sf="person.fill" />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
+  // Only use NativeTabs on actual iOS devices, not on web
+  if (Platform.OS === 'ios') {
+    // Dynamic import to avoid loading on web
+    const { NativeTabs, Icon, Label } = require('expo-router/unstable-native-tabs');
+    
+    return (
+      <NativeTabs>
+        <NativeTabs.Trigger key="home" name="(home)">
+          <Icon sf="house.fill" />
+          <Label>Home</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger key="purchase" name="purchase">
+          <Icon sf="cart.fill" />
+          <Label>Buy</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger key="tournaments" name="tournaments">
+          <Icon sf="trophy.fill" />
+          <Label>Tournaments</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger key="ecosystem" name="ecosystem">
+          <Icon sf="globe" />
+          <Label>Ecosystem</Label>
+        </NativeTabs.Trigger>
+        <NativeTabs.Trigger key="profile" name="profile">
+          <Icon sf="person.fill" />
+          <Label>Profile</Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
+    );
+  }
+
+  // Fallback: This shouldn't happen since we have platform-specific files,
+  // but just in case, redirect to the default layout
+  console.log('⚠️ iOS Tab Layout loaded on non-iOS platform, this should not happen');
+  return <Redirect href="/(tabs)/(home)/" />;
 }
