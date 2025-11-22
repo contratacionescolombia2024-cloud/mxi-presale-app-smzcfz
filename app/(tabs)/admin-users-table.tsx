@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -40,6 +40,7 @@ type SortDirection = 'asc' | 'desc';
 
 export default function AdminUsersTableScreen() {
   const { isAdmin } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [users, setUsers] = useState<UserTableData[]>([]);
@@ -262,7 +263,18 @@ export default function AdminUsersTableScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <IconSymbol 
+            ios_icon_name="chevron.left" 
+            android_material_icon_name="arrow_back" 
+            size={28} 
+            color={colors.text} 
+          />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
           <IconSymbol 
             ios_icon_name="tablecells.fill" 
             android_material_icon_name="table_chart" 
@@ -769,7 +781,16 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? 48 : 20,
     paddingBottom: 12,
   },
-  headerLeft: {
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
