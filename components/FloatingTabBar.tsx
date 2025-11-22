@@ -17,8 +17,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  runOnJS,
 } from 'react-native-reanimated';
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useCallback } from 'react';
 
 export interface TabBarItem {
   name: string;
@@ -82,6 +83,18 @@ const styles = StyleSheet.create({
   },
 });
 
+// CRITICAL: Extract route string helper function OUTSIDE component
+function extractRouteString(route: Href): string {
+  if (typeof route === 'string') {
+    return route;
+  }
+  // Handle Href object
+  if (route && typeof route === 'object') {
+    return (route as any).pathname || String(route);
+  }
+  return String(route);
+}
+
 export default function FloatingTabBar({
   tabs,
   containerWidth = Dimensions.get('window').width - 32,
@@ -90,43 +103,67 @@ export default function FloatingTabBar({
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  
+  // CRITICAL: Create shared value with initial value of 0
   const indicatorPosition = useSharedValue(0);
 
-  // Extract only serializable data for worklets
-  // This prevents the WorkletsError by ensuring we only use primitives
-  const tabsLength = tabs.length;
+  // CRITICAL: Extract ONLY primitive values for worklets
+  // Convert tabs to serializable data structure
+  const serializedTabs = useMemo(() => {
+    return tabs.map((tab) => ({
+      name: tab.name,
+      routeString: extractRouteString(tab.route),
+      iosIcon: tab.iosIcon,
+      androidIcon: tab.androidIcon,
+      label: tab.label,
+    }));
+  }, [tabs]);
+
+  // CRITICAL: Calculate primitive values OUTSIDE of worklet
+  const tabsLength = serializedTabs.length;
   const tabWidth = containerWidth / tabsLength;
 
+  // Find active index using serialized route strings
   const activeIndex = useMemo(() => {
-    return tabs.findIndex((tab) => {
-      const tabPath = typeof tab.route === 'string' ? tab.route : tab.route.pathname;
-      return pathname.startsWith(tabPath || '');
+    const index = serializedTabs.findIndex((tab) => {
+      return pathname.startsWith(tab.routeString || '');
     });
-  }, [tabs, pathname]);
+    return index !== -1 ? index : 0;
+  }, [serializedTabs, pathname]);
 
-  React.useEffect(() => {
-    if (activeIndex !== -1) {
-      // Use only primitive values in the worklet
-      indicatorPosition.value = withSpring(activeIndex * tabWidth, {
-        damping: 20,
-        stiffness: 90,
-      });
-    }
+  // CRITICAL: Update indicator position when active index changes
+  // Use useEffect to avoid worklet issues during initialization
+  useEffect(() => {
+    const targetPosition = activeIndex * tabWidth;
+    console.log('[FloatingTabBar] Updating indicator position:', {
+      activeIndex,
+      tabWidth,
+      targetPosition,
+    });
+    
+    // Animate to new position
+    indicatorPosition.value = withSpring(targetPosition, {
+      damping: 20,
+      stiffness: 90,
+    });
   }, [activeIndex, tabWidth, indicatorPosition]);
 
-  // Animated style only uses primitive values
+  // CRITICAL: Create animated style with ONLY primitive values
+  // The worklet must not capture any complex objects
   const indicatorStyle = useAnimatedStyle(() => {
     'worklet';
+    // Only use the shared value - no external dependencies
     return {
       transform: [{ translateX: indicatorPosition.value }],
       width: tabWidth,
     };
-  });
+  }, [tabWidth]); // Only depend on primitive tabWidth
 
-  const handleTabPress = (route: Href) => {
+  // CRITICAL: Wrap navigation in useCallback to prevent re-creation
+  const handleTabPress = useCallback((route: Href) => {
     console.log('[FloatingTabBar] Tab pressed:', route);
     router.push(route);
-  };
+  }, [router]);
 
   const TabBarContent = (
     <View style={[styles.tabBar, { width: containerWidth, borderRadius }]}>
@@ -134,13 +171,6 @@ export default function FloatingTabBar({
       {tabs.map((tab, index) => {
         const isActive = index === activeIndex;
         const iconColor = isActive ? colors.primary : colors.text;
-
-        console.log(`[FloatingTabBar] Rendering tab "${tab.label}":`, {
-          ios: tab.iosIcon,
-          android: tab.androidIcon,
-          isActive,
-          color: iconColor,
-        });
 
         return (
           <TouchableOpacity

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import FloatingTabBar, { TabBarItem } from '@/components/FloatingTabBar';
@@ -46,46 +46,51 @@ export default function TabLayout() {
 
   console.log('✅ Tab Layout - User is authenticated, showing tabs');
 
-  // Use centralized icon configuration
-  const tabs: TabBarItem[] = [
-    {
-      name: '(home)',
-      route: '/(tabs)/(home)/',
-      iosIcon: APP_ICONS.home.ios,
-      androidIcon: APP_ICONS.home.android,
-      label: APP_ICONS.home.label,
-    },
-    {
-      name: 'purchase',
-      route: '/(tabs)/purchase',
-      iosIcon: APP_ICONS.purchase.ios,
-      androidIcon: APP_ICONS.purchase.android,
-      label: 'Buy',
-    },
-    {
-      name: 'tournaments',
-      route: '/(tabs)/tournaments',
-      iosIcon: 'trophy.fill',
-      androidIcon: 'emoji-events',
-      label: 'Tournaments',
-    },
-    {
-      name: 'ecosystem',
-      route: '/(tabs)/ecosystem',
-      iosIcon: 'globe',
-      androidIcon: 'public',
-      label: 'Ecosystem',
-    },
-    {
-      name: 'profile',
-      route: '/(tabs)/profile',
-      iosIcon: APP_ICONS.profile.ios,
-      androidIcon: APP_ICONS.profile.android,
-      label: APP_ICONS.profile.label,
-    },
-  ];
-
-  console.log('📋 Tab Layout - Configured tabs:', tabs);
+  // CRITICAL: Create tabs array with ONLY serializable primitive values
+  // This prevents WorkletsError by ensuring no complex Href objects reach worklets
+  // The route strings are cast to 'any' to satisfy TypeScript, but they're just strings
+  const tabs: TabBarItem[] = useMemo(() => {
+    const tabsArray: TabBarItem[] = [
+      {
+        name: '(home)',
+        route: '/(tabs)/(home)/' as any,
+        iosIcon: APP_ICONS.home.ios,
+        androidIcon: APP_ICONS.home.android,
+        label: APP_ICONS.home.label,
+      },
+      {
+        name: 'purchase',
+        route: '/(tabs)/purchase' as any,
+        iosIcon: APP_ICONS.purchase.ios,
+        androidIcon: APP_ICONS.purchase.android,
+        label: 'Buy',
+      },
+      {
+        name: 'tournaments',
+        route: '/(tabs)/tournaments' as any,
+        iosIcon: 'trophy.fill',
+        androidIcon: 'emoji-events',
+        label: 'Tournaments',
+      },
+      {
+        name: 'ecosystem',
+        route: '/(tabs)/ecosystem' as any,
+        iosIcon: 'globe',
+        androidIcon: 'public',
+        label: 'Ecosystem',
+      },
+      {
+        name: 'profile',
+        route: '/(tabs)/profile' as any,
+        iosIcon: APP_ICONS.profile.ios,
+        androidIcon: APP_ICONS.profile.android,
+        label: APP_ICONS.profile.label,
+      },
+    ];
+    
+    console.log('📋 Tab Layout - Configured tabs:', tabsArray);
+    return tabsArray;
+  }, []); // Empty dependency array - tabs never change
 
   return (
     <>

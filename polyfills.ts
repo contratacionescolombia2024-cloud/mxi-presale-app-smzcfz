@@ -1,19 +1,21 @@
 
 // CRITICAL: This file MUST be imported FIRST before any other code
 // It provides Node.js built-in polyfills for React Native environment
+// IMPORTANT: Uses ONLY simple, serializable objects to avoid worklets errors
 
 console.log('🔧 Loading polyfills...');
 
-// Get reference to the global object FIRST
-const getGlobal = (): any => {
+// CRITICAL: Get reference to the global object FIRST
+// Use a simple function that returns the global object
+function getGlobalObject(): any {
   if (typeof globalThis !== 'undefined') return globalThis;
   if (typeof global !== 'undefined') return global;
   if (typeof window !== 'undefined') return window;
   if (typeof self !== 'undefined') return self;
   return {};
-};
+}
 
-const globalObj = getGlobal();
+const globalObj = getGlobalObject();
 
 // Ensure global object exists BEFORE anything else
 if (typeof global === 'undefined') {
@@ -28,20 +30,24 @@ if (typeof global === 'undefined') {
 
 console.log('✅ Global object configured');
 
-// Polyfill process FIRST (before any imports)
-// Use simple, serializable objects only
+// CRITICAL: Polyfill process with ONLY simple, serializable objects
+// No complex objects, no closures, no external dependencies
 try {
   if (!globalObj.process) {
+    // Create simple process object with only primitive values and simple functions
+    // CRITICAL: All functions must be simple and not capture any external variables
     globalObj.process = {
       env: { NODE_ENV: 'production' },
       version: 'v16.0.0',
       versions: { node: '16.0.0' },
       platform: 'browser',
       browser: true,
-      nextTick: (fn: (...args: any[]) => void, ...args: any[]) => setTimeout(() => fn(...args), 0),
-      cwd: () => '/',
-      chdir: () => {},
-      umask: () => 0,
+      nextTick: function(callback: Function, ...args: any[]) {
+        setTimeout(function() { callback(...args); }, 0);
+      },
+      cwd: function() { return '/'; },
+      chdir: function() {},
+      umask: function() { return 0; },
     };
   }
   
@@ -58,10 +64,10 @@ try {
   // Add browser flag
   globalObj.process.browser = true;
   
-  // Add nextTick if missing
+  // Add nextTick if missing (simple function, no closures)
   if (!globalObj.process.nextTick) {
-    globalObj.process.nextTick = (fn: (...args: any[]) => void, ...args: any[]) => {
-      setTimeout(() => fn(...args), 0);
+    globalObj.process.nextTick = function(callback: Function, ...args: any[]) {
+      setTimeout(function() { callback(...args); }, 0);
     };
   }
   
@@ -93,8 +99,8 @@ try {
 } catch (error) {
   console.error('❌ Failed to load buffer:', error);
   
-  // Create a minimal Buffer polyfill as fallback
-  const MinimalBuffer = class Buffer {
+  // Create a minimal Buffer polyfill as fallback (simple class, no complex objects)
+  class MinimalBuffer {
     static from(data: any): any {
       if (typeof data === 'string') {
         return new TextEncoder().encode(data);
@@ -107,7 +113,7 @@ try {
     static isBuffer(obj: any): boolean {
       return obj instanceof Uint8Array;
     }
-  };
+  }
   globalObj.Buffer = MinimalBuffer;
   console.log('⚠️ Using minimal Buffer polyfill');
 }
@@ -128,29 +134,30 @@ try {
   console.error('❌ Failed to load events:', error);
 }
 
-// Polyfill setImmediate/clearImmediate
+// CRITICAL: Polyfill setImmediate/clearImmediate with simple functions
+// These must be simple functions that don't capture any external variables
 if (typeof globalObj.setImmediate === 'undefined') {
-  globalObj.setImmediate = (fn: (...args: any[]) => void, ...args: any[]) => {
-    return setTimeout(() => fn(...args), 0);
+  globalObj.setImmediate = function(callback: Function, ...args: any[]) {
+    return setTimeout(function() { callback(...args); }, 0);
   };
 }
 
 if (typeof globalObj.clearImmediate === 'undefined') {
-  globalObj.clearImmediate = (id: any) => {
+  globalObj.clearImmediate = function(id: any) {
     clearTimeout(id);
   };
 }
 
-// Polyfill crypto for web
+// Polyfill crypto for web (simple object reference)
 if (typeof window !== 'undefined' && typeof globalObj.crypto === 'undefined') {
   if (typeof window.crypto !== 'undefined') {
     globalObj.crypto = window.crypto;
   }
 }
 
-// Polyfill crypto.getRandomValues if missing
+// CRITICAL: Polyfill crypto.getRandomValues with simple function
 if (typeof globalObj.crypto !== 'undefined' && typeof globalObj.crypto.getRandomValues === 'undefined') {
-  globalObj.crypto.getRandomValues = (array: any) => {
+  globalObj.crypto.getRandomValues = function(array: any) {
     for (let i = 0; i < array.length; i++) {
       array[i] = Math.floor(Math.random() * 256);
     }
