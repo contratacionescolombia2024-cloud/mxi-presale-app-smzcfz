@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { ethers } from 'ethers';
+import { Platform } from 'react-native';
 import {
   WalletType,
   WalletConnectionResult,
@@ -39,13 +39,18 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [usdtBalance, setUsdtBalance] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [provider, setProvider] = useState<any | null>(null);
+  const [signer, setSigner] = useState<any | null>(null);
 
   const connectWallet = useCallback(async (type: WalletType) => {
     setIsLoading(true);
     try {
       console.log('🔗 Connecting wallet:', type);
+
+      // Check if on native platform
+      if (Platform.OS !== 'web') {
+        throw new Error('Wallet connection is only available on web. Please use the web version of the app to connect your wallet.');
+      }
 
       let result: WalletConnectionResult;
 
@@ -118,6 +123,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     async (amountUSDT: number): Promise<string> => {
       if (!signer) {
         throw new Error('Wallet not connected');
+      }
+
+      if (Platform.OS !== 'web') {
+        throw new Error('Wallet payments are only available on web. Please use the web version of the app.');
       }
 
       try {
