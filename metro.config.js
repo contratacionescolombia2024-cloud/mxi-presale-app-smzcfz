@@ -27,6 +27,13 @@ const NATIVE_ONLY_PACKAGES = [
   'react-native-gesture-handler',
 ];
 
+// List of native-only React Native internal modules to block on web
+const NATIVE_ONLY_MODULES = [
+  'react-native/Libraries/Core/InitializeCore',
+  'react-native/Libraries/ReactPrivate/ReactNativePrivateInitializeCore',
+  'react-native/Libraries/Utilities/codegenNativeComponent',
+];
+
 config.resolver = {
   ...config.resolver,
   unstable_enablePackageExports: true,
@@ -72,6 +79,14 @@ config.resolver = {
       for (const pkg of NATIVE_ONLY_PACKAGES) {
         if (moduleName === pkg || moduleName.startsWith(pkg + '/')) {
           console.log(`🚫 Metro: Blocking native module ${moduleName} on web`);
+          return { type: 'empty' };
+        }
+      }
+      
+      // Block native-only React Native internal modules
+      for (const module of NATIVE_ONLY_MODULES) {
+        if (moduleName === module) {
+          console.log(`🚫 Metro: Blocking native-only internal module ${moduleName} on web`);
           return { type: 'empty' };
         }
       }
