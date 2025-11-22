@@ -1,6 +1,5 @@
 
-// Native (iOS/Android) version - wallet connection not supported on mobile
-// Users should use the web version for wallet connections
+// Web3 functionality has been removed
 
 export type WalletType = 'metamask' | 'walletconnect' | 'trustwallet';
 
@@ -23,31 +22,31 @@ export function isMetaMaskInstalled(): boolean {
 }
 
 export async function connectMetaMask(): Promise<WalletConnectionResult> {
-  throw new Error('Wallet connection is only available on web. Please use the web version of the app to connect your wallet.');
+  throw new Error('Wallet connection feature has been removed.');
 }
 
 export async function switchToBSC(): Promise<void> {
-  throw new Error('Wallet connection is only available on web.');
+  throw new Error('Wallet connection feature has been removed.');
 }
 
 export async function connectWalletConnect(): Promise<WalletConnectionResult> {
-  throw new Error('Wallet connection is only available on web. Please use the web version of the app to connect your wallet.');
+  throw new Error('Wallet connection feature has been removed.');
 }
 
 export async function getUSDTBalance(
   provider: any,
   address: string
 ): Promise<string> {
-  throw new Error('Wallet connection is only available on web.');
+  throw new Error('Wallet connection feature has been removed.');
 }
 
 export async function sendUSDTPayment(
   signer: any,
   amountUSDT: number
 ): Promise<string> {
-  throw new Error('Wallet connection is only available on web.');
+  throw new Error('Wallet connection feature has been removed.');
 }
 
 export async function disconnectWallet(walletType: WalletType): Promise<void> {
-  console.log('Wallet disconnected (native)');
+  console.log('Wallet connection feature has been removed.');
 }

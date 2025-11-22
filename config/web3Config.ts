@@ -1,4 +1,4 @@
 
-// Default export for platforms without specific implementation
+// Web3 functionality has been removed
 export const wagmiConfig = null;
 export const projectId = '';

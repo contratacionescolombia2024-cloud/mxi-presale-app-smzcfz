@@ -1,54 +1,56 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/styles/commonStyles';
-import { useTranslation } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { IconSymbol } from '@/components/IconSymbol';
 
 export default function ConnectWalletScreen() {
-  const { t } = useTranslation();
+  const { t } = useLanguage();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <LinearGradient
-        colors={[colors.primary, colors.secondary]}
-        style={styles.header}
-      >
-        <IconSymbol
-          ios_icon_name="wallet.pass.fill"
-          android_material_icon_name="account_balance_wallet"
-          size={48}
-          color="#FFFFFF"
-        />
-        <Text style={styles.headerTitle}>{t('connectWallet')}</Text>
-      </LinearGradient>
-
-      <View style={styles.content}>
-        <View style={styles.messageCard}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <LinearGradient
+          colors={[colors.primary, colors.secondary]}
+          style={styles.header}
+        >
           <IconSymbol
-            ios_icon_name="info.circle.fill"
-            android_material_icon_name="info"
+            ios_icon_name="wallet.pass.fill"
+            android_material_icon_name="account_balance_wallet"
             size={48}
-            color={colors.primary}
+            color="#FFFFFF"
           />
-          <Text style={styles.messageTitle}>{t('webOnlyFeature')}</Text>
-          <Text style={styles.messageText}>
-            {t('walletConnectionWebOnly')}
-          </Text>
-          <Text style={styles.messageSubtext}>
-            {t('pleaseUseWebVersion')}
-          </Text>
-        </View>
+          <Text style={styles.headerTitle}>{t('connectWallet')}</Text>
+        </LinearGradient>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>{t('supportedWallets')}:</Text>
-          <Text style={styles.infoItem}>• MetaMask</Text>
-          <Text style={styles.infoItem}>• Trust Wallet</Text>
-          <Text style={styles.infoItem}>• WalletConnect</Text>
+        <View style={styles.content}>
+          <View style={styles.messageCard}>
+            <IconSymbol
+              ios_icon_name="info.circle.fill"
+              android_material_icon_name="info"
+              size={48}
+              color={colors.primary}
+            />
+            <Text style={styles.messageTitle}>{t('featureRemoved')}</Text>
+            <Text style={styles.messageText}>
+              {t('cryptoWalletFeatureRemoved')}
+            </Text>
+            <Text style={styles.messageSubtext}>
+              {t('pleaseContactAdmin')}
+            </Text>
+          </View>
+
+          <View style={styles.infoBox}>
+            <Text style={styles.infoTitle}>{t('availablePaymentMethods')}:</Text>
+            <Text style={styles.infoItem}>• {t('contactAdministrator')}</Text>
+            <Text style={styles.infoItem}>• {t('manualPaymentProcess')}</Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 32,
-    paddingTop: 48,
+    paddingTop: Platform.OS === 'android' ? 48 : 32,
     alignItems: 'center',
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

@@ -1,17 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { IconSymbol } from '@/components/IconSymbol';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -24,66 +24,100 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 32,
+    padding: 32,
+    paddingTop: Platform.OS === 'android' ? 48 : 32,
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  title: {
+  headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
+    color: '#FFFFFF',
+    marginTop: 16,
   },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    lineHeight: 24,
+  content: {
+    padding: 20,
   },
   warningCard: {
     ...commonStyles.card,
     padding: 20,
-    marginBottom: 24,
+    marginTop: 24,
     borderWidth: 2,
     borderColor: colors.warning,
+    alignItems: 'center',
   },
   warningTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.warning,
+    marginTop: 16,
     marginBottom: 12,
+    textAlign: 'center',
   },
   warningText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.text,
-    lineHeight: 22,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  infoCard: {
+    ...commonStyles.card,
+    padding: 20,
+    marginTop: 16,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  infoItem: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginVertical: 4,
   },
 });
 
 export default function PurchaseCryptoScreen() {
-  const router = useRouter();
   const { t } = useLanguage();
-
-  useEffect(() => {
-    Alert.alert(
-      t('webOnlyFeature'),
-      t('cryptoWalletWebOnly'),
-      [{ text: t('ok'), onPress: () => router.back() }]
-    );
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Purchase MXI with Crypto</Text>
-          <Text style={styles.subtitle}>
-            Connect your wallet to purchase MXI with USDT
-          </Text>
-        </View>
+        <LinearGradient
+          colors={[colors.primary, colors.secondary]}
+          style={styles.header}
+        >
+          <IconSymbol
+            ios_icon_name="creditcard.fill"
+            android_material_icon_name="payment"
+            size={48}
+            color="#FFFFFF"
+          />
+          <Text style={styles.headerTitle}>{t('purchaseWithCrypto')}</Text>
+        </LinearGradient>
 
-        <View style={styles.warningCard}>
-          <Text style={styles.warningTitle}>⚠️ {t('webOnlyFeature')}</Text>
-          <Text style={styles.warningText}>
-            {t('cryptoWalletWebOnly')}
-          </Text>
+        <View style={styles.content}>
+          <View style={styles.warningCard}>
+            <IconSymbol
+              ios_icon_name="exclamationmark.triangle.fill"
+              android_material_icon_name="warning"
+              size={48}
+              color={colors.warning}
+            />
+            <Text style={styles.warningTitle}>{t('featureRemoved')}</Text>
+            <Text style={styles.warningText}>
+              {t('cryptoPaymentFeatureRemoved')}
+            </Text>
+          </View>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>{t('availablePaymentMethods')}:</Text>
+            <Text style={styles.infoItem}>• {t('contactAdministrator')}</Text>
+            <Text style={styles.infoItem}>• {t('manualPaymentProcess')}</Text>
+            <Text style={styles.infoItem}>• {t('useRegularPurchaseScreen')}</Text>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,15 +1,13 @@
 
 import { useEffect, useState } from 'react';
-import { Platform, View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { PreSaleProvider } from '@/contexts/PreSaleContext';
-import { WalletProvider } from '@/contexts/WalletContext';
 import { WidgetProvider } from '@/contexts/WidgetContext';
-import { Web3Provider } from '@/components/Web3Provider';
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(console.warn);
@@ -61,37 +59,22 @@ export default function RootLayout() {
     );
   }
 
-  // Core app structure
-  const AppStack = (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="ecosystem" />
-      <Stack.Screen name="games" />
-      <Stack.Screen name="mini-battle-game" />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
-
-  // Core providers
-  const CoreProviders = (
+  return (
     <AuthProvider>
       <LanguageProvider>
         <PreSaleProvider>
-          <WalletProvider>
-            <WidgetProvider>
-              {AppStack}
-            </WidgetProvider>
-          </WalletProvider>
+          <WidgetProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="ecosystem" />
+              <Stack.Screen name="games" />
+              <Stack.Screen name="mini-battle-game" />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </WidgetProvider>
         </PreSaleProvider>
       </LanguageProvider>
     </AuthProvider>
   );
-
-  // Only wrap with Web3Provider on web
-  if (Platform.OS === 'web') {
-    return <Web3Provider>{CoreProviders}</Web3Provider>;
-  }
-
-  return CoreProviders;
 }

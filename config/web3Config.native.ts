@@ -1,5 +1,4 @@
 
-// Native platforms don't support Web3Modal
-// Export empty config to prevent import errors
+// Web3 functionality has been removed
 export const wagmiConfig = null;
 export const projectId = '';

@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
 interface WalletContextType {
   address: string | null;
@@ -11,21 +11,23 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-
   const connect = async () => {
-    console.log('Wallet connection not available on native platforms');
-    // Native platforms would use different wallet connection methods
+    console.log('Wallet connection feature has been removed');
   };
 
   const disconnect = async () => {
-    setAddress(null);
-    setIsConnected(false);
+    console.log('Wallet disconnection feature has been removed');
   };
 
   return (
-    <WalletContext.Provider value={{ address, isConnected, connect, disconnect }}>
+    <WalletContext.Provider 
+      value={{ 
+        address: null, 
+        isConnected: false, 
+        connect, 
+        disconnect 
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
