@@ -765,55 +765,40 @@ export default function AdminScreen() {
     }
   };
 
-  const handleResetPresaleDay = () => {
-    console.log('🔴 Reset Presale Day button pressed - handleResetPresaleDay called');
-    
-    Alert.alert(
-      t('resetPresaleDay'),
-      `${t('presaleDayResetConfirm')}\n\n${t('resetVestingRewardsToZero')}\n${t('resetSoldMXIToZero')}\n\n${t('thisActionCannotBeUndone')}`,
-      [
-        {
-          text: t('no'),
-          style: 'cancel',
-          onPress: () => {
-            console.log('🔴 User cancelled reset');
-          }
-        },
-        {
-          text: t('yes'),
-          style: 'destructive',
-          onPress: () => {
-            console.log('🔴 User confirmed reset, calling executeResetPresaleDay...');
-            executeResetPresaleDay();
-          }
-        }
-      ]
-    );
-  };
-
   const executeResetPresaleDay = async () => {
-    console.log('🔴 executeResetPresaleDay function called - Starting execution');
+    console.log('🔴 ========== RESET PRESALE DAY EXECUTION STARTED ==========');
+    console.log('🔴 Step 1: Setting resettingPresaleDay state to true');
     
-    setResettingPresaleDay(true);
     try {
-      console.log('🔴 Calling supabase.rpc("admin_reset_presale_day")');
-      
+      console.log('🔴 Step 2: Verifying Supabase client');
+      if (!supabase) {
+        throw new Error('Supabase client is not initialized');
+      }
+
+      console.log('🔴 Step 3: Calling supabase.rpc("admin_reset_presale_day")');
       const { data, error } = await supabase.rpc('admin_reset_presale_day');
 
-      console.log('🔴 RPC call completed');
-      console.log('🔴 Response data:', data);
-      console.log('🔴 Response error:', error);
+      console.log('🔴 Step 4: RPC call completed');
+      console.log('🔴 Response data:', JSON.stringify(data, null, 2));
+      console.log('🔴 Response error:', JSON.stringify(error, null, 2));
 
       if (error) {
         console.error('❌ RPC Error:', error);
-        Alert.alert(t('error'), `${t('presaleDayResetFailed')}: ${error.message}`);
-        throw error;
+        throw new Error(`RPC Error: ${error.message}`);
       }
 
-      console.log('📦 Reset response:', data);
+      console.log('🔴 Step 5: Validating response data');
+      if (!data) {
+        throw new Error('No data returned from RPC function');
+      }
 
-      if (data && data.success) {
-        console.log('✅ Presale day reset successfully');
+      console.log('🔴 Step 6: Checking success status');
+      if (data.success === true) {
+        console.log('✅ ========== RESET COMPLETED SUCCESSFULLY ==========');
+        console.log('✅ Users affected:', data.affected_vesting_users || 0);
+        console.log('✅ Total rewards reset:', data.total_rewards_reset || 0);
+        console.log('✅ Stages affected:', data.affected_stages || 0);
+        console.log('✅ Total sold reset:', data.total_sold_reset || 0);
         
         const message = `${t('presaleDayResetSuccess')}\n\n` +
           `Vesting users affected: ${data.affected_vesting_users}\n` +
@@ -837,15 +822,44 @@ export default function AdminScreen() {
       } else {
         const errorMsg = data?.error || t('presaleDayResetFailed');
         console.error('❌ Reset failed:', errorMsg);
-        Alert.alert(t('error'), errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
       console.error('❌ Exception in executeResetPresaleDay:', error);
       Alert.alert(t('error'), error.message || t('presaleDayResetFailed'));
-    } finally {
-      console.log('🔴 executeResetPresaleDay completed, setting resettingPresaleDay to false');
-      setResettingPresaleDay(false);
     }
+  };
+
+  const handleResetPresaleDay = () => {
+    console.log('🔴 ========== RESET PRESALE DAY BUTTON PRESSED ==========');
+    console.log('🔴 handleResetPresaleDay function called');
+    
+    Alert.alert(
+      t('resetPresaleDay'),
+      `${t('presaleDayResetConfirm')}\n\n${t('resetVestingRewardsToZero')}\n${t('resetSoldMXIToZero')}\n\n${t('thisActionCannotBeUndone')}`,
+      [
+        {
+          text: t('no'),
+          style: 'cancel',
+          onPress: () => {
+            console.log('🔴 User cancelled reset');
+          }
+        },
+        {
+          text: t('yes'),
+          style: 'destructive',
+          onPress: async () => {
+            console.log('🔴 User confirmed reset, executing...');
+            setResettingPresaleDay(true);
+            try {
+              await executeResetPresaleDay();
+            } finally {
+              setResettingPresaleDay(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   if (!isAdmin) {
@@ -960,19 +974,17 @@ export default function AdminScreen() {
 
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.error }]}
-          onPress={() => {
-            console.log('🔴 Reset Presale Day button pressed - onPress triggered');
-            handleResetPresaleDay();
-          }}
+          onPress={handleResetPresaleDay}
           disabled={resettingPresaleDay}
+          activeOpacity={0.7}
         >
           {resettingPresaleDay ? (
-            <View style={styles.resetButtonContent}>
+            <React.Fragment>
               <ActivityIndicator size="small" color={colors.card} />
               <Text style={styles.quickAccessButtonText}>{t('loading')}</Text>
-            </View>
+            </React.Fragment>
           ) : (
-            <View style={styles.resetButtonContent}>
+            <React.Fragment>
               <IconSymbol 
                 ios_icon_name="arrow.counterclockwise.circle.fill" 
                 android_material_icon_name="restart_alt" 
@@ -986,7 +998,7 @@ export default function AdminScreen() {
                 size={20} 
                 color={colors.card} 
               />
-            </View>
+            </React.Fragment>
           )}
         </TouchableOpacity>
       </View>
@@ -1595,12 +1607,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
-  },
-  resetButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
   },
   tabBar: {
     paddingHorizontal: 20,
