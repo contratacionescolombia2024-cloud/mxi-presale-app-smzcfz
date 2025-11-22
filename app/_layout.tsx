@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-// REMOVED: import 'react-native-reanimated'; - This was causing worklet serialization issues
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { PreSaleProvider } from '@/contexts/PreSaleContext';
@@ -12,7 +11,7 @@ import { WalletProvider } from '@/contexts/WalletContext';
 import { WidgetProvider } from '@/contexts/WidgetContext';
 import { Web3Provider } from '@/components/Web3Provider';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -32,8 +31,7 @@ export default function RootLayout() {
 
   console.log('🚀 RootLayout: Platform =', Platform.OS);
 
-  // CRITICAL: Stack navigation structure
-  // Define this inline to avoid any closure issues
+  // Core app structure
   const AppStack = (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
@@ -41,30 +39,13 @@ export default function RootLayout() {
       <Stack.Screen name="ecosystem" />
       <Stack.Screen name="games" />
       <Stack.Screen name="mini-battle-game" />
-      <Stack.Screen
-        name="modal"
-        options={{
-          presentation: 'modal',
-        }}
-      />
-      <Stack.Screen
-        name="formsheet"
-        options={{
-          presentation: 'formSheet',
-        }}
-      />
-      <Stack.Screen
-        name="transparent-modal"
-        options={{
-          presentation: 'transparentModal',
-          animation: 'fade',
-        }}
-      />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="formsheet" options={{ presentation: 'formSheet' }} />
+      <Stack.Screen name="transparent-modal" options={{ presentation: 'transparentModal', animation: 'fade' }} />
     </Stack>
   );
 
-  // CRITICAL: Core app providers (always present)
-  // Wrap in a single component tree to avoid multiple returns
+  // Core providers
   const CoreProviders = (
     <AuthProvider>
       <LanguageProvider>
@@ -79,12 +60,12 @@ export default function RootLayout() {
     </AuthProvider>
   );
 
-  // CRITICAL: Only wrap with Web3Provider on web platform
+  // Only wrap with Web3Provider on web
   if (Platform.OS === 'web') {
-    console.log('🌐 RootLayout: Wrapping with Web3Provider for web');
+    console.log('🌐 RootLayout: Web platform - enabling Web3');
     return <Web3Provider>{CoreProviders}</Web3Provider>;
   }
 
-  console.log('📱 RootLayout: Native platform, skipping Web3Provider');
+  console.log('📱 RootLayout: Native platform - Web3 disabled');
   return CoreProviders;
 }

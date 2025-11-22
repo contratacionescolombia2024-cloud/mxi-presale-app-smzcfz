@@ -41,8 +41,7 @@ module.exports = function (api) {
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      // REMOVED: Reanimated plugin - was causing persistent worklet serialization errors
-      // The app doesn't critically need Reanimated animations, so we're using standard RN animations instead
+      // NO REANIMATED PLUGIN - Removed to prevent WorkletsError
     ],
   };
-};
+}

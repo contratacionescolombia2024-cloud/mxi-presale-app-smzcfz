@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Mxi Presale",
@@ -50,6 +51,5 @@
         "origin": false
       }
     }
-  },
-  "scheme": "Mxi Presale"
+  }
 }

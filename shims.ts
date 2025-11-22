@@ -1,32 +1,21 @@
 
-// Polyfills for React Native
+// Minimal shims for React Native
 import 'react-native-url-polyfill/auto';
 
-console.log('🔧 Loading shims...');
+console.log('🔧 Loading minimal shims...');
 
-// CRITICAL: Shim for Web3Modal custom elements on native platforms
-// These are simple, serializable objects
-if (typeof window !== 'undefined' && typeof customElements === 'undefined') {
-  const customElementsShim = {
-    define: () => {
-      // no-op
-    },
+// Shim customElements for native
+if (typeof customElements === 'undefined') {
+  (global as any).customElements = {
+    define: () => {},
     get: () => undefined,
     whenDefined: () => Promise.resolve(),
   };
-  
-  (global as any).customElements = customElementsShim;
-  console.log('✅ customElements shimmed');
 }
 
-// CRITICAL: Shim for Web3Modal button component on native
+// Shim HTMLElement for native
 if (typeof HTMLElement === 'undefined') {
-  class HTMLElementShim {
-    // Empty class for type compatibility
-  }
-  
-  (global as any).HTMLElement = HTMLElementShim;
-  console.log('✅ HTMLElement shimmed');
+  (global as any).HTMLElement = class {};
 }
 
-console.log('✅ Shims loaded successfully');
+console.log('✅ Minimal shims loaded');
