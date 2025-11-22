@@ -1,6 +1,6 @@
+
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { GlassView } from 'expo-glass-effect';
 import { useTheme } from '@react-navigation/native';
 
 export default function Modal() {
@@ -12,9 +12,22 @@ export default function Modal() {
       <Text style={[styles.text, { color: theme.colors.text }]}>This is a modal presentation.</Text>
 
       <Pressable onPress={() => router.back()}>
-        <GlassView style={styles.button} glassEffectStyle="clear">
+        <View
+          style={[
+            styles.button,
+            {
+              backgroundColor: theme.dark
+                ? 'rgba(255, 255, 255, 0.1)'
+                : 'rgba(0, 0, 0, 0.05)',
+              borderWidth: 1,
+              borderColor: theme.dark
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'rgba(0, 0, 0, 0.1)',
+            }
+          ]}
+        >
           <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Close Modal</Text>
-        </GlassView>
+        </View>
       </Pressable>
     </View>
   );
@@ -24,20 +37,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
-    // backgroundColor handled dynamically
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
-    // color handled dynamically
   },
   text: {
     fontSize: 16,
     marginBottom: 24,
     textAlign: 'center',
-    // color handled dynamically
   },
   button: {
     paddingHorizontal: 20,
@@ -47,6 +58,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    // color handled dynamically
   },
 });

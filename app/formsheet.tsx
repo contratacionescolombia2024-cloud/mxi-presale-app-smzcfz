@@ -17,18 +17,20 @@ export default function FormSheetModal() {
       <Text style={[styles.text, { color: theme.colors.text }]}>Drag the grabber to resize!</Text>
 
       <Pressable onPress={() => router.back()}>
-        <View style={[
-          styles.button,
-          {
-            backgroundColor: theme.dark
-              ? 'rgba(255, 255, 255, 0.1)'
-              : 'rgba(0, 0, 0, 0.05)',
-            borderWidth: 1,
-            borderColor: theme.dark
-              ? 'rgba(255, 255, 255, 0.2)'
-              : 'rgba(0, 0, 0, 0.1)',
-          }
-        ]}>
+        <View
+          style={[
+            styles.button,
+            {
+              backgroundColor: theme.dark
+                ? 'rgba(255, 255, 255, 0.1)'
+                : 'rgba(0, 0, 0, 0.05)',
+              borderWidth: 1,
+              borderColor: theme.dark
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'rgba(0, 0, 0, 0.1)',
+            }
+          ]}
+        >
           <Text style={[styles.buttonText, { color: theme.colors.primary }]}>Close Modal</Text>
         </View>
       </Pressable>
@@ -40,20 +42,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
-    // backgroundColor handled dynamically
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
-    // color handled dynamically
   },
   text: {
     fontSize: 16,
     marginBottom: 24,
     textAlign: 'center',
-    // color handled dynamically
   },
   button: {
     paddingHorizontal: 20,
@@ -63,6 +63,5 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    // color handled dynamically
   },
 });
