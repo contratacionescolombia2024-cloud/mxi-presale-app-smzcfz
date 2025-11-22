@@ -1,27 +1,12 @@
-
 const { getDefaultConfig } = require('expo/metro-config');
+const { FileStore } = require('metro-cache');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Remove the FileStore cache configuration that might be causing issues
-config.cacheStores = [];
-
-// Configure resolver with proper node module handling
-config.resolver = {
-  ...config.resolver,
-  sourceExts: [...(config.resolver?.sourceExts || []), 'cjs', 'mjs'],
-  assetExts: config.resolver?.assetExts || [],
-};
-
-// Simplify transformer configuration
-config.transformer = {
-  ...config.transformer,
-  getTransformOptions: async () => ({
-    transform: {
-      experimentalImportSupport: false,
-      inlineRequires: true,
-    },
-  }),
-};
+// Use turborepo to restore the cache when possible
+config.cacheStores = [
+    new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
+  ];
 
 module.exports = config;

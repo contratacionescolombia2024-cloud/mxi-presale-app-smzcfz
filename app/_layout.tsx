@@ -1,24 +1,23 @@
 
-// CRITICAL: Import polyfills at the very top, before any other imports
-import '../polyfills';
-
 import React, { useEffect } from "react";
-import { useColorScheme, AppState, Platform } from "react-native";
+import { useColorScheme, Alert, AppState, Platform } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useNetworkState } from "expo-network";
 import { SystemBars } from "react-native-edge-to-edge";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PreSaleProvider } from "@/contexts/PreSaleContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { startVestingBackgroundService, stopVestingBackgroundService } from "@/utils/vestingBackgroundService";
+import "react-native-reanimated";
 import {
   DarkTheme,
   DefaultTheme,
   Theme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
 import * as Linking from "expo-linking";
 import Head from "expo-router/head";
@@ -77,6 +76,8 @@ export default function RootLayout() {
         startVestingBackgroundService();
       } else if (nextAppState === 'background' || nextAppState === 'inactive') {
         console.log('📱 App went to background/inactive');
+        // Keep the service running even in background
+        // The edge function will continue to update vesting on the server
       }
     });
 
@@ -96,16 +97,21 @@ export default function RootLayout() {
       console.log('🔗 URL path:', url.path);
       console.log('🔗 URL hostname:', url.hostname);
       
+      // Handle password reset deep link
+      // The URL will be in format: mxipresale://reset-password
       if (url.path === 'reset-password' || url.hostname === 'reset-password') {
         console.log('🔐 Navigating to reset password screen');
+        // Use replace to avoid navigation stack issues
         setTimeout(() => {
           router.replace('/(auth)/reset-password');
         }, 100);
       }
     };
 
+    // Listen for deep links when app is already open
     const subscription = Linking.addEventListener('url', handleDeepLink);
 
+    // Check if app was opened with a deep link
     Linking.getInitialURL().then((url) => {
       if (url) {
         console.log('🔗 Initial URL:', url);
@@ -117,6 +123,8 @@ export default function RootLayout() {
       subscription.remove();
     };
   }, [router]);
+
+  const { isConnected } = useNetworkState();
 
   if (!loaded) {
     return null;

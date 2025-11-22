@@ -3,7 +3,6 @@ export const colors = {
   // Dark theme colors - Premium palette with BLACK background
   background: '#000000', // Changed to pure black
   card: '#151829',
-  cardBackground: '#151829',
   border: '#252840',
   
   // Text colors

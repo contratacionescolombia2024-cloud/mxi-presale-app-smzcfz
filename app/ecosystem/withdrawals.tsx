@@ -1,880 +1,418 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Alert,
   Platform,
-  ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
-import { colors, commonStyles } from '@/styles/commonStyles';
 import { useRouter } from 'expo-router';
-import { supabase } from '@/app/integrations/supabase/client';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-
-interface VestingData {
-  commission_balance: number;
-  tournaments_balance: number;
-  total_mxi: number;
-  purchased_mxi: number;
-}
-
-interface Withdrawal {
-  id: string;
-  wallet_address: string;
-  amount: number;
-  withdrawal_source: string;
-  status: string;
-  notes: string | null;
-  admin_notes: string | null;
-  created_at: string;
-  processed_at: string | null;
-}
-
-type WithdrawalSource = 'referral_balance' | 'commission_balance' | 'tournament_balance';
-
-export default function WithdrawalsScreen() {
-  const { user } = useAuth();
-  const { t } = useLanguage();
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [vestingData, setVestingData] = useState<VestingData | null>(null);
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  
-  // Form state
-  const [walletAddress, setWalletAddress] = useState('');
-  const [amount, setAmount] = useState('');
-  const [selectedSource, setSelectedSource] = useState<WithdrawalSource | null>(null);
-  const [notes, setNotes] = useState('');
-
-  const loadVestingData = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('vesting')
-        .select('commission_balance, tournaments_balance, total_mxi, purchased_mxi')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading vesting data:', error);
-        return;
-      }
-
-      setVestingData(data);
-    } catch (error) {
-      console.error('Exception loading vesting data:', error);
-    }
-  }, [user?.id]);
-
-  const loadWithdrawals = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('withdrawals')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading withdrawals:', error);
-        return;
-      }
-
-      setWithdrawals(data || []);
-    } catch (error) {
-      console.error('Exception loading withdrawals:', error);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    loadVestingData();
-    loadWithdrawals();
-  }, [loadVestingData, loadWithdrawals]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([loadVestingData(), loadWithdrawals()]);
-    setRefreshing(false);
-  };
-
-  const getAvailableBalance = (source: WithdrawalSource): number => {
-    if (!vestingData) return 0;
-
-    switch (source) {
-      case 'referral_balance':
-        // Referral balance is calculated from total_mxi - purchased_mxi - tournaments_balance - commission_balance
-        return Math.max(0, (vestingData.total_mxi || 0) - (vestingData.purchased_mxi || 0) - (vestingData.tournaments_balance || 0) - (vestingData.commission_balance || 0));
-      case 'commission_balance':
-        return vestingData.commission_balance || 0;
-      case 'tournament_balance':
-        return vestingData.tournaments_balance || 0;
-      default:
-        return 0;
-    }
-  };
-
-  const handleSubmitWithdrawal = async () => {
-    // Validation
-    if (!walletAddress.trim()) {
-      Alert.alert(t('invalidWalletAddress'), t('pleaseEnterWalletAddress'));
-      return;
-    }
-
-    if (!selectedSource) {
-      Alert.alert(t('error'), t('pleaseSelectSource'));
-      return;
-    }
-
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum < 20 || amountNum > 10000) {
-      Alert.alert(t('invalidAmount'), t('invalidAmountMessage'));
-      return;
-    }
-
-    const availableBalance = getAvailableBalance(selectedSource);
-    if (amountNum > availableBalance) {
-      Alert.alert(
-        t('insufficientBalance'),
-        `${t('insufficientBalanceMessage')}\n\n${t('availableForWithdrawal')}: ${availableBalance.toFixed(2)} USDT`
-      );
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Insert withdrawal request
-      const { error: insertError } = await supabase
-        .from('withdrawals')
-        .insert({
-          user_id: user?.id,
-          wallet_address: walletAddress.trim(),
-          amount: amountNum,
-          withdrawal_source: selectedSource,
-          notes: notes.trim() || null,
-          status: 'pending',
-        });
-
-      if (insertError) {
-        console.error('Error creating withdrawal:', insertError);
-        throw insertError;
-      }
-
-      // Deduct from the selected balance
-      const updateData: any = {};
-      
-      if (selectedSource === 'commission_balance') {
-        updateData.commission_balance = (vestingData?.commission_balance || 0) - amountNum;
-      } else if (selectedSource === 'tournament_balance') {
-        updateData.tournaments_balance = (vestingData?.tournaments_balance || 0) - amountNum;
-      } else if (selectedSource === 'referral_balance') {
-        // For referral balance, we deduct from total_mxi
-        updateData.total_mxi = (vestingData?.total_mxi || 0) - amountNum;
-      }
-
-      const { error: updateError } = await supabase
-        .from('vesting')
-        .update(updateData)
-        .eq('user_id', user?.id);
-
-      if (updateError) {
-        console.error('Error updating balance:', updateError);
-        throw updateError;
-      }
-
-      Alert.alert(
-        t('withdrawalRequested'),
-        t('withdrawalRequestedMessage'),
-        [
-          {
-            text: t('ok'),
-            onPress: () => {
-              // Reset form
-              setWalletAddress('');
-              setAmount('');
-              setSelectedSource(null);
-              setNotes('');
-              
-              // Reload data
-              loadVestingData();
-              loadWithdrawals();
-            }
-          }
-        ]
-      );
-    } catch (error: any) {
-      console.error('Exception submitting withdrawal:', error);
-      Alert.alert(t('withdrawalFailed'), error.message || t('pleaseTryAgain'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getSourceLabel = (source: string): string => {
-    switch (source) {
-      case 'referral_balance':
-        return t('referralBalance');
-      case 'commission_balance':
-        return t('commissionBalance');
-      case 'tournament_balance':
-        return t('tournamentBalance');
-      default:
-        return source;
-    }
-  };
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'pending':
-        return colors.warning;
-      case 'processing':
-        return colors.info;
-      case 'completed':
-        return colors.success;
-      case 'rejected':
-        return colors.error;
-      default:
-        return colors.textSecondary;
-    }
-  };
-
-  const getStatusLabel = (status: string): string => {
-    switch (status) {
-      case 'pending':
-        return t('pending');
-      case 'processing':
-        return t('processing');
-      case 'completed':
-        return t('completed');
-      case 'rejected':
-        return t('rejected');
-      default:
-        return status;
-    }
-  };
-
-  return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol 
-            ios_icon_name="chevron.left" 
-            android_material_icon_name="arrow_back" 
-            size={24} 
-            color={colors.text} 
-          />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <IconSymbol 
-            ios_icon_name="banknote" 
-            android_material_icon_name="account_balance_wallet" 
-            size={32} 
-            color={colors.primary} 
-          />
-          <Text style={styles.title}>{t('withdrawals')}</Text>
-        </View>
-        <TouchableOpacity onPress={onRefresh} disabled={refreshing}>
-          {refreshing ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <IconSymbol 
-              ios_icon_name="arrow.clockwise" 
-              android_material_icon_name="refresh" 
-              size={24} 
-              color={colors.primary} 
-            />
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Available Balances */}
-        <View style={commonStyles.card}>
-          <Text style={styles.sectionTitle}>
-            <IconSymbol 
-              ios_icon_name="chart.bar.fill" 
-              android_material_icon_name="bar_chart" 
-              size={20} 
-              color={colors.secondary} 
-            />
-            {' '}{t('availableForWithdrawal')}
-          </Text>
-          
-          <View style={styles.balanceGrid}>
-            <View style={styles.balanceBox}>
-              <Text style={styles.balanceLabel}>{t('referralBalance')}</Text>
-              <Text style={styles.balanceValue}>
-                {getAvailableBalance('referral_balance').toFixed(2)} USDT
-              </Text>
-            </View>
-            
-            <View style={styles.balanceBox}>
-              <Text style={styles.balanceLabel}>{t('commissionBalance')}</Text>
-              <Text style={styles.balanceValue}>
-                {getAvailableBalance('commission_balance').toFixed(2)} USDT
-              </Text>
-            </View>
-            
-            <View style={styles.balanceBox}>
-              <Text style={styles.balanceLabel}>{t('tournamentBalance')}</Text>
-              <Text style={styles.balanceValue}>
-                {getAvailableBalance('tournament_balance').toFixed(2)} USDT
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.infoBox}>
-            <IconSymbol 
-              ios_icon_name="info.circle.fill" 
-              android_material_icon_name="info" 
-              size={20} 
-              color={colors.info} 
-            />
-            <Text style={styles.infoText}>{t('withdrawalSourceInfo')}</Text>
-          </View>
-        </View>
-
-        {/* Withdrawal Request Form */}
-        <View style={commonStyles.card}>
-          <Text style={styles.sectionTitle}>
-            <IconSymbol 
-              ios_icon_name="paperplane.fill" 
-              android_material_icon_name="send" 
-              size={20} 
-              color={colors.primary} 
-            />
-            {' '}{t('requestWithdrawal')}
-          </Text>
-
-          {/* Wallet Address */}
-          <Text style={styles.inputLabel}>{t('walletAddress')}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t('enterWalletAddress')}
-            placeholderTextColor={colors.textSecondary}
-            value={walletAddress}
-            onChangeText={setWalletAddress}
-            editable={!loading}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          {/* Withdrawal Source */}
-          <Text style={styles.inputLabel}>{t('withdrawalSource')}</Text>
-          <View style={styles.sourceButtons}>
-            <TouchableOpacity
-              style={[
-                styles.sourceButton,
-                selectedSource === 'referral_balance' && styles.sourceButtonActive
-              ]}
-              onPress={() => setSelectedSource('referral_balance')}
-              disabled={loading}
-            >
-              <Text style={[
-                styles.sourceButtonText,
-                selectedSource === 'referral_balance' && styles.sourceButtonTextActive
-              ]}>
-                {t('referralBalance')}
-              </Text>
-              <Text style={[
-                styles.sourceButtonAmount,
-                selectedSource === 'referral_balance' && styles.sourceButtonAmountActive
-              ]}>
-                {getAvailableBalance('referral_balance').toFixed(2)} USDT
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.sourceButton,
-                selectedSource === 'commission_balance' && styles.sourceButtonActive
-              ]}
-              onPress={() => setSelectedSource('commission_balance')}
-              disabled={loading}
-            >
-              <Text style={[
-                styles.sourceButtonText,
-                selectedSource === 'commission_balance' && styles.sourceButtonTextActive
-              ]}>
-                {t('commissionBalance')}
-              </Text>
-              <Text style={[
-                styles.sourceButtonAmount,
-                selectedSource === 'commission_balance' && styles.sourceButtonAmountActive
-              ]}>
-                {getAvailableBalance('commission_balance').toFixed(2)} USDT
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.sourceButton,
-                selectedSource === 'tournament_balance' && styles.sourceButtonActive
-              ]}
-              onPress={() => setSelectedSource('tournament_balance')}
-              disabled={loading}
-            >
-              <Text style={[
-                styles.sourceButtonText,
-                selectedSource === 'tournament_balance' && styles.sourceButtonTextActive
-              ]}>
-                {t('tournamentBalance')}
-              </Text>
-              <Text style={[
-                styles.sourceButtonAmount,
-                selectedSource === 'tournament_balance' && styles.sourceButtonAmountActive
-              ]}>
-                {getAvailableBalance('tournament_balance').toFixed(2)} USDT
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Amount */}
-          <Text style={styles.inputLabel}>{t('withdrawalAmount')}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t('enterWithdrawalAmount')}
-            placeholderTextColor={colors.textSecondary}
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="decimal-pad"
-            editable={!loading}
-          />
-
-          <View style={styles.limitsRow}>
-            <View style={styles.limitBox}>
-              <Text style={styles.limitLabel}>{t('minimumWithdrawal')}</Text>
-              <Text style={styles.limitValue}>20 USDT</Text>
-            </View>
-            <View style={styles.limitBox}>
-              <Text style={styles.limitLabel}>{t('maximumWithdrawal')}</Text>
-              <Text style={styles.limitValue}>10,000 USDT</Text>
-            </View>
-          </View>
-
-          {/* Notes */}
-          <Text style={styles.inputLabel}>{t('withdrawalNotes')}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder={t('enterWithdrawalNotes')}
-            placeholderTextColor={colors.textSecondary}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-            editable={!loading}
-          />
-
-          {/* Processing Time Info */}
-          <View style={[styles.infoBox, { marginTop: 16 }]}>
-            <IconSymbol 
-              ios_icon_name="clock.fill" 
-              android_material_icon_name="schedule" 
-              size={20} 
-              color={colors.warning} 
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.infoText}>
-                <Text style={{ fontWeight: '700' }}>{t('processingTime')}: </Text>
-                {t('hours24to48')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              (loading || !walletAddress || !selectedSource || !amount) && styles.submitButtonDisabled
-            ]}
-            onPress={handleSubmitWithdrawal}
-            disabled={loading || !walletAddress || !selectedSource || !amount}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.card} size="small" />
-            ) : (
-              <React.Fragment>
-                <IconSymbol 
-                  ios_icon_name="paperplane.fill" 
-                  android_material_icon_name="send" 
-                  size={20} 
-                  color={colors.card} 
-                />
-                <Text style={styles.submitButtonText}>{t('submitWithdrawal')}</Text>
-              </React.Fragment>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Withdrawal History */}
-        <View style={commonStyles.card}>
-          <Text style={styles.sectionTitle}>
-            <IconSymbol 
-              ios_icon_name="clock.fill" 
-              android_material_icon_name="history" 
-              size={20} 
-              color={colors.highlight} 
-            />
-            {' '}{t('withdrawalHistory')}
-          </Text>
-
-          {withdrawals.length > 0 ? (
-            withdrawals.map((withdrawal) => (
-              <View key={withdrawal.id} style={styles.withdrawalCard}>
-                <View style={styles.withdrawalHeader}>
-                  <View style={styles.withdrawalAmount}>
-                    <Text style={styles.withdrawalAmountText}>
-                      {withdrawal.amount.toFixed(2)} USDT
-                    </Text>
-                    <Text style={styles.withdrawalSource}>
-                      {getSourceLabel(withdrawal.withdrawal_source)}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.statusBadge,
-                    { backgroundColor: `${getStatusColor(withdrawal.status)}20` }
-                  ]}>
-                    <Text style={[
-                      styles.statusBadgeText,
-                      { color: getStatusColor(withdrawal.status) }
-                    ]}>
-                      {getStatusLabel(withdrawal.status)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.withdrawalDetails}>
-                  <View style={styles.withdrawalDetailRow}>
-                    <IconSymbol 
-                      ios_icon_name="wallet.pass" 
-                      android_material_icon_name="account_balance_wallet" 
-                      size={16} 
-                      color={colors.textSecondary} 
-                    />
-                    <Text style={styles.withdrawalDetailText} numberOfLines={1}>
-                      {withdrawal.wallet_address}
-                    </Text>
-                  </View>
-
-                  <View style={styles.withdrawalDetailRow}>
-                    <IconSymbol 
-                      ios_icon_name="calendar" 
-                      android_material_icon_name="calendar_today" 
-                      size={16} 
-                      color={colors.textSecondary} 
-                    />
-                    <Text style={styles.withdrawalDetailText}>
-                      {t('requestedOn')}: {new Date(withdrawal.created_at).toLocaleDateString()}
-                    </Text>
-                  </View>
-
-                  {withdrawal.processed_at && (
-                    <View style={styles.withdrawalDetailRow}>
-                      <IconSymbol 
-                        ios_icon_name="checkmark.circle" 
-                        android_material_icon_name="check_circle" 
-                        size={16} 
-                        color={colors.success} 
-                      />
-                      <Text style={styles.withdrawalDetailText}>
-                        {t('processedOn')}: {new Date(withdrawal.processed_at).toLocaleDateString()}
-                      </Text>
-                    </View>
-                  )}
-
-                  {withdrawal.notes && (
-                    <View style={styles.notesBox}>
-                      <Text style={styles.notesLabel}>{t('withdrawalNotes')}:</Text>
-                      <Text style={styles.notesText}>{withdrawal.notes}</Text>
-                    </View>
-                  )}
-
-                  {withdrawal.admin_notes && (
-                    <View style={[styles.notesBox, { backgroundColor: `${colors.warning}10` }]}>
-                      <Text style={styles.notesLabel}>Admin Notes:</Text>
-                      <Text style={styles.notesText}>{withdrawal.admin_notes}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <IconSymbol 
-                ios_icon_name="tray" 
-                android_material_icon_name="inbox" 
-                size={48} 
-                color={colors.textSecondary} 
-              />
-              <Text style={styles.emptyStateText}>{t('noWithdrawalsYet')}</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
+  scrollContent: {
+    padding: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 20,
+    paddingBottom: 100,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 20,
-    paddingTop: Platform.OS === 'android' ? 48 : 20,
-    paddingBottom: 12,
+    marginBottom: 24,
+    gap: 16,
   },
   backButton: {
-    padding: 4,
-  },
-  headerTitleContainer: {
-    flex: 1,
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: 'bold',
     color: colors.text,
     marginBottom: 16,
-  },
-  balanceGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 16,
-  },
-  balanceBox: {
-    flex: 1,
-    minWidth: '30%',
-    backgroundColor: colors.background,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  balanceLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginBottom: 8,
     textAlign: 'center',
   },
-  balanceValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+  section: {
+    marginBottom: 24,
   },
-  infoBox: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  paragraph: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 24,
+    marginBottom: 12,
+  },
+  bulletPoint: {
     flexDirection: 'row',
-    gap: 12,
-    backgroundColor: `${colors.info}10`,
-    padding: 14,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.info,
+    marginBottom: 8,
+    paddingLeft: 8,
   },
-  infoText: {
+  bullet: {
+    fontSize: 16,
+    color: '#8B5CF6',
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+  bulletText: {
     flex: 1,
-    fontSize: 13,
-    color: colors.text,
-    lineHeight: 20,
+    fontSize: 16,
+    color: colors.textSecondary,
+    lineHeight: 24,
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+  highlightBox: {
+    backgroundColor: colors.sectionPurple,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.4)',
+  },
+  highlightTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: colors.text,
     marginBottom: 8,
-    marginTop: 16,
   },
-  input: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-    color: colors.text,
+  highlightText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    lineHeight: 22,
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  sourceButtons: {
-    gap: 10,
-  },
-  sourceButton: {
-    backgroundColor: colors.background,
+  stepCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  sourceButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+  stepNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+    marginBottom: 8,
   },
-  sourceButtonText: {
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  stepDescription: {
     fontSize: 15,
-    fontWeight: '600',
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+  warningBox: {
+    backgroundColor: colors.sectionOrangeStrong,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(217, 119, 6, 0.4)',
+  },
+  warningTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 8,
   },
-  sourceButtonTextActive: {
-    color: colors.card,
-  },
-  sourceButtonAmount: {
-    fontSize: 14,
-    fontWeight: '700',
+  warningText: {
+    fontSize: 15,
     color: colors.textSecondary,
+    lineHeight: 22,
   },
-  sourceButtonAmountActive: {
-    color: colors.card,
+  infoBox: {
+    backgroundColor: colors.sectionBlue,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.4)',
   },
-  limitsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  limitBox: {
-    flex: 1,
-    backgroundColor: colors.background,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  limitLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  limitValue: {
-    fontSize: 14,
-    fontWeight: '700',
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 8,
   },
-  submitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.primary,
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 24,
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.card,
-  },
-  withdrawalCard: {
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  withdrawalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  withdrawalAmount: {
-    flex: 1,
-  },
-  withdrawalAmountText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  withdrawalSource: {
-    fontSize: 13,
+  infoText: {
+    fontSize: 15,
     color: colors.textSecondary,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  withdrawalDetails: {
-    gap: 8,
-  },
-  withdrawalDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  withdrawalDetailText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  notesBox: {
-    backgroundColor: `${colors.primary}10`,
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  notesLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  notesText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 12,
+    lineHeight: 22,
   },
 });
+
+export default function WithdrawalsScreen() {
+  const router = useRouter();
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <IconSymbol name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Retiros</Text>
+        </View>
+
+        <View style={styles.iconContainer}>
+          <IconSymbol name="account-balance-wallet" size={40} color={colors.light} />
+        </View>
+
+        <Text style={styles.title}>Retiros</Text>
+
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightTitle}>💰 Sistema de Retiros</Text>
+          <Text style={styles.highlightText}>
+            Puedes retirar tus ganancias de comisiones de referidos y premios de torneos de manera segura y transparente.
+          </Text>
+        </View>
+
+        <View style={styles.warningBox}>
+          <Text style={styles.warningTitle}>⚠️ Importante</Text>
+          <Text style={styles.warningText}>
+            Los MXI comprados directamente y los rendimientos de vesting NO se pueden retirar hasta el lanzamiento oficial del token (20 de febrero de 2026). Solo puedes retirar comisiones de referidos y premios de torneos.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💵 ¿Qué Puedes Retirar?</Text>
+        </View>
+
+        <View style={styles.bulletPoint}>
+          <Text style={styles.bullet}>✅</Text>
+          <Text style={styles.bulletText}>
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Comisiones de Referidos:</Text> MXI ganados por referir nuevos usuarios (5%, 2%, 1%)
+          </Text>
+        </View>
+
+        <View style={styles.bulletPoint}>
+          <Text style={styles.bullet}>✅</Text>
+          <Text style={styles.bulletText}>
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Premios de Torneos:</Text> MXI ganados en torneos, Viral Zone y Mini Battles
+          </Text>
+        </View>
+
+        <View style={styles.bulletPoint}>
+          <Text style={styles.bullet}>❌</Text>
+          <Text style={styles.bulletText}>
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>MXI Comprados:</Text> Bloqueados hasta el lanzamiento oficial
+          </Text>
+        </View>
+
+        <View style={styles.bulletPoint}>
+          <Text style={styles.bullet}>❌</Text>
+          <Text style={styles.bulletText}>
+            <Text style={{ fontWeight: 'bold', color: colors.text }}>Rendimientos de Vesting:</Text> Bloqueados hasta el lanzamiento oficial
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📋 Proceso de Retiro</Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>1</Text>
+          <Text style={styles.stepTitle}>Verificación KYC</Text>
+          <Text style={styles.stepDescription}>
+            Debes tener tu cuenta verificada con KYC aprobado. Sin verificación KYC no se pueden procesar retiros.
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>2</Text>
+          <Text style={styles.stepTitle}>Accede a tu Perfil</Text>
+          <Text style={styles.stepDescription}>
+            Ve a la sección de Perfil en la app y selecciona la opción "Gestión de Balance" o "Retiros".
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>3</Text>
+          <Text style={styles.stepTitle}>Selecciona el Monto</Text>
+          <Text style={styles.stepDescription}>
+            Ingresa la cantidad de MXI que deseas retirar de tu balance de comisiones o torneos. Verifica que tienes suficiente balance disponible.
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>4</Text>
+          <Text style={styles.stepTitle}>Elige el Método de Pago</Text>
+          <Text style={styles.stepDescription}>
+            Selecciona si deseas recibir el pago en PayPal, Binance, o transferencia bancaria. Proporciona los datos necesarios.
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>5</Text>
+          <Text style={styles.stepTitle}>Confirma la Solicitud</Text>
+          <Text style={styles.stepDescription}>
+            Revisa todos los detalles y confirma tu solicitud de retiro. Recibirás una notificación de confirmación.
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>6</Text>
+          <Text style={styles.stepTitle}>Espera la Aprobación</Text>
+          <Text style={styles.stepDescription}>
+            Los administradores revisarán tu solicitud. El proceso puede tomar de 24 a 72 horas hábiles.
+          </Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepNumber}>7</Text>
+          <Text style={styles.stepTitle}>Recibe tu Pago</Text>
+          <Text style={styles.stepDescription}>
+            Una vez aprobado, recibirás el pago en el método seleccionado. Recibirás una notificación cuando el pago se haya procesado.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>💳 Métodos de Pago Disponibles</Text>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              <Text style={{ fontWeight: 'bold', color: colors.text }}>PayPal:</Text> Retiros en USDT o USD
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              <Text style={{ fontWeight: 'bold', color: colors.text }}>Binance:</Text> Retiros en USDT o BNB
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              <Text style={{ fontWeight: 'bold', color: colors.text }}>Transferencia Bancaria:</Text> Disponible según tu país
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.infoBox}>
+          <Text style={styles.infoTitle}>📊 Límites y Comisiones</Text>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Retiro mínimo: 50 MXI
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Retiro máximo: Sin límite (sujeto a verificación)
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Comisión de procesamiento: 2% del monto retirado
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Tiempo de procesamiento: 24-72 horas hábiles
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🔒 Seguridad</Text>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Todas las solicitudes de retiro son revisadas manualmente
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Se requiere verificación de identidad (KYC) para procesar retiros
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Los retiros sospechosos pueden requerir verificación adicional
+            </Text>
+          </View>
+          <View style={styles.bulletPoint}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={styles.bulletText}>
+              Todas las transacciones quedan registradas en blockchain
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>❓ Preguntas Frecuentes</Text>
+          
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 12 }]}>
+            ¿Cuándo puedo retirar mis MXI comprados?
+          </Text>
+          <Text style={styles.paragraph}>
+            Los MXI comprados directamente estarán disponibles para retiro después del lanzamiento oficial del token el 20 de febrero de 2026.
+          </Text>
+
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 12 }]}>
+            ¿Puedo cancelar una solicitud de retiro?
+          </Text>
+          <Text style={styles.paragraph}>
+            Sí, puedes cancelar una solicitud de retiro mientras esté en estado "Pendiente". Una vez aprobada y procesada, no se puede cancelar.
+          </Text>
+
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 12 }]}>
+            ¿Qué pasa si mi retiro es rechazado?
+          </Text>
+          <Text style={styles.paragraph}>
+            Si tu retiro es rechazado, recibirás una notificación con el motivo. Los MXI volverán a tu balance disponible y podrás intentar nuevamente.
+          </Text>
+
+          <Text style={[styles.paragraph, { fontWeight: 'bold', color: colors.text, marginTop: 12 }]}>
+            ¿Hay límite de retiros por mes?
+          </Text>
+          <Text style={styles.paragraph}>
+            No hay límite en la cantidad de retiros que puedes hacer, pero cada retiro está sujeto a la comisión de procesamiento del 2%.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}

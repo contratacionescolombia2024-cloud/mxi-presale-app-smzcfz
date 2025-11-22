@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -102,7 +102,41 @@ export default function CatchItGame({ tournamentId, onComplete, onExit }: CatchI
   const correctIcons = ['star', 'favorite', 'emoji-emotions'];
   const wrongIcons = ['close', 'block', 'warning'];
 
-  const spawnItem = useCallback(() => {
+  useEffect(() => {
+    if (gameStarted && !gameOver) {
+      startGameLoop();
+      startTimer();
+    }
+
+    return () => {
+      if (gameLoopRef.current) {
+        clearInterval(gameLoopRef.current);
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [gameStarted, gameOver]);
+
+  useEffect(() => {
+    if (timeLeft <= 0 && gameStarted) {
+      handleGameOver();
+    }
+  }, [timeLeft]);
+
+  const startTimer = () => {
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+  };
+
+  const startGameLoop = () => {
+    gameLoopRef.current = setInterval(() => {
+      spawnItem();
+    }, 1000);
+  };
+
+  const spawnItem = () => {
     const isCorrect = Math.random() > 0.4;
     const icons = isCorrect ? correctIcons : wrongIcons;
     const icon = icons[Math.floor(Math.random() * icons.length)];
@@ -124,41 +158,7 @@ export default function CatchItGame({ tournamentId, onComplete, onExit }: CatchI
     }).start(() => {
       setFallingItems((prev) => prev.filter((item) => item.id !== newItem.id));
     });
-  }, []);
-
-  const startTimer = useCallback(() => {
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => Math.max(0, prev - 1));
-    }, 1000);
-  }, []);
-
-  const startGameLoop = useCallback(() => {
-    gameLoopRef.current = setInterval(() => {
-      spawnItem();
-    }, 1000);
-  }, [spawnItem]);
-
-  useEffect(() => {
-    if (gameStarted && !gameOver) {
-      startGameLoop();
-      startTimer();
-    }
-
-    return () => {
-      if (gameLoopRef.current) {
-        clearInterval(gameLoopRef.current);
-      }
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [gameStarted, gameOver, startGameLoop, startTimer]);
-
-  useEffect(() => {
-    if (timeLeft <= 0 && gameStarted) {
-      handleGameOver();
-    }
-  }, [timeLeft, gameStarted]);
+  };
 
   const handleItemPress = (item: FallingItem) => {
     if (item.isCorrect) {

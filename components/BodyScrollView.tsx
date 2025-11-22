@@ -1,8 +1,7 @@
-
 import { forwardRef } from "react";
 import { ScrollView, ScrollViewProps } from "react-native";
 
-const BodyScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
+export const BodyScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
   return (
     <ScrollView
       automaticallyAdjustsScrollIndicatorInsets
@@ -14,7 +13,3 @@ const BodyScrollView = forwardRef<any, ScrollViewProps>((props, ref) => {
     />
   );
 });
-
-BodyScrollView.displayName = 'BodyScrollView';
-
-export { BodyScrollView };

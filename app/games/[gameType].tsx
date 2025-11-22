@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, Fragment, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Fragment } from 'react';
 import {
   View,
   Text,
@@ -356,7 +356,20 @@ export default function GameScreen() {
 
   const isViralZone = VIRAL_ZONE_GAMES.includes(gameType || '');
 
-  const setupRealtimeSubscription = useCallback(async () => {
+  useEffect(() => {
+    loadTournaments();
+    loadBalances();
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [gameType]);
+
+  const setupRealtimeSubscription = async () => {
     if (!gameType) {
       console.log('⚠️ No game type specified');
       return;
@@ -382,9 +395,9 @@ export default function GameScreen() {
         loadTournaments();
       })
       .subscribe();
-  }, [gameType]);
+  };
 
-  const loadBalances = useCallback(async () => {
+  const loadBalances = async () => {
     if (!user?.id) return;
 
     try {
@@ -414,9 +427,9 @@ export default function GameScreen() {
     } catch (error) {
       console.error('❌ Failed to load balances:', error);
     }
-  }, [user?.id]);
+  };
 
-  const loadTournaments = useCallback(async () => {
+  const loadTournaments = async () => {
     if (!gameType) {
       console.log('⚠️ No game type specified');
       setIsLoading(false);
@@ -469,20 +482,7 @@ export default function GameScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [gameType]);
-
-  useEffect(() => {
-    loadTournaments();
-    loadBalances();
-    setupRealtimeSubscription();
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [gameType, loadTournaments, loadBalances, setupRealtimeSubscription]);
+  };
 
   const handleCreateTournamentPress = () => {
     if (totalActiveTournaments >= maxActiveTournaments) {

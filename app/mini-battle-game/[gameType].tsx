@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -46,7 +46,11 @@ export default function MiniBattleGameScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [miniBattle, setMiniBattle] = useState<MiniBattle | null>(null);
 
-  const loadMiniBattle = useCallback(async () => {
+  useEffect(() => {
+    loadMiniBattle();
+  }, [miniBattleId]);
+
+  const loadMiniBattle = async () => {
     if (!miniBattleId) {
       console.log('⚠️ No mini battle ID');
       setIsLoading(false);
@@ -73,11 +77,7 @@ export default function MiniBattleGameScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [miniBattleId, router]);
-
-  useEffect(() => {
-    loadMiniBattle();
-  }, [loadMiniBattle]);
+  };
 
   const handleGameComplete = async (score: number) => {
     if (!miniBattle || !user?.id) {

@@ -4,8 +4,6 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import WalletConnector from '@/components/WalletConnector';
 import {
   View,
   Text,
@@ -16,10 +14,10 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import React, { useState } from 'react';
-import { sendUSDTPayment, WalletType } from '@/utils/walletConnect';
-import { supabase } from '@/app/integrations/supabase/client';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const styles = StyleSheet.create({
   container: {
@@ -137,6 +135,71 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
+  paymentMethodsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  paymentMethods: {
+    gap: 16,
+  },
+  paymentButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  paymentButtonSelected: {
+    borderColor: colors.primary,
+  },
+  paymentGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  paymentLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  paymentIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paymentInfo: {
+    flex: 1,
+  },
+  paymentName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  paymentDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  paymentPrice: {
+    alignItems: 'flex-end',
+  },
+  paymentPriceLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  paymentPriceValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
   purchaseButton: {
     ...buttonStyles.primary,
     marginTop: 16,
@@ -189,44 +252,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary,
   },
-  verificationCard: {
-    backgroundColor: colors.primary + '20',
+  cryptomusInfo: {
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.border,
   },
-  verificationTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary,
+  cryptomusInfoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 8,
   },
-  verificationText: {
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 4,
-  },
-  hashText: {
+  cryptomusInfoText: {
     fontSize: 12,
     color: colors.textSecondary,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    lineHeight: 18,
+    marginBottom: 4,
   },
 });
 
 export default function PurchaseScreen() {
-  const { currentStage, refreshData, isLoading } = usePreSale();
-  const { user } = useAuth();
+  const { currentStage, purchaseMXI, isLoading } = usePreSale();
   const { t } = useLanguage();
   const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cryptomus' | null>(null);
   const [loading, setLoading] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [_walletType, _setWalletType] = useState<WalletType | null>(null);
-  const [_provider, _setProvider] = useState<any>(null);
-  const [signer, setSigner] = useState<any>(null);
-  const [transactionHash, setTransactionHash] = useState<string | null>(null);
-  const [verifying, setVerifying] = useState(false);
 
   const calculateMXI = () => {
     const amountNum = parseFloat(amount);
@@ -234,102 +287,9 @@ export default function PurchaseScreen() {
     return amountNum / currentStage.price;
   };
 
-  const handleWalletConnect = (
-    address: string,
-    type: WalletType,
-    providerInstance: any,
-    signerInstance: any
-  ) => {
-    setWalletAddress(address);
-    _setWalletType(type);
-    _setProvider(providerInstance);
-    setSigner(signerInstance);
-    console.log('✅ Wallet connected:', { address, type });
-  };
-
-  const handleWalletDisconnect = () => {
-    setWalletAddress(null);
-    _setWalletType(null);
-    _setProvider(null);
-    setSigner(null);
-    setTransactionHash(null);
-    console.log('🔌 Wallet disconnected');
-  };
-
-  const verifyTransaction = async (txHash: string, mxiAmount: number, usdtAmount: number) => {
-    setVerifying(true);
-    try {
-      console.log('🔍 Verifying transaction with backend...');
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
-      const response = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/verify-usdt-purchase`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            userId: user?.id,
-            wallet: walletAddress,
-            txHash: txHash,
-            usdtPagados: usdtAmount,
-            mxiComprados: mxiAmount,
-            stage: currentStage?.stage,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 202) {
-          // Transaction needs more confirmations
-          Alert.alert(
-            t('waitingForConfirmations'),
-            `${t('transactionNeedsConfirmations')} ${result.required - result.confirmations} ${t('moreConfirmations')}`,
-            [{ text: t('ok') }]
-          );
-          return;
-        }
-        throw new Error(result.error || 'Verification failed');
-      }
-
-      console.log('✅ Transaction verified:', result);
-
-      Alert.alert(
-        t('purchaseConfirmed'),
-        `${t('purchaseConfirmedMessage')} ${mxiAmount.toFixed(2)} MXI!\n\n${t('transaction')}: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\n${t('balanceUpdated')}`,
-        [
-          {
-            text: t('ok'),
-            onPress: () => {
-              setAmount('');
-              setTransactionHash(null);
-              refreshData();
-            },
-          },
-        ]
-      );
-    } catch (error: any) {
-      console.error('❌ Verification error:', error);
-      Alert.alert(
-        t('verificationFailed'),
-        error.message || t('verificationFailedMessage')
-      );
-    } finally {
-      setVerifying(false);
-    }
-  };
-
   const handlePurchase = async () => {
     const amountNum = parseFloat(amount);
-
+    
     if (isNaN(amountNum) || amountNum < 20 || amountNum > 50000) {
       Alert.alert(
         t('error'),
@@ -338,69 +298,29 @@ export default function PurchaseScreen() {
       return;
     }
 
-    if (!walletAddress || !signer) {
-      Alert.alert(t('error'), t('connectWalletFirst'));
-      return;
-    }
-
-    if (!user?.id) {
-      Alert.alert(t('error'), t('userNotAuthenticated'));
-      return;
-    }
-
-    if (!currentStage) {
-      Alert.alert(t('error'), t('noActivePresaleStage'));
+    if (!paymentMethod) {
+      Alert.alert(t('selectPaymentMethodAlert'), t('pleaseSelectPaymentMethod'));
       return;
     }
 
     setLoading(true);
-    setTransactionHash(null);
-
     try {
-      // Send USDT payment
-      console.log('💰 Sending USDT payment...');
-      const txHash = await sendUSDTPayment(signer, amountNum);
-
-      console.log('✅ Transaction sent:', txHash);
-      setTransactionHash(txHash);
-
-      // Calculate MXI amount
-      const mxiAmount = amountNum / currentStage.price;
-
-      // Save transaction to database as pending
-      const { error: txError } = await supabase
-        .from('metamask_transactions')
-        .insert({
-          user_id: user.id,
-          wallet_address: walletAddress,
-          transaction_hash: txHash,
-          amount_usd: amountNum,
-          mxi_amount: mxiAmount,
-          payment_currency: 'USDT',
-          stage: currentStage.stage,
-          status: 'pending',
-        });
-
-      if (txError) {
-        console.error('❌ Error saving transaction:', txError);
-      }
-
+      await purchaseMXI(amountNum, paymentMethod);
       Alert.alert(
-        t('transactionSubmittedSuccess'),
-        `${t('usdtPaymentSubmitted')}\n\n${t('transactionHash')}: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 8)}\n\n${t('verifyTransactionMessage')}`,
+        t('purchaseInitiated'),
+        t('cryptomusPurchaseMessage'),
         [
           {
-            text: t('verifyNow'),
-            onPress: () => verifyTransaction(txHash, mxiAmount, amountNum),
-          },
-          {
-            text: t('later'),
-            style: 'cancel',
+            text: t('ok'),
+            onPress: () => {
+              setAmount('');
+              setPaymentMethod(null);
+            },
           },
         ]
       );
     } catch (error: any) {
-      console.error('❌ Purchase error:', error);
+      console.error('Purchase error:', error);
       Alert.alert(t('purchaseFailed'), error.message || t('pleaseTryAgain'));
     } finally {
       setLoading(false);
@@ -422,11 +342,11 @@ export default function PurchaseScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <IconSymbol
-            ios_icon_name="exclamationmark.triangle"
-            android_material_icon_name="warning"
-            size={80}
-            color={colors.textSecondary}
+          <IconSymbol 
+            ios_icon_name="exclamationmark.triangle" 
+            android_material_icon_name="warning" 
+            size={80} 
+            color={colors.textSecondary} 
           />
           <Text style={styles.emptyTitle}>{t('noActiveStage')}</Text>
           <Text style={styles.emptyText}>{t('noActiveStageMes')}</Text>
@@ -436,7 +356,7 @@ export default function PurchaseScreen() {
   }
 
   const mxiAmount = calculateMXI();
-  const canPurchase = mxiAmount > 0 && walletAddress && !loading && !verifying;
+  const canPurchase = mxiAmount > 0 && paymentMethod && !loading;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -447,9 +367,7 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.stageCard}>
-          <Text style={styles.stageTitle}>
-            {t('stage')} {currentStage.stage} {t('stageDetails')}
-          </Text>
+          <Text style={styles.stageTitle}>{t('stage')} {currentStage.stage} {t('stageDetails')}</Text>
           <View style={styles.stageInfo}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>{t('currentPricePerMXI')}</Text>
@@ -483,11 +401,6 @@ export default function PurchaseScreen() {
         </View>
 
         <View style={styles.purchaseCard}>
-          <WalletConnector
-            onConnect={handleWalletConnect}
-            onDisconnect={handleWalletDisconnect}
-          />
-
           <Text style={styles.inputLabel}>{t('amount')} (USDT)</Text>
           <TextInput
             style={styles.input}
@@ -496,7 +409,7 @@ export default function PurchaseScreen() {
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
-            editable={!loading && !verifying && walletAddress !== null}
+            editable={!loading}
           />
           <Text style={styles.helperText}>
             {t('minimum')}: 20 USDT • {t('maximum')}: 50,000 USDT
@@ -512,38 +425,55 @@ export default function PurchaseScreen() {
                 <Text style={styles.calculationLabel}>{t('pricePerMXI')}</Text>
                 <Text style={styles.calculationValue}>${currentStage.price.toFixed(2)}</Text>
               </View>
-              <View style={styles.calculationRow}>
-                <Text style={styles.calculationLabel}>{t('paymentMethod')}</Text>
-                <Text style={styles.calculationValue}>USDT (BEP-20)</Text>
-              </View>
             </View>
           )}
 
-          {transactionHash && (
-            <View style={styles.verificationCard}>
-              <Text style={styles.verificationTitle}>⏳ {t('transactionSubmitted')}</Text>
-              <Text style={styles.verificationText}>
-                {t('paymentSubmittedToBlockchain')}
-              </Text>
-              <Text style={styles.verificationText}>{t('transactionHash')}:</Text>
-              <Text style={styles.hashText}>{transactionHash}</Text>
-              <TouchableOpacity
-                style={[styles.purchaseButton, { marginTop: 12 }]}
-                onPress={() => {
-                  const mxiAmount = calculateMXI();
-                  const usdtAmount = parseFloat(amount);
-                  verifyTransaction(transactionHash, mxiAmount, usdtAmount);
-                }}
-                disabled={verifying}
+          <Text style={styles.paymentMethodsTitle}>{t('selectPaymentMethod')}</Text>
+          <View style={styles.paymentMethods}>
+            <TouchableOpacity
+              style={[
+                styles.paymentButton,
+                paymentMethod === 'cryptomus' && styles.paymentButtonSelected,
+              ]}
+              onPress={() => setPaymentMethod('cryptomus')}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#6C5CE7', '#A29BFE']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.paymentGradient}
               >
-                {verifying ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.purchaseButtonText}>{t('verifyTransaction')}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+                <View style={styles.paymentLeft}>
+                  <View style={styles.paymentIconContainer}>
+                    <IconSymbol 
+                      ios_icon_name="bitcoinsign.circle.fill" 
+                      android_material_icon_name="currency_bitcoin" 
+                      size={28} 
+                      color="#FFFFFF" 
+                    />
+                  </View>
+                  <View style={styles.paymentInfo}>
+                    <Text style={styles.paymentName}>{t('cryptomus')}</Text>
+                    <Text style={styles.paymentDescription}>{t('cryptomusDescription')}</Text>
+                  </View>
+                </View>
+                <View style={styles.paymentPrice}>
+                  <Text style={styles.paymentPriceLabel}>{t('currentPrice')}</Text>
+                  <Text style={styles.paymentPriceValue}>${currentStage.price.toFixed(2)}</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.cryptomusInfo}>
+            <Text style={styles.cryptomusInfoTitle}>ℹ️ {t('cryptomusInfoTitle')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo1')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo2')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo3')}</Text>
+            <Text style={styles.cryptomusInfoText}>• {t('cryptomusInfo4')}</Text>
+          </View>
 
           <TouchableOpacity
             style={canPurchase ? styles.purchaseButton : styles.purchaseButtonDisabled}
@@ -554,9 +484,7 @@ export default function PurchaseScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.purchaseButtonText}>
-                {!walletAddress
-                  ? t('connectWalletFirst')
-                  : `${t('pay')} ${amount || '0'} USDT`}
+                {paymentMethod ? `${t('completePurchaseVia')} ${t('cryptomus')}` : t('selectPaymentMethodButton')}
               </Text>
             )}
           </TouchableOpacity>

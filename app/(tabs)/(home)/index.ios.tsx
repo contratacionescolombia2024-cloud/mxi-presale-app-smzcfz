@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors } from '@/styles/commonStyles';
+import { colors, commonStyles } from '@/styles/commonStyles';
 import React, { useEffect, useState, useCallback } from 'react';
 import { IconSymbol } from '@/components/IconSymbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -193,6 +193,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceRowValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  balanceRowHighlight: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.text,
@@ -400,10 +405,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sectionTeal,
     borderColor: 'rgba(20, 184, 166, 0.4)',
   },
-  actionCardWithdrawals: {
-    backgroundColor: colors.sectionGreen,
-    borderColor: 'rgba(16, 185, 129, 0.4)',
-  },
   actionLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -450,6 +451,7 @@ export default function HomeScreen() {
     seconds: 0,
   });
 
+  // Load global metrics
   const loadGlobalMetrics = useCallback(async () => {
     try {
       console.log('🌍 Loading global metrics...');
@@ -493,6 +495,7 @@ export default function HomeScreen() {
     }
   }, []);
 
+  // Real-time subscription for global metrics
   useEffect(() => {
     loadGlobalMetrics();
 
@@ -534,6 +537,7 @@ export default function HomeScreen() {
     };
   }, [loadGlobalMetrics, refreshData]);
 
+  // Real-time update for global vesting rewards (every second)
   useEffect(() => {
     if (!globalMetrics?.totalPurchasedMXI) return;
 
@@ -555,6 +559,7 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, [globalMetrics?.totalPurchasedMXI]);
 
+  // Countdown to February 20, 2026 (Token Launch)
   useEffect(() => {
     const targetDate = new Date('2026-02-20T00:00:00').getTime();
 
@@ -580,6 +585,7 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // Countdown to current phase end
   useEffect(() => {
     if (!currentStage?.endDate) return;
 
@@ -635,12 +641,15 @@ export default function HomeScreen() {
     );
   }
 
+  // Calculate MXI breakdown using the new purchased_mxi field
   const totalMXI = vestingData?.totalMXI || 0;
   const purchasedMXI = vestingData?.purchasedMXI || 0;
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
   const tournamentsBalance = vestingData?.tournamentsBalance || 0;
+  const commissionBalance = vestingData?.commissionBalance || 0;
   
+  // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
   const totalMXIAvailable = 25000000;
   const totalDistributed = globalMetrics?.totalMXIInDistribution || 0;
   const progress = (totalDistributed / totalMXIAvailable) * 100;
@@ -653,7 +662,9 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* Top Bar with Social Icons, Logo and Language Selector */}
         <View style={styles.topBar}>
+          {/* Social Media Icons - Top Left */}
           <View style={styles.socialIconsContainer}>
             <TouchableOpacity 
               style={styles.socialIconButton}
@@ -685,6 +696,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Logo - Center */}
           <View style={styles.logoContainer}>
             <Image
               source={require('@/assets/images/842fdc6d-790f-4b06-a0ae-10c12b6f2fb0.png')}
@@ -692,6 +704,7 @@ export default function HomeScreen() {
             />
           </View>
 
+          {/* Language Button - Top Right */}
           <TouchableOpacity 
             style={styles.languageButton}
             onPress={() => router.push('/language-settings')}
@@ -705,6 +718,7 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>{t('yourMXIDashboard')}</Text>
         </View>
 
+        {/* Countdown Timer */}
         <View style={styles.countdownCard}>
           <Text style={styles.countdownTitle}>🚀 {t('mxiTokenLaunch')}</Text>
           <Text style={styles.countdownSubtitle}>{t('countdownToLaunch')}</Text>
@@ -731,6 +745,7 @@ export default function HomeScreen() {
           <Text style={styles.launchDate}>February 20, 2026</Text>
         </View>
 
+        {/* Balance Card */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>{t('totalMXIBalance')}</Text>
           <Text style={styles.balanceAmount}>{totalMXI.toFixed(2)} MXI</Text>
@@ -790,6 +805,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Vesting Display with Real-Time Updates */}
         <View style={styles.vestingCard}>
           <View style={styles.vestingHeader}>
             <Text style={styles.vestingTitle}>{t('vestingRewardsTitle')}</Text>
@@ -849,6 +865,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Current Phase Status with Global Data */}
         <View style={styles.phaseCountersContainer}>
           <View style={styles.salesStatusCard}>
             <View style={styles.salesStatusHeader}>
@@ -913,6 +930,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Action Cards */}
         <View style={styles.actionsGrid}>
           <TouchableOpacity 
             style={[styles.actionCard, styles.actionCardPurchase]}
@@ -964,19 +982,6 @@ export default function HomeScreen() {
               color="#14B8A6"
             />
             <Text style={styles.actionLabel}>{t('kycVerification')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.actionCard, styles.actionCardWithdrawals]}
-            onPress={() => router.push('/ecosystem/withdrawals')}
-          >
-            <IconSymbol 
-              ios_icon_name="banknote" 
-              android_material_icon_name="account_balance_wallet" 
-              size={32} 
-              color="#10B981"
-            />
-            <Text style={styles.actionLabel}>{t('withdrawals')}</Text>
           </TouchableOpacity>
         </View>
 

@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
+  View,
   Text,
   StyleSheet,
   ActivityIndicator,
@@ -34,7 +35,7 @@ export default function PasswordRecoveryScreen() {
     try {
       // Listen for password recovery event
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, _session) => {
+        async (event, session) => {
           console.log('🔄 Auth event in recovery screen:', event);
           
           if (event === 'PASSWORD_RECOVERY') {

@@ -11,24 +11,22 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import AppFooter from '@/components/AppFooter';
 
 export default function ProfileScreen() {
   const { user, logout, isAdmin } = useAuth();
-  const { t } = useLanguage();
   const router = useRouter();
 
   const handleLogout = async () => {
     Alert.alert(
-      t('logout'),
-      t('logoutConfirm'),
+      'Logout',
+      'Are you sure you want to logout?',
       [
-        { text: t('cancel'), style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         { 
-          text: t('logout'), 
+          text: 'Logout', 
           style: 'destructive',
           onPress: async () => {
             console.log('🚪 ========== USER INITIATED LOGOUT (iOS) ==========');
@@ -37,15 +35,18 @@ export default function ProfileScreen() {
             try {
               console.log('🔄 Calling logout function...');
               
+              // Call logout function and wait for it to complete
               await logout();
               
               console.log('✅ Logout function completed');
               console.log('🔄 Preparing to navigate to login screen...');
               
+              // Use a small delay to ensure all state updates have propagated
               await new Promise(resolve => setTimeout(resolve, 300));
               
               console.log('🔄 Navigating to login screen...');
               
+              // Force replace to login screen
               router.replace('/(auth)/login');
               
               console.log('✅ Navigation completed');
@@ -57,6 +58,7 @@ export default function ProfileScreen() {
               console.error('Error message:', error?.message);
               console.error('Error stack:', error?.stack);
               
+              // Show error alert but still navigate to login
               Alert.alert(
                 'Logout Notice', 
                 'You have been logged out. If you experience any issues, please restart the app.',
@@ -65,6 +67,7 @@ export default function ProfileScreen() {
                     text: 'OK',
                     onPress: () => {
                       console.log('🔄 Force navigating to login after error...');
+                      // Force navigation to login even if logout had issues
                       router.replace('/(auth)/login');
                     }
                   }
@@ -87,9 +90,9 @@ export default function ProfileScreen() {
 
   const getKYCStatusText = () => {
     switch (user?.kycStatus) {
-      case 'approved': return t('verified');
-      case 'rejected': return t('rejected');
-      default: return t('pending');
+      case 'approved': return 'Verified';
+      case 'rejected': return 'Rejected';
+      default: return 'Pending';
     }
   };
 
@@ -115,37 +118,37 @@ export default function ProfileScreen() {
               size={16} 
               color={colors.card} 
             />
-            <Text style={styles.kycBadgeText}>{t('kycStatus')}: {getKYCStatusText()}</Text>
+            <Text style={styles.kycBadgeText}>KYC: {getKYCStatusText()}</Text>
           </View>
         </View>
 
         <View style={commonStyles.card}>
-          <Text style={styles.cardTitle}>{t('accountInformation')}</Text>
+          <Text style={styles.cardTitle}>Account Information</Text>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t('referralCode')}</Text>
+            <Text style={styles.infoLabel}>Referral Code</Text>
             <Text style={styles.infoValue}>{user?.referralCode}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t('identification')}</Text>
-            <Text style={styles.infoValue}>{user?.identification || t('notSet')}</Text>
+            <Text style={styles.infoLabel}>Identification</Text>
+            <Text style={styles.infoValue}>{user?.identification || 'Not set'}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t('address')}</Text>
-            <Text style={styles.infoValue}>{user?.address || t('notSet')}</Text>
+            <Text style={styles.infoLabel}>Address</Text>
+            <Text style={styles.infoValue}>{user?.address || 'Not set'}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t('memberSince')}</Text>
+            <Text style={styles.infoLabel}>Member Since</Text>
             <Text style={styles.infoValue}>
               {new Date(user?.createdAt || '').toLocaleDateString()}
             </Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>{t('emailVerified')}</Text>
+            <Text style={styles.infoLabel}>Email Verified</Text>
             <View style={styles.verifiedBadge}>
               <IconSymbol 
                 ios_icon_name={user?.emailVerified ? 'checkmark.circle.fill' : 'xmark.circle.fill'} 
@@ -154,7 +157,7 @@ export default function ProfileScreen() {
                 color={user?.emailVerified ? colors.success : colors.error} 
               />
               <Text style={[styles.verifiedText, { color: user?.emailVerified ? colors.success : colors.error }]}>
-                {user?.emailVerified ? t('verified') : t('notVerified')}
+                {user?.emailVerified ? 'Verified' : 'Not Verified'}
               </Text>
             </View>
           </View>
@@ -170,7 +173,7 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.primary} 
           />
-          <Text style={styles.menuItemText}>{t('editProfile')}</Text>
+          <Text style={styles.menuItemText}>Edit Profile</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -189,7 +192,7 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.secondary} 
           />
-          <Text style={styles.menuItemText}>{t('kycVerification')}</Text>
+          <Text style={styles.menuItemText}>KYC Verification</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -208,7 +211,7 @@ export default function ProfileScreen() {
             size={24} 
             color={colors.accent} 
           />
-          <Text style={styles.menuItemText}>{t('messages')}</Text>
+          <Text style={styles.menuItemText}>Messages</Text>
           <IconSymbol 
             ios_icon_name="chevron.right" 
             android_material_icon_name="chevron_right" 
@@ -228,7 +231,7 @@ export default function ProfileScreen() {
               size={24} 
               color={colors.error} 
             />
-            <Text style={styles.menuItemText}>{t('adminPanel')}</Text>
+            <Text style={styles.menuItemText}>Admin Panel</Text>
             <IconSymbol 
               ios_icon_name="chevron.right" 
               android_material_icon_name="chevron_right" 
@@ -242,7 +245,7 @@ export default function ProfileScreen() {
           style={[buttonStyles.outline, styles.logoutButton]}
           onPress={handleLogout}
         >
-          <Text style={buttonStyles.textOutline}>{t('logout')}</Text>
+          <Text style={buttonStyles.textOutline}>Logout</Text>
         </TouchableOpacity>
 
         <AppFooter />

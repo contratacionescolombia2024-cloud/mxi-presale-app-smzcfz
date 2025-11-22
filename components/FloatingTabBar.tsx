@@ -18,7 +18,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 export interface TabBarItem {
   name: string;
@@ -90,35 +90,29 @@ export default function FloatingTabBar({
 }: FloatingTabBarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  
-  // Use shared values for animation
   const indicatorPosition = useSharedValue(0);
-  const tabWidth = containerWidth / tabs.length;
 
-  // Find active tab index
   const activeIndex = tabs.findIndex((tab) => {
     const tabPath = typeof tab.route === 'string' ? tab.route : tab.route.pathname;
     return pathname.startsWith(tabPath || '');
   });
 
-  // Update indicator position when active tab changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (activeIndex !== -1) {
+      const tabWidth = containerWidth / tabs.length;
       indicatorPosition.value = withSpring(activeIndex * tabWidth, {
         damping: 20,
         stiffness: 90,
       });
     }
-  }, [activeIndex, tabWidth]);
+  }, [activeIndex, containerWidth, tabs.length]);
 
-  // Animated style for indicator - MUST be defined with 'worklet' directive
   const indicatorStyle = useAnimatedStyle(() => {
-    'worklet';
     return {
       transform: [{ translateX: indicatorPosition.value }],
-      width: tabWidth,
+      width: containerWidth / tabs.length,
     };
-  }, [tabWidth]);
+  });
 
   const handleTabPress = (route: Href) => {
     console.log('[FloatingTabBar] Tab pressed:', route);
@@ -131,6 +125,13 @@ export default function FloatingTabBar({
       {tabs.map((tab, index) => {
         const isActive = index === activeIndex;
         const iconColor = isActive ? colors.primary : colors.text;
+
+        console.log(`[FloatingTabBar] Rendering tab "${tab.label}":`, {
+          ios: tab.iosIcon,
+          android: tab.androidIcon,
+          isActive,
+          color: iconColor,
+        });
 
         return (
           <TouchableOpacity

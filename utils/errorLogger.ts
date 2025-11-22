@@ -1,4 +1,3 @@
-
 // Global error logging for runtime errors
 
 import { Platform } from "react-native";
@@ -43,6 +42,59 @@ const sendErrorToParent = (level: string, message: string, data: any) => {
   }
 };
 
+// Function to extract meaningful source location from stack trace
+const extractSourceLocation = (stack: string): string => {
+  if (!stack) return '';
+
+  // Look for various patterns in the stack trace
+  const patterns = [
+    // Pattern for app files: app/filename.tsx:line:column
+    /at .+\/(app\/[^:)]+):(\d+):(\d+)/,
+    // Pattern for components: components/filename.tsx:line:column
+    /at .+\/(components\/[^:)]+):(\d+):(\d+)/,
+    // Pattern for any .tsx/.ts files
+    /at .+\/([^/]+\.tsx?):(\d+):(\d+)/,
+    // Pattern for bundle files with source maps
+    /at .+\/([^/]+\.bundle[^:]*):(\d+):(\d+)/,
+    // Pattern for any JavaScript file
+    /at .+\/([^/\s:)]+\.[jt]sx?):(\d+):(\d+)/
+  ];
+
+  for (const pattern of patterns) {
+    const match = stack.match(pattern);
+    if (match) {
+      return ` | Source: ${match[1]}:${match[2]}:${match[3]}`;
+    }
+  }
+
+  // If no specific pattern matches, try to find any file reference
+  const fileMatch = stack.match(/at .+\/([^/\s:)]+\.[jt]sx?):(\d+)/);
+  if (fileMatch) {
+    return ` | Source: ${fileMatch[1]}:${fileMatch[2]}`;
+  }
+
+  return '';
+};
+
+// Function to get caller information from stack trace
+const getCallerInfo = (): string => {
+  const stack = new Error().stack || '';
+  const lines = stack.split('\n');
+
+  // Skip the first few lines (Error, getCallerInfo, console override)
+  for (let i = 3; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.indexOf('app/') !== -1 || line.indexOf('components/') !== -1 || line.indexOf('.tsx') !== -1 || line.indexOf('.ts') !== -1) {
+      const match = line.match(/at .+\/([^/\s:)]+\.[jt]sx?):(\d+):(\d+)/);
+      if (match) {
+        return ` | Called from: ${match[1]}:${match[2]}:${match[3]}`;
+      }
+    }
+  }
+
+  return '';
+};
+
 export const setupErrorLogging = () => {
   // Capture unhandled errors in web environment
   if (typeof window !== 'undefined') {
@@ -77,10 +129,10 @@ export const setupErrorLogging = () => {
     }
   }
 
-  // Store original console methods (commented out to avoid unused variable warnings)
-  // const _originalConsoleError = console.error;
-  // const _originalConsoleWarn = console.warn;
-  // const _originalConsoleLog = console.log;
+  // Store original console methods
+  const originalConsoleError = console.error;
+  const originalConsoleWarn = console.warn;
+  const originalConsoleLog = console.log;
 
   // UNCOMMENT BELOW CODE TO GET MORE SENSITIVE ERROR LOGGING (usually many errors triggered per 1 uncaught runtime error)
 
@@ -138,7 +190,7 @@ export const setupErrorLogging = () => {
   // Try to intercept React Native warnings at a lower level
   if (typeof window !== 'undefined' && (window as any).__DEV__) {
     // Override React's warning system if available
-    const _originalWarn = (window as any).console?.warn || console.warn;
+    const originalWarn = (window as any).console?.warn || console.warn;
 
     // Monkey patch any React warning functions
     if ((window as any).React && (window as any).React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED) {
