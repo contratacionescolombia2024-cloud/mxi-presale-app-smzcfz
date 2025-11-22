@@ -18,7 +18,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export interface TabBarItem {
   name: string;
@@ -92,25 +92,34 @@ export default function FloatingTabBar({
   const pathname = usePathname();
   const indicatorPosition = useSharedValue(0);
 
-  const activeIndex = tabs.findIndex((tab) => {
-    const tabPath = typeof tab.route === 'string' ? tab.route : tab.route.pathname;
-    return pathname.startsWith(tabPath || '');
-  });
+  // Extract only serializable data for worklets
+  // This prevents the WorkletsError by ensuring we only use primitives
+  const tabsLength = tabs.length;
+  const tabWidth = containerWidth / tabsLength;
+
+  const activeIndex = useMemo(() => {
+    return tabs.findIndex((tab) => {
+      const tabPath = typeof tab.route === 'string' ? tab.route : tab.route.pathname;
+      return pathname.startsWith(tabPath || '');
+    });
+  }, [tabs, pathname]);
 
   React.useEffect(() => {
     if (activeIndex !== -1) {
-      const tabWidth = containerWidth / tabs.length;
+      // Use only primitive values in the worklet
       indicatorPosition.value = withSpring(activeIndex * tabWidth, {
         damping: 20,
         stiffness: 90,
       });
     }
-  }, [activeIndex, containerWidth, tabs.length]);
+  }, [activeIndex, tabWidth, indicatorPosition]);
 
+  // Animated style only uses primitive values
   const indicatorStyle = useAnimatedStyle(() => {
+    'worklet';
     return {
       transform: [{ translateX: indicatorPosition.value }],
-      width: containerWidth / tabs.length,
+      width: tabWidth,
     };
   });
 
