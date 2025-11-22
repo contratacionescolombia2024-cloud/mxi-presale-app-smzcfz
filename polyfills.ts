@@ -1,12 +1,10 @@
 
 // CRITICAL: This file MUST be imported FIRST before any other code
 // It provides Node.js built-in polyfills for React Native environment
-// IMPORTANT: Uses ONLY simple, serializable objects to avoid worklets errors
 
 console.log('🔧 Loading polyfills...');
 
 // CRITICAL: Get reference to the global object FIRST
-// Use a simple function that returns the global object
 function getGlobalObject(): any {
   if (typeof globalThis !== 'undefined') return globalThis;
   if (typeof global !== 'undefined') return global;
@@ -31,47 +29,39 @@ if (typeof global === 'undefined') {
 console.log('✅ Global object configured');
 
 // CRITICAL: Polyfill process with ONLY simple, serializable objects
-// No complex objects, no closures, no external dependencies
 try {
   if (!globalObj.process) {
-    // Create simple process object with only primitive values and simple functions
-    // CRITICAL: All functions must be simple and not capture any external variables
     globalObj.process = {
       env: { NODE_ENV: 'production' },
       version: 'v16.0.0',
       versions: { node: '16.0.0' },
       platform: 'browser',
       browser: true,
-      nextTick: function(callback: Function, ...args: any[]) {
-        setTimeout(function() { callback(...args); }, 0);
+      nextTick: (callback: Function, ...args: any[]) => {
+        setTimeout(() => { callback(...args); }, 0);
       },
-      cwd: function() { return '/'; },
-      chdir: function() {},
-      umask: function() { return 0; },
+      cwd: () => '/',
+      chdir: () => {},
+      umask: () => 0,
     };
   }
   
-  // Ensure process.env exists
   if (!globalObj.process.env) {
     globalObj.process.env = {};
   }
   
-  // Set NODE_ENV
   if (!globalObj.process.env.NODE_ENV) {
     globalObj.process.env.NODE_ENV = 'production';
   }
   
-  // Add browser flag
   globalObj.process.browser = true;
   
-  // Add nextTick if missing (simple function, no closures)
   if (!globalObj.process.nextTick) {
-    globalObj.process.nextTick = function(callback: Function, ...args: any[]) {
-      setTimeout(function() { callback(...args); }, 0);
+    globalObj.process.nextTick = (callback: Function, ...args: any[]) => {
+      setTimeout(() => { callback(...args); }, 0);
     };
   }
   
-  // Set process on window/globalThis
   if (typeof window !== 'undefined') {
     (window as any).process = globalObj.process;
   }
@@ -99,7 +89,6 @@ try {
 } catch (error) {
   console.error('❌ Failed to load buffer:', error);
   
-  // Create a minimal Buffer polyfill as fallback (simple class, no complex objects)
   class MinimalBuffer {
     static from(data: any): any {
       if (typeof data === 'string') {
@@ -134,30 +123,29 @@ try {
   console.error('❌ Failed to load events:', error);
 }
 
-// CRITICAL: Polyfill setImmediate/clearImmediate with simple functions
-// These must be simple functions that don't capture any external variables
+// CRITICAL: Polyfill setImmediate/clearImmediate
 if (typeof globalObj.setImmediate === 'undefined') {
-  globalObj.setImmediate = function(callback: Function, ...args: any[]) {
-    return setTimeout(function() { callback(...args); }, 0);
+  globalObj.setImmediate = (callback: Function, ...args: any[]) => {
+    return setTimeout(() => { callback(...args); }, 0);
   };
 }
 
 if (typeof globalObj.clearImmediate === 'undefined') {
-  globalObj.clearImmediate = function(id: any) {
+  globalObj.clearImmediate = (id: any) => {
     clearTimeout(id);
   };
 }
 
-// Polyfill crypto for web (simple object reference)
+// Polyfill crypto for web
 if (typeof window !== 'undefined' && typeof globalObj.crypto === 'undefined') {
   if (typeof window.crypto !== 'undefined') {
     globalObj.crypto = window.crypto;
   }
 }
 
-// CRITICAL: Polyfill crypto.getRandomValues with simple function
+// CRITICAL: Polyfill crypto.getRandomValues
 if (typeof globalObj.crypto !== 'undefined' && typeof globalObj.crypto.getRandomValues === 'undefined') {
-  globalObj.crypto.getRandomValues = function(array: any) {
+  globalObj.crypto.getRandomValues = (array: any) => {
     for (let i = 0; i < array.length; i++) {
       array[i] = Math.floor(Math.random() * 256);
     }
@@ -182,5 +170,4 @@ console.log('========================');
 console.log('');
 console.log('✅ Polyfills loaded successfully!');
 
-// Export empty object to make this a module
 export {};

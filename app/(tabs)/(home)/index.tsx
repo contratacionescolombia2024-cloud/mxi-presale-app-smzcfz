@@ -15,10 +15,10 @@ import { useRouter } from 'expo-router';
 import { usePreSale } from '@/contexts/PreSaleContext';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ICONS } from '@/constants/AppIcons';
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { colors, commonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppFooter from '@/components/AppFooter';
 import { supabase } from '@/app/integrations/supabase/client';
@@ -452,66 +452,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  globalVestingCard: {
-    backgroundColor: colors.sectionPink,
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(236, 72, 153, 0.4)',
-  },
-  globalVestingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  globalVestingTitle: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(236, 72, 153, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#4ade80',
-  },
-  liveBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  globalMetricsGrid: {
-    gap: 10,
-  },
-  globalMetricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(236, 72, 153, 0.1)',
-    padding: 12,
-    borderRadius: 10,
-  },
-  globalMetricLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  globalMetricValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.highlight,
-  },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -773,7 +713,6 @@ export default function HomeScreen() {
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
   const tournamentsBalance = vestingData?.tournamentsBalance || 0;
-  const commissionBalance = vestingData?.commissionBalance || 0;
   
   // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
   const totalMXIAvailable = 25000000;

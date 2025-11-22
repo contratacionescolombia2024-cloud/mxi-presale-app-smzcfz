@@ -24,6 +24,8 @@ config.resolver = {
       '@wagmi/connectors',
       '@web3modal/wagmi',
       '@web3modal/base',
+      '@web3modal/scaffold',
+      '@web3modal/ui',
       'wagmi',
       'viem',
       'ox/',
@@ -94,14 +96,11 @@ config.resolver = {
     if (moduleName.endsWith('.js')) {
       const withoutExtension = moduleName.replace(/\.js$/, '');
       try {
-        // Try without extension first
         return context.resolveRequest(context, withoutExtension, platform);
       } catch (e) {
         try {
-          // Try with .ts extension
           return context.resolveRequest(context, withoutExtension + '.ts', platform);
         } catch (e2) {
-          // Try with .tsx extension
           try {
             return context.resolveRequest(context, withoutExtension + '.tsx', platform);
           } catch (e3) {

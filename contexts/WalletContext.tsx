@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Alert } from 'react-native';
 
 interface WalletContextType {
   isConnected: boolean;
@@ -24,8 +24,8 @@ export function useWallet() {
   return context;
 }
 
-// CRITICAL: Define all functions OUTSIDE component to ensure they're serializable
-// These are simple functions with no closures or complex dependencies
+// CRITICAL: Native implementation with ONLY serializable primitives
+// All functions are defined at module level to ensure they're serializable
 function showWebOnlyAlert() {
   Alert.alert(
     'Web Only Feature',
@@ -34,7 +34,7 @@ function showWebOnlyAlert() {
   );
 }
 
-async function connectWallet(type: string): Promise<void> {
+async function connectWallet(_type: string): Promise<void> {
   console.log('⚠️ WalletProvider: Connect wallet called on native platform');
   showWebOnlyAlert();
   throw new Error('Wallet connection is only available on web');
@@ -48,15 +48,15 @@ async function refreshBalance(): Promise<void> {
   console.log('⚠️ WalletProvider: Refresh balance called on native platform');
 }
 
-async function sendPayment(amountUSDT: number): Promise<string> {
+async function sendPayment(_amountUSDT: number): Promise<string> {
   console.log('⚠️ WalletProvider: Send payment called on native platform');
   showWebOnlyAlert();
   throw new Error('Payment is only available on web');
 }
 
-// CRITICAL: Create context value object ONCE with only primitives and simple functions
-// This object is completely serializable and safe for worklets
-const NATIVE_CONTEXT_VALUE: WalletContextType = {
+// CRITICAL: Create a constant context value with only primitives
+// This object never changes and is completely serializable
+const NATIVE_WALLET_CONTEXT: WalletContextType = {
   isConnected: false,
   walletType: null,
   address: null,
@@ -69,14 +69,12 @@ const NATIVE_CONTEXT_VALUE: WalletContextType = {
 };
 
 // Native implementation - Web3Modal is not supported on native platforms
-// CRITICAL: This implementation uses ONLY serializable primitives to avoid worklets errors
 export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('💼 WalletProvider: Native implementation loaded');
 
-  // CRITICAL: Use the pre-defined constant value to ensure stability
-  // This prevents any re-creation of the context value
+  // CRITICAL: Use the constant value to prevent any re-renders or object recreation
   return (
-    <WalletContext.Provider value={NATIVE_CONTEXT_VALUE}>
+    <WalletContext.Provider value={NATIVE_WALLET_CONTEXT}>
       {children}
     </WalletContext.Provider>
   );

@@ -11,8 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, commonStyles } from '@/styles/commonStyles';
-import React, { useEffect, useState, useCallback } from 'react';
+import { colors } from '@/styles/commonStyles';
+import { useEffect, useState, useCallback } from 'react';
 import { IconSymbol } from '@/components/IconSymbol';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreSale } from '@/contexts/PreSaleContext';
@@ -193,11 +193,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   balanceRowValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  balanceRowHighlight: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.text,
@@ -647,7 +642,6 @@ export default function HomeScreen() {
   const referralMXI = referralStats?.totalMXIEarned || 0;
   const vestingRewards = vestingData?.currentRewards || 0;
   const tournamentsBalance = vestingData?.tournamentsBalance || 0;
-  const commissionBalance = vestingData?.commissionBalance || 0;
   
   // Calculate progress based on TOTAL MXI IN DISTRIBUTION (from all users)
   const totalMXIAvailable = 25000000;

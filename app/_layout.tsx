@@ -32,7 +32,6 @@ export default function RootLayout() {
   console.log('🚀 RootLayout: Platform =', Platform.OS);
 
   // CRITICAL: Stack navigation structure
-  // Keep this simple and avoid any complex objects
   const AppStack = (
     <Stack>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -66,7 +65,6 @@ export default function RootLayout() {
   );
 
   // CRITICAL: Core app providers (always present)
-  // These must be simple and not contain any complex objects
   const CoreProviders = (
     <AuthProvider>
       <LanguageProvider>
@@ -80,7 +78,6 @@ export default function RootLayout() {
   );
 
   // CRITICAL: Only wrap with Web3Provider on web platform
-  // This prevents any Web3-related code from being loaded on native
   if (Platform.OS === 'web') {
     console.log('🌐 RootLayout: Wrapping with Web3Provider for web');
     return <Web3Provider>{CoreProviders}</Web3Provider>;

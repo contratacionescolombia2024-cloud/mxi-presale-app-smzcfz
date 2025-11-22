@@ -1,29 +1,14 @@
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconSymbol } from '@/components/IconSymbol';
-import { Href } from 'expo-router';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Dimensions,
-} from 'react-native';
+import { useMemo } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
+import { IconSymbol } from './IconSymbol';
 import { BlurView } from 'expo-blur';
-import { useRouter, usePathname } from 'expo-router';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
-import React, { useMemo, useEffect, useCallback } from 'react';
 
 export interface TabBarItem {
   name: string;
-  route: Href;
+  route: string;
   iosIcon: string;
   androidIcon: string;
   label: string;
@@ -31,9 +16,77 @@ export interface TabBarItem {
 
 interface FloatingTabBarProps {
   tabs: TabBarItem[];
-  containerWidth?: number;
-  borderRadius?: number;
-  bottomMargin?: number;
+}
+
+export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // CRITICAL: Memoize the active tab calculation to prevent unnecessary re-renders
+  const activeTab = useMemo(() => {
+    const currentPath = pathname || '';
+    console.log('📍 Current pathname:', currentPath);
+    
+    // Find the matching tab
+    for (const tab of tabs) {
+      if (currentPath.includes(tab.name)) {
+        return tab.name;
+      }
+    }
+    
+    // Default to home if no match
+    return '(home)';
+  }, [pathname, tabs]);
+
+  // CRITICAL: Memoize the tab press handler to ensure it's stable
+  const handleTabPress = useMemo(() => {
+    return (route: string) => {
+      console.log('🔄 Navigating to:', route);
+      try {
+        router.push(route as any);
+      } catch (error) {
+        console.error('❌ Navigation error:', error);
+      }
+    };
+  }, [router]);
+
+  // CRITICAL: Memoize the tab items to prevent re-renders
+  const tabItems = useMemo(() => {
+    return tabs.map((tab) => {
+      const isActive = activeTab === tab.name;
+      
+      return (
+        <TouchableOpacity
+          key={tab.name}
+          style={styles.tab}
+          onPress={() => handleTabPress(tab.route)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
+            <IconSymbol
+              ios_icon_name={tab.iosIcon}
+              android_material_icon_name={tab.androidIcon}
+              size={24}
+              color={isActive ? colors.primary : colors.textSecondary}
+            />
+          </View>
+          <Text style={[styles.label, isActive && styles.activeLabel]}>
+            {tab.label}
+          </Text>
+        </TouchableOpacity>
+      );
+    });
+  }, [tabs, activeTab, handleTabPress]);
+
+  return (
+    <View style={styles.container}>
+      <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
+        <View style={styles.tabBar}>
+          {tabItems}
+        </View>
+      </BlurView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -44,175 +97,46 @@ const styles = StyleSheet.create({
     right: 0,
     paddingBottom: Platform.OS === 'ios' ? 20 : 10,
     paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  blurContainer: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border + '40',
   },
   tabBar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-around',
-    height: 70,
-    borderRadius: 25,
-    overflow: 'hidden',
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.card,
-    ...Platform.select({
-      ios: {},
-      android: {
-        elevation: 8,
-      },
-      web: {
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-      },
-    }),
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    backgroundColor: colors.cardBackground + 'CC',
   },
-  tabButton: {
+  tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
   },
-  tabLabel: {
-    fontSize: 11,
-    marginTop: 4,
-    fontWeight: '600',
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
-  indicator: {
-    position: 'absolute',
-    height: 4,
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-    top: 0,
+  activeIconContainer: {
+    backgroundColor: colors.primary + '20',
+  },
+  label: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  activeLabel: {
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
-
-// CRITICAL: Extract route string helper function OUTSIDE component
-function extractRouteString(route: Href): string {
-  if (typeof route === 'string') {
-    return route;
-  }
-  // Handle Href object
-  if (route && typeof route === 'object') {
-    return (route as any).pathname || String(route);
-  }
-  return String(route);
-}
-
-export default function FloatingTabBar({
-  tabs,
-  containerWidth = Dimensions.get('window').width - 32,
-  borderRadius = 25,
-  bottomMargin = Platform.OS === 'ios' ? 20 : 10,
-}: FloatingTabBarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  
-  // CRITICAL: Create shared value with initial value of 0
-  const indicatorPosition = useSharedValue(0);
-
-  // CRITICAL: Extract ONLY primitive values for worklets
-  // Convert tabs to serializable data structure
-  const serializedTabs = useMemo(() => {
-    return tabs.map((tab) => ({
-      name: tab.name,
-      routeString: extractRouteString(tab.route),
-      iosIcon: tab.iosIcon,
-      androidIcon: tab.androidIcon,
-      label: tab.label,
-    }));
-  }, [tabs]);
-
-  // CRITICAL: Calculate primitive values OUTSIDE of worklet
-  const tabsLength = serializedTabs.length;
-  const tabWidth = containerWidth / tabsLength;
-
-  // Find active index using serialized route strings
-  const activeIndex = useMemo(() => {
-    const index = serializedTabs.findIndex((tab) => {
-      return pathname.startsWith(tab.routeString || '');
-    });
-    return index !== -1 ? index : 0;
-  }, [serializedTabs, pathname]);
-
-  // CRITICAL: Update indicator position when active index changes
-  // Use useEffect to avoid worklet issues during initialization
-  useEffect(() => {
-    const targetPosition = activeIndex * tabWidth;
-    console.log('[FloatingTabBar] Updating indicator position:', {
-      activeIndex,
-      tabWidth,
-      targetPosition,
-    });
-    
-    // Animate to new position
-    indicatorPosition.value = withSpring(targetPosition, {
-      damping: 20,
-      stiffness: 90,
-    });
-  }, [activeIndex, tabWidth, indicatorPosition]);
-
-  // CRITICAL: Create animated style with ONLY primitive values
-  // The worklet must not capture any complex objects
-  const indicatorStyle = useAnimatedStyle(() => {
-    'worklet';
-    // Only use the shared value - no external dependencies
-    return {
-      transform: [{ translateX: indicatorPosition.value }],
-      width: tabWidth,
-    };
-  }, [tabWidth]); // Only depend on primitive tabWidth
-
-  // CRITICAL: Wrap navigation in useCallback to prevent re-creation
-  const handleTabPress = useCallback((route: Href) => {
-    console.log('[FloatingTabBar] Tab pressed:', route);
-    router.push(route);
-  }, [router]);
-
-  const TabBarContent = (
-    <View style={[styles.tabBar, { width: containerWidth, borderRadius }]}>
-      <Animated.View style={[styles.indicator, indicatorStyle]} />
-      {tabs.map((tab, index) => {
-        const isActive = index === activeIndex;
-        const iconColor = isActive ? colors.primary : colors.text;
-
-        return (
-          <TouchableOpacity
-            key={tab.name}
-            style={styles.tabButton}
-            onPress={() => handleTabPress(tab.route)}
-            activeOpacity={0.7}
-          >
-            <IconSymbol
-              ios_icon_name={tab.iosIcon}
-              android_material_icon_name={tab.androidIcon}
-              size={24}
-              color={iconColor}
-            />
-            <Text
-              style={[
-                styles.tabLabel,
-                {
-                  color: iconColor,
-                },
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-
-  return (
-    <SafeAreaView
-      edges={['bottom']}
-      style={[styles.container, { paddingBottom: bottomMargin }]}
-    >
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={80} tint="dark" style={{ borderRadius }}>
-          {TabBarContent}
-        </BlurView>
-      ) : (
-        TabBarContent
-      )}
-    </SafeAreaView>
-  );
-}
