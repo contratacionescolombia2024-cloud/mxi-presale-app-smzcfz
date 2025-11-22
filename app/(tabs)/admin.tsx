@@ -766,7 +766,7 @@ export default function AdminScreen() {
   };
 
   const handleResetPresaleDay = () => {
-    console.log('🔴 Reset Presale Day button pressed');
+    console.log('🔴 Reset Presale Day button pressed - handleResetPresaleDay called');
     
     Alert.alert(
       t('resetPresaleDay'),
@@ -783,7 +783,7 @@ export default function AdminScreen() {
           text: t('yes'),
           style: 'destructive',
           onPress: () => {
-            console.log('🔴 User confirmed reset, executing...');
+            console.log('🔴 User confirmed reset, calling executeResetPresaleDay...');
             executeResetPresaleDay();
           }
         }
@@ -792,13 +792,17 @@ export default function AdminScreen() {
   };
 
   const executeResetPresaleDay = async () => {
-    console.log('🔴 Executing Reset Presale Day');
+    console.log('🔴 executeResetPresaleDay function called - Starting execution');
     
     setResettingPresaleDay(true);
     try {
-      console.log('🔴 Calling admin_reset_presale_day RPC function');
+      console.log('🔴 Calling supabase.rpc("admin_reset_presale_day")');
       
       const { data, error } = await supabase.rpc('admin_reset_presale_day');
+
+      console.log('🔴 RPC call completed');
+      console.log('🔴 Response data:', data);
+      console.log('🔴 Response error:', error);
 
       if (error) {
         console.error('❌ RPC Error:', error);
@@ -824,6 +828,7 @@ export default function AdminScreen() {
             {
               text: t('ok'),
               onPress: async () => {
+                console.log('🔄 Reloading all data after reset');
                 await loadAllData();
               }
             }
@@ -838,6 +843,7 @@ export default function AdminScreen() {
       console.error('❌ Exception in executeResetPresaleDay:', error);
       Alert.alert(t('error'), error.message || t('presaleDayResetFailed'));
     } finally {
+      console.log('🔴 executeResetPresaleDay completed, setting resettingPresaleDay to false');
       setResettingPresaleDay(false);
     }
   };
@@ -885,11 +891,13 @@ export default function AdminScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick Access Buttons */}
       <View style={styles.quickAccessContainer}>
         <TouchableOpacity 
           style={styles.quickAccessButton}
-          onPress={() => router.push('/admin-users-table')}
+          onPress={() => {
+            console.log('📊 Navigating to admin-users-table');
+            router.push('/admin-users-table');
+          }}
         >
           <IconSymbol 
             ios_icon_name="tablecells.fill" 
@@ -908,7 +916,10 @@ export default function AdminScreen() {
         
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.secondary }]}
-          onPress={() => router.push('/balance-management')}
+          onPress={() => {
+            console.log('💰 Navigating to balance-management');
+            router.push('/balance-management');
+          }}
         >
           <IconSymbol 
             ios_icon_name="dollarsign.circle.fill" 
@@ -927,7 +938,10 @@ export default function AdminScreen() {
 
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.accent }]}
-          onPress={() => router.push('/phase-control-admin')}
+          onPress={() => {
+            console.log('🎮 Navigating to phase-control-admin');
+            router.push('/phase-control-admin');
+          }}
         >
           <IconSymbol 
             ios_icon_name="slider.horizontal.3" 
@@ -946,16 +960,19 @@ export default function AdminScreen() {
 
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.error }]}
-          onPress={handleResetPresaleDay}
+          onPress={() => {
+            console.log('🔴 Reset Presale Day button pressed - onPress triggered');
+            handleResetPresaleDay();
+          }}
           disabled={resettingPresaleDay}
         >
           {resettingPresaleDay ? (
-            <React.Fragment>
+            <View style={styles.resetButtonContent}>
               <ActivityIndicator size="small" color={colors.card} />
               <Text style={styles.quickAccessButtonText}>{t('loading')}</Text>
-            </React.Fragment>
+            </View>
           ) : (
-            <React.Fragment>
+            <View style={styles.resetButtonContent}>
               <IconSymbol 
                 ios_icon_name="arrow.counterclockwise.circle.fill" 
                 android_material_icon_name="restart_alt" 
@@ -969,7 +986,7 @@ export default function AdminScreen() {
                 size={20} 
                 color={colors.card} 
               />
-            </React.Fragment>
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -1003,11 +1020,10 @@ export default function AdminScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={loadAllData} />
         }
       >
-        {/* METRICS TAB */}
         {activeTab === 'metrics' && (
-          <React.Fragment>
+          <View>
             {metrics ? (
-              <React.Fragment>
+              <View>
                 <View style={styles.metricsGrid}>
                   <View style={[commonStyles.card, styles.metricCard]}>
                     <IconSymbol 
@@ -1087,19 +1103,18 @@ export default function AdminScreen() {
                     {((metrics.totalMXISold / 25000000) * 100).toFixed(2)}% of 25M total
                   </Text>
                 </View>
-              </React.Fragment>
+              </View>
             ) : (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.loadingText}>Loading metrics...</Text>
               </View>
             )}
-          </React.Fragment>
+          </View>
         )}
 
-        {/* USERS TAB */}
         {activeTab === 'users' && (
-          <React.Fragment>
+          <View>
             <View style={commonStyles.card}>
               <Text style={styles.cardTitle}>User Management</Text>
               <TextInput
@@ -1111,9 +1126,9 @@ export default function AdminScreen() {
               />
             </View>
 
-            {filteredUsers.map((u) => (
+            {filteredUsers.map((u, index) => (
               <TouchableOpacity
-                key={u.id}
+                key={index}
                 style={commonStyles.card}
                 onPress={() => {
                   setSelectedUser(u);
@@ -1141,10 +1156,9 @@ export default function AdminScreen() {
                 </View>
               </TouchableOpacity>
             ))}
-          </React.Fragment>
+          </View>
         )}
 
-        {/* LINK REFERRAL TAB */}
         {activeTab === 'link-referral' && (
           <View style={commonStyles.card}>
             <Text style={styles.cardTitle}>Link User to Referrer</Text>
@@ -1189,17 +1203,16 @@ export default function AdminScreen() {
           </View>
         )}
 
-        {/* KYC TAB */}
         {activeTab === 'kyc' && (
-          <React.Fragment>
+          <View>
             <View style={commonStyles.card}>
               <Text style={styles.cardTitle}>Pending KYC Submissions ({kycSubmissions.length})</Text>
             </View>
 
             {kycSubmissions.length > 0 ? (
-              kycSubmissions.map((kyc) => (
+              kycSubmissions.map((kyc, index) => (
                 <TouchableOpacity
-                  key={kyc.id}
+                  key={index}
                   style={commonStyles.card}
                   onPress={() => {
                     setSelectedKYC(kyc);
@@ -1228,20 +1241,19 @@ export default function AdminScreen() {
                 <Text style={styles.emptyText}>No pending KYC submissions</Text>
               </View>
             )}
-          </React.Fragment>
+          </View>
         )}
 
-        {/* MESSAGES TAB */}
         {activeTab === 'messages' && (
-          <React.Fragment>
+          <View>
             <View style={commonStyles.card}>
               <Text style={styles.cardTitle}>User Messages ({messages.length})</Text>
             </View>
 
             {messages.length > 0 ? (
-              messages.map((msg) => (
+              messages.map((msg, index) => (
                 <TouchableOpacity
-                  key={msg.id}
+                  key={index}
                   style={[
                     commonStyles.card,
                     msg.status === 'pending' && styles.messageCardPending
@@ -1286,10 +1298,9 @@ export default function AdminScreen() {
                 <Text style={styles.emptyText}>No messages</Text>
               </View>
             )}
-          </React.Fragment>
+          </View>
         )}
 
-        {/* SETTINGS TAB */}
         {activeTab === 'settings' && platformSettings && (
           <View style={commonStyles.card}>
             <Text style={styles.cardTitle}>Platform Settings</Text>
@@ -1342,7 +1353,6 @@ export default function AdminScreen() {
         )}
       </ScrollView>
 
-      {/* User Details Modal */}
       <Modal
         visible={showUserModal}
         animationType="slide"
@@ -1408,7 +1418,6 @@ export default function AdminScreen() {
         </View>
       </Modal>
 
-      {/* KYC Modal */}
       <Modal
         visible={showKYCModal}
         animationType="slide"
@@ -1477,7 +1486,6 @@ export default function AdminScreen() {
         </View>
       </Modal>
 
-      {/* Message Modal */}
       <Modal
         visible={showMessageModal}
         animationType="slide"
@@ -1587,6 +1595,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.card,
+  },
+  resetButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
   },
   tabBar: {
     paddingHorizontal: 20,
