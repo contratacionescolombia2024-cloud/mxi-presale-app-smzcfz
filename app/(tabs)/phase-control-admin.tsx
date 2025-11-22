@@ -97,47 +97,158 @@ export default function PhaseControlAdminScreen() {
     }
   };
 
+  const executeResetVestingRewards = async () => {
+    console.log('🚀 ========== DRASTIC RESET APPROACH STARTED ==========');
+    console.log('🚀 Step 1: Verify Supabase client is initialized');
+    console.log('🚀 Supabase client:', supabase ? 'INITIALIZED' : 'NOT INITIALIZED');
+    
+    if (!supabase) {
+      console.error('❌ CRITICAL: Supabase client is not initialized!');
+      throw new Error('Supabase client is not initialized');
+    }
+
+    console.log('🚀 Step 2: Get current session');
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log('🚀 Session data:', sessionData);
+    console.log('🚀 Session error:', sessionError);
+    
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
+      throw new Error(`Session error: ${sessionError.message}`);
+    }
+    
+    if (!sessionData?.session) {
+      console.error('❌ No active session found!');
+      throw new Error('No active session. Please log in again.');
+    }
+
+    console.log('🚀 Step 3: Verify user is authenticated');
+    console.log('🚀 User ID:', sessionData.session.user.id);
+    console.log('🚀 User email:', sessionData.session.user.email);
+
+    console.log('🚀 Step 4: Calling RPC function admin_reset_global_vesting_rewards');
+    console.log('🚀 RPC call parameters: NONE (function takes no parameters)');
+    
+    try {
+      // DRASTIC APPROACH: Call the RPC function with explicit error handling
+      const rpcResult = await supabase.rpc('admin_reset_global_vesting_rewards');
+      
+      console.log('🚀 Step 5: RPC call completed');
+      console.log('🚀 RPC Result:', JSON.stringify(rpcResult, null, 2));
+      console.log('🚀 RPC Data:', rpcResult.data);
+      console.log('🚀 RPC Error:', rpcResult.error);
+      console.log('🚀 RPC Status:', rpcResult.status);
+      console.log('🚀 RPC StatusText:', rpcResult.statusText);
+
+      if (rpcResult.error) {
+        console.error('❌ RPC Error detected:', rpcResult.error);
+        console.error('❌ Error code:', rpcResult.error.code);
+        console.error('❌ Error message:', rpcResult.error.message);
+        console.error('❌ Error details:', rpcResult.error.details);
+        console.error('❌ Error hint:', rpcResult.error.hint);
+        throw new Error(`RPC Error: ${rpcResult.error.message || 'Unknown RPC error'}`);
+      }
+
+      console.log('🚀 Step 6: Validate response data');
+      const responseData = rpcResult.data;
+      console.log('🚀 Response data type:', typeof responseData);
+      console.log('🚀 Response data:', responseData);
+
+      if (!responseData) {
+        console.error('❌ No data returned from RPC function');
+        throw new Error('No data returned from RPC function');
+      }
+
+      if (typeof responseData !== 'object') {
+        console.error('❌ Response data is not an object:', responseData);
+        throw new Error('Invalid response format from RPC function');
+      }
+
+      console.log('🚀 Step 7: Check success status');
+      console.log('🚀 Success field:', responseData.success);
+      console.log('🚀 Affected users:', responseData.affected_users);
+      console.log('🚀 Total rewards reset:', responseData.total_rewards_reset);
+
+      if (responseData.success === true) {
+        console.log('✅ ========== RESET COMPLETED SUCCESSFULLY ==========');
+        console.log('✅ Users affected:', responseData.affected_users || 0);
+        console.log('✅ Total rewards reset:', responseData.total_rewards_reset || 0);
+        
+        return {
+          success: true,
+          affected_users: responseData.affected_users || 0,
+          total_rewards_reset: responseData.total_rewards_reset || 0,
+          message: responseData.message || 'Vesting rewards reset successfully'
+        };
+      } else {
+        console.error('❌ Function returned success: false');
+        console.error('❌ Error from function:', responseData.error || responseData.message);
+        throw new Error(responseData.error || responseData.message || 'Failed to reset vesting rewards');
+      }
+    } catch (rpcError: any) {
+      console.error('❌ Exception during RPC call:', rpcError);
+      console.error('❌ Exception message:', rpcError.message);
+      console.error('❌ Exception stack:', rpcError.stack);
+      throw rpcError;
+    }
+  };
+
   const handleResetVestingRewards = () => {
+    console.log('🔘 Reset button pressed');
+    
     Alert.alert(
-      t('resetVestingRewards'),
-      t('resetVestingConfirm'),
+      t('resetVestingRewards') || 'Reset Vesting Rewards',
+      t('resetVestingConfirm') || 'Are you sure you want to reset all vesting rewards? This action cannot be undone.',
       [
         {
-          text: t('cancel'),
+          text: t('cancel') || 'Cancel',
           style: 'cancel',
+          onPress: () => {
+            console.log('🔘 User cancelled reset');
+          }
         },
         {
-          text: t('confirm'),
+          text: t('confirm') || 'Confirm',
           style: 'destructive',
           onPress: async () => {
+            console.log('🔘 User confirmed reset');
             setResetting(true);
+            
             try {
-              console.log('🔄 Resetting global vesting rewards...');
+              const result = await executeResetVestingRewards();
               
-              const { data, error } = await supabase.rpc('admin_reset_global_vesting_rewards');
-
-              if (error) {
-                console.error('❌ Error resetting vesting rewards:', error);
-                throw error;
-              }
-
-              console.log('✅ Vesting rewards reset response:', data);
-
-              if (data && data.success) {
-                Alert.alert(
-                  t('success'),
-                  `${t('vestingResetSuccess')}\n\n` +
-                  `Users affected: ${data.affected_users}\n` +
-                  `Total rewards reset: ${data.total_rewards_reset} MXI`
-                );
-                await loadData();
-              } else {
-                throw new Error(data?.error || 'Failed to reset vesting rewards');
-              }
+              console.log('✅ Reset successful, showing success alert');
+              Alert.alert(
+                t('success') || 'Success',
+                `${t('vestingResetSuccess') || 'Vesting rewards reset successfully'}\n\n` +
+                `Users affected: ${result.affected_users}\n` +
+                `Total rewards reset: ${parseFloat(result.total_rewards_reset.toString()).toFixed(4)} MXI`,
+                [
+                  {
+                    text: 'OK',
+                    onPress: async () => {
+                      console.log('✅ Reloading data after successful reset');
+                      await loadData();
+                    }
+                  }
+                ]
+              );
             } catch (error: any) {
-              console.error('❌ Exception resetting vesting rewards:', error);
-              Alert.alert(t('error'), error.message || t('vestingResetFailed'));
+              console.error('❌ Reset failed with error:', error);
+              Alert.alert(
+                t('error') || 'Error',
+                error.message || t('vestingResetFailed') || 'Failed to reset vesting rewards. Please try again.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      console.log('❌ User acknowledged error');
+                    }
+                  }
+                ]
+              );
             } finally {
+              console.log('🔘 Resetting state to false');
               setResetting(false);
             }
           },
@@ -317,9 +428,13 @@ export default function PhaseControlAdminScreen() {
             style={[styles.resetButton, resetting && styles.resetButtonDisabled]}
             onPress={handleResetVestingRewards}
             disabled={resetting}
+            activeOpacity={0.7}
           >
             {resetting ? (
-              <ActivityIndicator color={colors.card} />
+              <React.Fragment>
+                <ActivityIndicator color={colors.card} />
+                <Text style={styles.resetButtonText}>Resetting...</Text>
+              </React.Fragment>
             ) : (
               <React.Fragment>
                 <IconSymbol 
@@ -328,7 +443,7 @@ export default function PhaseControlAdminScreen() {
                   size={24} 
                   color={colors.card} 
                 />
-                <Text style={styles.resetButtonText}>{t('resetVestingRewards')}</Text>
+                <Text style={styles.resetButtonText}>{t('resetVestingRewards') || 'Reset Vesting Rewards'}</Text>
               </React.Fragment>
             )}
           </TouchableOpacity>
@@ -515,6 +630,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
     padding: 18,
     borderRadius: 12,
+    minHeight: 56,
   },
   resetButtonDisabled: {
     opacity: 0.5,
