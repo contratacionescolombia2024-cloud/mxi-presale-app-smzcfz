@@ -24,9 +24,10 @@ export function useWallet() {
   return context;
 }
 
-// CRITICAL: Native implementation with ONLY serializable primitives
-// All functions are defined at module level to ensure they're serializable
-function showWebOnlyAlert() {
+// CRITICAL: Define all functions at module level to ensure serializability
+// These functions are defined outside the component to prevent closure issues
+
+function showWebOnlyAlert(): void {
   Alert.alert(
     'Web Only Feature',
     'Wallet connection and crypto payments are only available on the web version of this app. Please visit the web version to use this feature.',
@@ -34,38 +35,38 @@ function showWebOnlyAlert() {
   );
 }
 
-async function connectWallet(_type: string): Promise<void> {
+async function connectWalletNative(_type: string): Promise<void> {
   console.log('⚠️ WalletProvider: Connect wallet called on native platform');
   showWebOnlyAlert();
   throw new Error('Wallet connection is only available on web');
 }
 
-async function disconnectWallet(): Promise<void> {
+async function disconnectWalletNative(): Promise<void> {
   console.log('⚠️ WalletProvider: Disconnect wallet called on native platform');
 }
 
-async function refreshBalance(): Promise<void> {
+async function refreshBalanceNative(): Promise<void> {
   console.log('⚠️ WalletProvider: Refresh balance called on native platform');
 }
 
-async function sendPayment(_amountUSDT: number): Promise<string> {
+async function sendPaymentNative(_amountUSDT: number): Promise<string> {
   console.log('⚠️ WalletProvider: Send payment called on native platform');
   showWebOnlyAlert();
   throw new Error('Payment is only available on web');
 }
 
-// CRITICAL: Create a constant context value with only primitives
-// This object never changes and is completely serializable
+// CRITICAL: Create a constant context value with only primitives and module-level functions
+// This object is completely serializable and never changes
 const NATIVE_WALLET_CONTEXT: WalletContextType = {
   isConnected: false,
   walletType: null,
   address: null,
   usdtBalance: null,
   isLoading: false,
-  connectWallet,
-  disconnectWallet,
-  refreshBalance,
-  sendPayment,
+  connectWallet: connectWalletNative,
+  disconnectWallet: disconnectWalletNative,
+  refreshBalance: refreshBalanceNative,
+  sendPayment: sendPaymentNative,
 };
 
 // Native implementation - Web3Modal is not supported on native platforms
@@ -73,6 +74,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   console.log('💼 WalletProvider: Native implementation loaded');
 
   // CRITICAL: Use the constant value to prevent any re-renders or object recreation
+  // This ensures the context value is always the same reference
   return (
     <WalletContext.Provider value={NATIVE_WALLET_CONTEXT}>
       {children}

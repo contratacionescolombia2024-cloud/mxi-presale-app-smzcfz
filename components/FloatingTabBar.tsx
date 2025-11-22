@@ -1,10 +1,9 @@
 
 import { useMemo, useCallback } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
-import { usePathname, useRouter, Href } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from './IconSymbol';
-import { BlurView } from 'expo-blur';
 
 export interface TabBarItem {
   name: string;
@@ -22,26 +21,29 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // CRITICAL: Extract active tab name as a primitive string
+  // CRITICAL: Extract only primitive string value
+  const currentPath = useMemo(() => {
+    return String(pathname || '');
+  }, [pathname]);
+
+  // CRITICAL: Determine active tab using only string comparison
   const activeTabName = useMemo(() => {
-    const currentPath = pathname || '';
-    
-    // Find the matching tab
-    for (const tab of tabs) {
-      if (currentPath.includes(tab.name)) {
-        return tab.name;
+    for (let i = 0; i < tabs.length; i++) {
+      const tabName = String(tabs[i].name);
+      if (currentPath.includes(tabName)) {
+        return tabName;
       }
     }
-    
-    // Default to home if no match
     return '(home)';
-  }, [pathname, tabs]);
+  }, [currentPath, tabs]);
 
-  // CRITICAL: Create stable handler outside of map
+  // CRITICAL: Create navigation handler that doesn't use any closures
+  // This function is defined at component level but doesn't capture any complex objects
   const handleTabPress = useCallback((route: string) => {
-    console.log('🔄 Navigating to:', route);
+    console.log('🔄 Tab pressed, navigating to:', route);
     try {
-      router.push(route as Href);
+      // Cast to any to avoid Href type issues
+      router.push(route as any);
     } catch (error) {
       console.error('❌ Navigation error:', error);
     }
@@ -49,34 +51,38 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
 
   return (
     <View style={styles.container}>
-      <BlurView intensity={80} tint="dark" style={styles.blurContainer}>
-        <View style={styles.tabBar}>
-          {tabs.map((tab) => {
-            const isActive = activeTabName === tab.name;
-            
-            return (
-              <TouchableOpacity
-                key={tab.name}
-                style={styles.tab}
-                onPress={() => handleTabPress(tab.route)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
-                  <IconSymbol
-                    ios_icon_name={tab.iosIcon}
-                    android_material_icon_name={tab.androidIcon}
-                    size={24}
-                    color={isActive ? colors.primary : colors.textSecondary}
-                  />
-                </View>
-                <Text style={[styles.label, isActive && styles.activeLabel]}>
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </BlurView>
+      <View style={styles.tabBar}>
+        {tabs.map((tab, index) => {
+          // Extract all values as primitives
+          const tabName = String(tab.name);
+          const tabRoute = String(tab.route);
+          const tabIosIcon = String(tab.iosIcon);
+          const tabAndroidIcon = String(tab.androidIcon);
+          const tabLabel = String(tab.label);
+          const isActive = activeTabName === tabName;
+          
+          return (
+            <TouchableOpacity
+              key={`tab-${index}-${tabName}`}
+              style={styles.tab}
+              onPress={() => handleTabPress(tabRoute)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
+                <IconSymbol
+                  ios_icon_name={tabIosIcon}
+                  android_material_icon_name={tabAndroidIcon}
+                  size={24}
+                  color={isActive ? colors.primary : colors.textSecondary}
+                />
+              </View>
+              <Text style={[styles.label, isActive && styles.activeLabel]}>
+                {tabLabel}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -91,19 +97,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
   },
-  blurContainer: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border + '40',
-  },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
     paddingHorizontal: 8,
-    backgroundColor: colors.cardBackground + 'CC',
+    backgroundColor: colors.cardBackground + 'F0',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border + '40',
+    // Shadow for depth
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   tab: {
     flex: 1,

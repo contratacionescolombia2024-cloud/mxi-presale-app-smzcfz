@@ -10,7 +10,7 @@
  * <IconSymbol name={ICONS.HOME} size={24} color={colors.text} />
  */
 
-export const ICONS = {
+export const ICONS = Object.freeze({
   // Navigation
   HOME: 'home',
   MENU: 'menu',
@@ -98,59 +98,61 @@ export const ICONS = {
   FAVORITE: 'favorite',
   NOTIFICATIONS: 'notifications',
   BOOKMARK: 'bookmark',
-} as const;
+} as const);
 
 export type IconName = typeof ICONS[keyof typeof ICONS];
 
 /**
  * Legacy icon configuration for backwards compatibility
  * This maintains the old structure but uses the new simplified names
+ * All objects are frozen to prevent mutations and ensure serializability
  */
 export interface AppIcon {
-  ios: string;
-  android: string;
-  label: string;
+  readonly ios: string;
+  readonly android: string;
+  readonly label: string;
 }
 
-export const APP_ICONS: Record<string, AppIcon> = {
-  home: { ios: 'house.fill', android: 'home', label: 'Home' },
-  menu: { ios: 'line.3.horizontal', android: 'menu', label: 'Menu' },
-  back: { ios: 'chevron.left', android: 'arrow-back', label: 'Back' },
-  forward: { ios: 'chevron.right', android: 'arrow-forward', label: 'Forward' },
+// CRITICAL: Freeze all icon objects to ensure they're immutable and serializable
+export const APP_ICONS: Readonly<Record<string, Readonly<AppIcon>>> = Object.freeze({
+  home: Object.freeze({ ios: 'house.fill', android: 'home', label: 'Home' }),
+  menu: Object.freeze({ ios: 'line.3.horizontal', android: 'menu', label: 'Menu' }),
+  back: Object.freeze({ ios: 'chevron.left', android: 'arrow-back', label: 'Back' }),
+  forward: Object.freeze({ ios: 'chevron.right', android: 'arrow-forward', label: 'Forward' }),
   
-  purchase: { ios: 'cart.fill', android: 'shopping-cart', label: 'Purchase' },
-  vesting: { ios: 'chart.line.uptrend.xyaxis', android: 'trending-up', label: 'Vesting' },
-  referrals: { ios: 'person.2.fill', android: 'people', label: 'Referrals' },
-  profile: { ios: 'person.fill', android: 'person', label: 'Profile' },
-  kyc: { ios: 'checkmark.shield.fill', android: 'verified-user', label: 'KYC' },
-  messages: { ios: 'message.fill', android: 'message', label: 'Messages' },
-  admin: { ios: 'gearshape.fill', android: 'settings', label: 'Admin' },
+  purchase: Object.freeze({ ios: 'cart.fill', android: 'shopping-cart', label: 'Purchase' }),
+  vesting: Object.freeze({ ios: 'chart.line.uptrend.xyaxis', android: 'trending-up', label: 'Vesting' }),
+  referrals: Object.freeze({ ios: 'person.2.fill', android: 'people', label: 'Referrals' }),
+  profile: Object.freeze({ ios: 'person.fill', android: 'person', label: 'Profile' }),
+  kyc: Object.freeze({ ios: 'checkmark.shield.fill', android: 'verified-user', label: 'KYC' }),
+  messages: Object.freeze({ ios: 'message.fill', android: 'message', label: 'Messages' }),
+  admin: Object.freeze({ ios: 'gearshape.fill', android: 'settings', label: 'Admin' }),
   
-  payment: { ios: 'creditcard.fill', android: 'credit-card', label: 'Payment' },
-  bitcoin: { ios: 'bitcoinsign.circle.fill', android: 'attach-money', label: 'Bitcoin' },
+  payment: Object.freeze({ ios: 'creditcard.fill', android: 'credit-card', label: 'Payment' }),
+  bitcoin: Object.freeze({ ios: 'bitcoinsign.circle.fill', android: 'attach-money', label: 'Bitcoin' }),
   
-  verified: { ios: 'checkmark.circle.fill', android: 'check-circle', label: 'Verified' },
-  pending: { ios: 'clock.fill', android: 'schedule', label: 'Pending' },
-  error: { ios: 'xmark.octagon.fill', android: 'error', label: 'Error' },
-  warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', label: 'Warning' },
-  info: { ios: 'info.circle.fill', android: 'info', label: 'Info' },
+  verified: Object.freeze({ ios: 'checkmark.circle.fill', android: 'check-circle', label: 'Verified' }),
+  pending: Object.freeze({ ios: 'clock.fill', android: 'schedule', label: 'Pending' }),
+  error: Object.freeze({ ios: 'xmark.octagon.fill', android: 'error', label: 'Error' }),
+  warning: Object.freeze({ ios: 'exclamationmark.triangle.fill', android: 'warning', label: 'Warning' }),
+  info: Object.freeze({ ios: 'info.circle.fill', android: 'info', label: 'Info' }),
   
-  add: { ios: 'plus.circle.fill', android: 'add-circle', label: 'Add' },
-  edit: { ios: 'pencil.circle.fill', android: 'edit', label: 'Edit' },
-  delete: { ios: 'trash.fill', android: 'delete', label: 'Delete' },
-  share: { ios: 'square.and.arrow.up.fill', android: 'share', label: 'Share' },
-  copy: { ios: 'doc.on.doc.fill', android: 'content-copy', label: 'Copy' },
-  refresh: { ios: 'arrow.clockwise', android: 'refresh', label: 'Refresh' },
-  search: { ios: 'magnifyingglass', android: 'search', label: 'Search' },
-  close: { ios: 'xmark', android: 'close', label: 'Close' },
+  add: Object.freeze({ ios: 'plus.circle.fill', android: 'add-circle', label: 'Add' }),
+  edit: Object.freeze({ ios: 'pencil.circle.fill', android: 'edit', label: 'Edit' }),
+  delete: Object.freeze({ ios: 'trash.fill', android: 'delete', label: 'Delete' }),
+  share: Object.freeze({ ios: 'square.and.arrow.up.fill', android: 'share', label: 'Share' }),
+  copy: Object.freeze({ ios: 'doc.on.doc.fill', android: 'content-copy', label: 'Copy' }),
+  refresh: Object.freeze({ ios: 'arrow.clockwise', android: 'refresh', label: 'Refresh' }),
+  search: Object.freeze({ ios: 'magnifyingglass', android: 'search', label: 'Search' }),
+  close: Object.freeze({ ios: 'xmark', android: 'close', label: 'Close' }),
   
-  calendar: { ios: 'calendar', android: 'event', label: 'Calendar' },
-  chart: { ios: 'chart.bar.fill', android: 'bar-chart', label: 'Chart' },
-  lock: { ios: 'lock.fill', android: 'lock', label: 'Lock' },
-  email: { ios: 'envelope.fill', android: 'email', label: 'Email' },
-  phone: { ios: 'phone.fill', android: 'phone', label: 'Phone' },
-  star: { ios: 'star.fill', android: 'star', label: 'Star' },
-  notification: { ios: 'bell.fill', android: 'notifications', label: 'Notification' },
-};
+  calendar: Object.freeze({ ios: 'calendar', android: 'event', label: 'Calendar' }),
+  chart: Object.freeze({ ios: 'chart.bar.fill', android: 'bar-chart', label: 'Chart' }),
+  lock: Object.freeze({ ios: 'lock.fill', android: 'lock', label: 'Lock' }),
+  email: Object.freeze({ ios: 'envelope.fill', android: 'email', label: 'Email' }),
+  phone: Object.freeze({ ios: 'phone.fill', android: 'phone', label: 'Phone' }),
+  star: Object.freeze({ ios: 'star.fill', android: 'star', label: 'Star' }),
+  notification: Object.freeze({ ios: 'bell.fill', android: 'notifications', label: 'Notification' }),
+});
 
 export type AppIconName = keyof typeof APP_ICONS;

@@ -16,45 +16,46 @@ const styles = StyleSheet.create({
   },
 });
 
-// CRITICAL: Define tabs as a constant outside the component
-// This ensures the array is stable and never recreated
-const TABS: TabBarItem[] = [
-  {
+// CRITICAL: Define tabs as a frozen constant outside the component
+// Object.freeze ensures the array and its contents are completely immutable
+// This prevents any accidental mutations that could cause serialization issues
+const TABS: ReadonlyArray<Readonly<TabBarItem>> = Object.freeze([
+  Object.freeze({
     name: '(home)',
     route: '/(tabs)/(home)/',
     iosIcon: APP_ICONS.home.ios,
     androidIcon: APP_ICONS.home.android,
     label: APP_ICONS.home.label,
-  },
-  {
+  }),
+  Object.freeze({
     name: 'purchase',
     route: '/(tabs)/purchase',
     iosIcon: APP_ICONS.purchase.ios,
     androidIcon: APP_ICONS.purchase.android,
     label: 'Buy',
-  },
-  {
+  }),
+  Object.freeze({
     name: 'tournaments',
     route: '/(tabs)/tournaments',
     iosIcon: 'trophy.fill',
     androidIcon: 'emoji-events',
     label: 'Tournaments',
-  },
-  {
+  }),
+  Object.freeze({
     name: 'ecosystem',
     route: '/(tabs)/ecosystem',
     iosIcon: 'globe',
     androidIcon: 'public',
     label: 'Ecosystem',
-  },
-  {
+  }),
+  Object.freeze({
     name: 'profile',
     route: '/(tabs)/profile',
     iosIcon: APP_ICONS.profile.ios,
     androidIcon: APP_ICONS.profile.android,
     label: APP_ICONS.profile.label,
-  },
-];
+  }),
+]);
 
 export default function TabLayout() {
   const { isAuthenticated, isAdmin, isLoading, user } = useAuth();
@@ -118,7 +119,7 @@ export default function TabLayout() {
         <Stack.Screen name="game-settings" />
         <Stack.Screen name="language-settings" />
       </Stack>
-      <FloatingTabBar tabs={TABS} />
+      <FloatingTabBar tabs={TABS as TabBarItem[]} />
     </>
   );
 }

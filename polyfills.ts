@@ -1,6 +1,7 @@
 
 // CRITICAL: This file MUST be imported FIRST before any other code
 // It provides Node.js built-in polyfills for React Native environment
+// All objects must be serializable for Reanimated worklets compatibility
 
 console.log('🔧 Loading polyfills...');
 
@@ -29,6 +30,11 @@ if (typeof global === 'undefined') {
 console.log('✅ Global object configured');
 
 // CRITICAL: Polyfill process with ONLY simple, serializable objects
+// Define nextTick function at module level to ensure it's serializable
+const nextTickImpl = (callback: (...args: any[]) => void, ...args: any[]) => {
+  setTimeout(() => callback(...args), 0);
+};
+
 try {
   if (!globalObj.process) {
     globalObj.process = {
@@ -37,9 +43,7 @@ try {
       versions: { node: '16.0.0' },
       platform: 'browser',
       browser: true,
-      nextTick: (callback: (...args: any[]) => void, ...args: any[]) => {
-        setTimeout(() => callback(...args), 0);
-      },
+      nextTick: nextTickImpl,
       cwd: () => '/',
       chdir: () => { /* no-op */ },
       umask: () => 0,
@@ -57,9 +61,7 @@ try {
   globalObj.process.browser = true;
   
   if (!globalObj.process.nextTick) {
-    globalObj.process.nextTick = (callback: (...args: any[]) => void, ...args: any[]) => {
-      setTimeout(() => callback(...args), 0);
-    };
+    globalObj.process.nextTick = nextTickImpl;
   }
   
   if (typeof window !== 'undefined') {
@@ -89,6 +91,7 @@ try {
 } catch (error) {
   console.error('❌ Failed to load buffer:', error);
   
+  // Minimal Buffer polyfill with serializable methods
   class MinimalBuffer {
     static from(data: any): any {
       if (typeof data === 'string') {
@@ -123,17 +126,21 @@ try {
   console.error('❌ Failed to load events:', error);
 }
 
-// CRITICAL: Polyfill setImmediate/clearImmediate
+// CRITICAL: Polyfill setImmediate/clearImmediate with serializable functions
+const setImmediateImpl = (callback: (...args: any[]) => void, ...args: any[]) => {
+  return setTimeout(() => callback(...args), 0);
+};
+
+const clearImmediateImpl = (id: any) => {
+  clearTimeout(id);
+};
+
 if (typeof globalObj.setImmediate === 'undefined') {
-  globalObj.setImmediate = (callback: (...args: any[]) => void, ...args: any[]) => {
-    return setTimeout(() => callback(...args), 0);
-  };
+  globalObj.setImmediate = setImmediateImpl;
 }
 
 if (typeof globalObj.clearImmediate === 'undefined') {
-  globalObj.clearImmediate = (id: any) => {
-    clearTimeout(id);
-  };
+  globalObj.clearImmediate = clearImmediateImpl;
 }
 
 // Polyfill crypto for web
@@ -143,14 +150,16 @@ if (typeof window !== 'undefined' && typeof globalObj.crypto === 'undefined') {
   }
 }
 
-// CRITICAL: Polyfill crypto.getRandomValues
+// CRITICAL: Polyfill crypto.getRandomValues with serializable function
+const getRandomValuesImpl = (array: any) => {
+  for (let i = 0; i < array.length; i++) {
+    array[i] = Math.floor(Math.random() * 256);
+  }
+  return array;
+};
+
 if (typeof globalObj.crypto !== 'undefined' && typeof globalObj.crypto.getRandomValues === 'undefined') {
-  globalObj.crypto.getRandomValues = (array: any) => {
-    for (let i = 0; i < array.length; i++) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
-    return array;
-  };
+  globalObj.crypto.getRandomValues = getRandomValuesImpl;
 }
 
 console.log('✅ setImmediate/clearImmediate configured');
