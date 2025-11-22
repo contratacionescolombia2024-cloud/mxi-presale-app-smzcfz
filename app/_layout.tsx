@@ -1,3 +1,5 @@
+// CRITICAL: Load polyfills FIRST
+import "../polyfills";
 
 import React, { useEffect } from "react";
 import { useColorScheme, AppState } from "react-native";
