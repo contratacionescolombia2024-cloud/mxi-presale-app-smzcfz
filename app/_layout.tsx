@@ -11,10 +11,17 @@ import { WalletProvider } from '@/contexts/WalletContext';
 import { WidgetProvider } from '@/contexts/WidgetContext';
 import { Web3Provider } from '@/components/Web3Provider';
 
+console.log('🎨 _layout.tsx: Module loading...');
+console.log('🚀 _layout.tsx: Platform =', Platform.OS);
+
 // Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync().catch((error) => {
-  console.warn('⚠️ Error preventing splash screen auto-hide:', error);
-});
+try {
+  SplashScreen.preventAutoHideAsync().catch((error) => {
+    console.warn('⚠️ Error preventing splash screen auto-hide:', error);
+  });
+} catch (error) {
+  console.warn('⚠️ SplashScreen.preventAutoHideAsync not available:', error);
+}
 
 // Error Boundary Component
 function ErrorBoundary({ children }: { children: React.ReactNode }) {
@@ -69,8 +76,7 @@ function LoadingView() {
 }
 
 export default function RootLayout() {
-  console.log('🎨 RootLayout: Initializing...');
-  console.log('🚀 RootLayout: Platform =', Platform.OS);
+  console.log('🎨 RootLayout: Component rendering...');
   
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -87,9 +93,13 @@ export default function RootLayout() {
       console.log('✅ Fonts loaded, hiding splash screen');
       // Add a small delay to ensure everything is ready
       setTimeout(() => {
-        SplashScreen.hideAsync().catch((hideError) => {
-          console.warn('⚠️ Error hiding splash screen:', hideError);
-        });
+        try {
+          SplashScreen.hideAsync().catch((hideError) => {
+            console.warn('⚠️ Error hiding splash screen:', hideError);
+          });
+        } catch (hideError) {
+          console.warn('⚠️ SplashScreen.hideAsync not available:', hideError);
+        }
       }, 100);
     }
   }, [loaded]);
@@ -100,7 +110,7 @@ export default function RootLayout() {
     return <LoadingView />;
   }
 
-  console.log('🚀 RootLayout: Fonts loaded =', loaded);
+  console.log('🚀 RootLayout: Rendering app structure');
 
   // Core app structure
   const AppStack = (

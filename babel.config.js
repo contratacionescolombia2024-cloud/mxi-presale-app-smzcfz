@@ -14,21 +14,23 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      // Module resolver should come first
+      // Export namespace plugin
+      "@babel/plugin-proposal-export-namespace-from",
+      // Module resolver should come after export namespace
       [
         "module-resolver",
         {
           root: ["./"],
           extensions: [
+            ".native.ts",
+            ".native.tsx",
+            ".ios.ts",
+            ".ios.tsx",
+            ".android.ts",
+            ".android.tsx",
             ".web.ts",
             ".web.tsx",
-            ".ios.ts",
-            ".android.ts",
-            ".native.ts",
             ".ts",
-            ".ios.tsx",
-            ".android.tsx",
-            ".native.tsx",
             ".tsx",
             ".jsx",
             ".js",
@@ -44,8 +46,6 @@ module.exports = function (api) {
           },
         },
       ],
-      // Export namespace plugin
-      "@babel/plugin-proposal-export-namespace-from",
       // Editable components (dev only)
       ...EDITABLE_COMPONENTS,
     ],

@@ -9,13 +9,13 @@ console.log('⏰ Time:', new Date().toISOString());
 
 // Step 1: Load polyfills (pure JavaScript, no native modules)
 console.log('📦 Step 1: Loading polyfills...');
-import './polyfills';
+require('./polyfills');
 console.log('✅ Step 1 Complete: Polyfills loaded');
 
 // Step 2: Start Expo Router (this initializes React Native)
 console.log('🎯 Step 2: Starting Expo Router...');
 console.log('⚠️  If the app crashes here, the issue is in expo-router initialization');
-import 'expo-router/entry';
+require('expo-router/entry');
 console.log('✅ Step 2 Complete: Expo Router started');
 
 console.log('🚀 ========== APP STARTED SUCCESSFULLY ==========');

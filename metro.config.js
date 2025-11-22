@@ -1,7 +1,14 @@
 
 const { getDefaultConfig } = require('expo/metro-config');
+const { FileStore } = require('metro-cache');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
+
+// Use turborepo to restore the cache when possible
+config.cacheStores = [
+  new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
+];
 
 // List of Web3 packages to block on native platforms
 const WEB3_PACKAGES = [
@@ -65,6 +72,25 @@ config.resolver = {
   ],
   
   resolveRequest: (context, moduleName, platform) => {
+    // Handle react-native/Libraries/* imports on web
+    if (platform === 'web' && moduleName.startsWith('react-native/Libraries/')) {
+      console.log(`🔄 Metro: Attempting to resolve react-native-web for ${moduleName} on web`);
+      const webModuleName = moduleName.replace('react-native/', 'react-native-web/');
+      try {
+        const resolved = context.resolveRequest(context, webModuleName, platform);
+        if (resolved) {
+          console.log(`✅ Metro: Resolved ${moduleName} to react-native-web`);
+          return resolved;
+        }
+      } catch (e) {
+        console.log(`⚠️ Metro: Could not resolve ${webModuleName}, using empty module`);
+        // Return empty module if react-native-web doesn't have this module
+        return {
+          type: 'empty',
+        };
+      }
+    }
+    
     // Block Web3 packages on native platforms (iOS and Android)
     if (platform !== 'web') {
       // Check if the module is a Web3 package or starts with one
@@ -112,7 +138,7 @@ config.resolver = {
       }
     }
     
-    // Default resolution
+    // Default resolution - chain to the standard Metro resolver
     return context.resolveRequest(context, moduleName, platform);
   },
 };
