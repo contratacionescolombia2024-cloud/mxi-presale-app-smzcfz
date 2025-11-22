@@ -58,6 +58,16 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Loading Component
+function LoadingView() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
+      <ActivityIndicator size="large" color="#4ecdc4" />
+      <Text style={{ color: '#fff', marginTop: 20 }}>Loading...</Text>
+    </View>
+  );
+}
+
 export default function RootLayout() {
   console.log('🎨 RootLayout: Initializing...');
   console.log('🚀 RootLayout: Platform =', Platform.OS);
@@ -87,12 +97,7 @@ export default function RootLayout() {
   // Show loading indicator while fonts are loading
   if (!loaded && !error) {
     console.log('⏳ Waiting for fonts to load...');
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e' }}>
-        <ActivityIndicator size="large" color="#4ecdc4" />
-        <Text style={{ color: '#fff', marginTop: 20 }}>Loading...</Text>
-      </View>
-    );
+    return <LoadingView />;
   }
 
   console.log('🚀 RootLayout: Fonts loaded =', loaded);
