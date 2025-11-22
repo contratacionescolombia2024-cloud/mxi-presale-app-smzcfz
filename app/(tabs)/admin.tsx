@@ -109,8 +109,6 @@ export default function AdminScreen() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showKYCModal, setShowKYCModal] = useState(false);
-  const [showResetPresaleDayModal, setShowResetPresaleDayModal] = useState(false);
-  const [resetPresaleDayPassword, setResetPresaleDayPassword] = useState('');
   const [resettingPresaleDay, setResettingPresaleDay] = useState(false);
 
   // Form states
@@ -740,24 +738,33 @@ export default function AdminScreen() {
 
   const handleResetPresaleDay = () => {
     console.log('🔴 Reset Presale Day button pressed');
-    setResetPresaleDayPassword('');
-    setShowResetPresaleDayModal(true);
+    
+    Alert.alert(
+      t('resetPresaleDay'),
+      `${t('presaleDayResetConfirm')}\n\n${t('resetVestingRewardsToZero')}\n${t('resetSoldMXIToZero')}\n\n${t('thisActionCannotBeUndone')}`,
+      [
+        {
+          text: t('no'),
+          style: 'cancel',
+          onPress: () => {
+            console.log('🔴 User cancelled reset');
+          }
+        },
+        {
+          text: t('yes'),
+          style: 'destructive',
+          onPress: () => {
+            console.log('🔴 User confirmed reset, executing...');
+            executeResetPresaleDay();
+          }
+        }
+      ]
+    );
   };
 
   const executeResetPresaleDay = async () => {
     console.log('🔴 Executing Reset Presale Day');
     
-    // Validate password
-    if (!resetPresaleDayPassword.trim()) {
-      Alert.alert(t('error'), t('passwordRequired'));
-      return;
-    }
-
-    if (resetPresaleDayPassword !== 'Ingo1991') {
-      Alert.alert(t('error'), t('incorrectPassword'));
-      return;
-    }
-
     setResettingPresaleDay(true);
     try {
       console.log('🔴 Calling admin_reset_presale_day RPC function');
@@ -788,8 +795,6 @@ export default function AdminScreen() {
             {
               text: t('ok'),
               onPress: async () => {
-                setShowResetPresaleDayModal(false);
-                setResetPresaleDayPassword('');
                 await loadAllData();
               }
             }
@@ -913,20 +918,30 @@ export default function AdminScreen() {
         <TouchableOpacity 
           style={[styles.quickAccessButton, { backgroundColor: colors.error }]}
           onPress={handleResetPresaleDay}
+          disabled={resettingPresaleDay}
         >
-          <IconSymbol 
-            ios_icon_name="arrow.counterclockwise.circle.fill" 
-            android_material_icon_name="restart_alt" 
-            size={24} 
-            color={colors.card} 
-          />
-          <Text style={styles.quickAccessButtonText}>{t('resetPresaleDay')}</Text>
-          <IconSymbol 
-            ios_icon_name="chevron.right" 
-            android_material_icon_name="chevron_right" 
-            size={20} 
-            color={colors.card} 
-          />
+          {resettingPresaleDay ? (
+            <React.Fragment>
+              <ActivityIndicator size="small" color={colors.card} />
+              <Text style={styles.quickAccessButtonText}>{t('loading')}</Text>
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              <IconSymbol 
+                ios_icon_name="arrow.counterclockwise.circle.fill" 
+                android_material_icon_name="restart_alt" 
+                size={24} 
+                color={colors.card} 
+              />
+              <Text style={styles.quickAccessButtonText}>{t('resetPresaleDay')}</Text>
+              <IconSymbol 
+                ios_icon_name="chevron.right" 
+                android_material_icon_name="chevron_right" 
+                size={20} 
+                color={colors.card} 
+              />
+            </React.Fragment>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -1054,125 +1069,6 @@ export default function AdminScreen() {
         {/* For brevity, I'm not including all the other tab content here */}
         {/* The rest of the component remains unchanged */}
       </ScrollView>
-
-      {/* Reset Presale Day Modal */}
-      <Modal
-        visible={showResetPresaleDayModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          if (!resettingPresaleDay) {
-            setShowResetPresaleDayModal(false);
-            setResetPresaleDayPassword('');
-          }
-        }}
-      >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <TouchableOpacity 
-            style={styles.modalOverlay} 
-            activeOpacity={1}
-            onPress={() => {
-              if (!resettingPresaleDay) {
-                setShowResetPresaleDayModal(false);
-                setResetPresaleDayPassword('');
-              }
-            }}
-          >
-            <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-              <View style={styles.resetPresaleDayModal}>
-                <View style={styles.resetPresaleDayHeader}>
-                  <IconSymbol 
-                    ios_icon_name="exclamationmark.triangle.fill" 
-                    android_material_icon_name="warning" 
-                    size={48} 
-                    color={colors.error} 
-                  />
-                  <Text style={styles.resetPresaleDayTitle}>{t('resetPresaleDay')}</Text>
-                </View>
-
-                <View style={styles.resetPresaleDayWarning}>
-                  <Text style={styles.resetPresaleDayWarningText}>
-                    {t('presaleDayResetConfirm')}
-                  </Text>
-                  <Text style={styles.resetPresaleDayWarningItem}>
-                    {t('resetVestingRewardsToZero')}
-                  </Text>
-                  <Text style={styles.resetPresaleDayWarningItem}>
-                    {t('resetSoldMXIToZero')}
-                  </Text>
-                  <Text style={[styles.resetPresaleDayWarningText, { marginTop: 12, fontWeight: '700' }]}>
-                    {t('thisActionCannotBeUndone')}
-                  </Text>
-                </View>
-
-                <View style={styles.resetPresaleDayPasswordContainer}>
-                  <Text style={styles.resetPresaleDayPasswordLabel}>
-                    {t('enterPasswordToReset')}
-                  </Text>
-                  <TextInput
-                    style={styles.resetPresaleDayPasswordInput}
-                    value={resetPresaleDayPassword}
-                    onChangeText={setResetPresaleDayPassword}
-                    placeholder="Ingo1991"
-                    placeholderTextColor={colors.textSecondary}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!resettingPresaleDay}
-                  />
-                </View>
-
-                <View style={styles.resetPresaleDayActions}>
-                  <TouchableOpacity
-                    style={[styles.resetPresaleDayButton, styles.resetPresaleDayCancelButton]}
-                    onPress={() => {
-                      setShowResetPresaleDayModal(false);
-                      setResetPresaleDayPassword('');
-                    }}
-                    disabled={resettingPresaleDay}
-                  >
-                    <Text style={styles.resetPresaleDayCancelButtonText}>{t('cancel')}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.resetPresaleDayButton, 
-                      styles.resetPresaleDayConfirmButton,
-                      resettingPresaleDay && styles.resetPresaleDayButtonDisabled
-                    ]}
-                    onPress={executeResetPresaleDay}
-                    disabled={resettingPresaleDay}
-                  >
-                    {resettingPresaleDay ? (
-                      <React.Fragment>
-                        <ActivityIndicator size="small" color={colors.card} />
-                        <Text style={styles.resetPresaleDayConfirmButtonText}>
-                          {t('loading')}
-                        </Text>
-                      </React.Fragment>
-                    ) : (
-                      <React.Fragment>
-                        <IconSymbol 
-                          ios_icon_name="arrow.counterclockwise.circle.fill" 
-                          android_material_icon_name="restart_alt" 
-                          size={20} 
-                          color={colors.card} 
-                        />
-                        <Text style={styles.resetPresaleDayConfirmButtonText}>
-                          {t('confirm')}
-                        </Text>
-                      </React.Fragment>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -1330,108 +1226,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  resetPresaleDayModal: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  resetPresaleDayHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  resetPresaleDayTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: colors.text,
-    marginTop: 12,
-    textAlign: 'center',
-  },
-  resetPresaleDayWarning: {
-    backgroundColor: `${colors.error}15`,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.error,
-  },
-  resetPresaleDayWarningText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  resetPresaleDayWarningItem: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-    marginLeft: 8,
-  },
-  resetPresaleDayPasswordContainer: {
-    marginBottom: 20,
-  },
-  resetPresaleDayPasswordLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  resetPresaleDayPasswordInput: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.text,
-  },
-  resetPresaleDayActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  resetPresaleDayButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    borderRadius: 12,
-    minHeight: 52,
-  },
-  resetPresaleDayCancelButton: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  resetPresaleDayCancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  resetPresaleDayConfirmButton: {
-    backgroundColor: colors.error,
-  },
-  resetPresaleDayConfirmButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.card,
-  },
-  resetPresaleDayButtonDisabled: {
-    opacity: 0.5,
   },
 });
