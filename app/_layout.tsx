@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import 'react-native-reanimated';
+// REMOVED: import 'react-native-reanimated'; - This was causing worklet serialization issues
 import { AuthProvider } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { PreSaleProvider } from '@/contexts/PreSaleContext';

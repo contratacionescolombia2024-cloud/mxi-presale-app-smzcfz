@@ -1,6 +1,6 @@
 
 import { useMemo, useCallback } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from './IconSymbol';
@@ -21,12 +21,12 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // CRITICAL: Extract only primitive string value
+  // Extract only primitive string value
   const currentPath = useMemo(() => {
     return String(pathname || '');
   }, [pathname]);
 
-  // CRITICAL: Determine active tab using only string comparison
+  // Determine active tab using only string comparison
   const activeTabName = useMemo(() => {
     for (let i = 0; i < tabs.length; i++) {
       const tabName = String(tabs[i].name);
@@ -37,15 +37,11 @@ export default function FloatingTabBar({ tabs }: FloatingTabBarProps) {
     return '(home)';
   }, [currentPath, tabs]);
 
-  // CRITICAL: Create navigation handler that doesn't capture router in worklets
-  // Use a simple callback that only captures the router reference
+  // Create navigation handler
   const handleTabPress = useCallback((route: string) => {
     console.log('🔄 Tab pressed, navigating to:', route);
     try {
-      // Use setTimeout to break out of any potential worklet context
-      setTimeout(() => {
-        router.push(route as any);
-      }, 0);
+      router.push(route as any);
     } catch (error) {
       console.error('❌ Navigation error:', error);
     }

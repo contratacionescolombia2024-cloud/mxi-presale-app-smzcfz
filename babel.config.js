@@ -41,17 +41,8 @@ module.exports = function (api) {
       ],
       ...EDITABLE_COMPONENTS,
       "@babel/plugin-proposal-export-namespace-from",
-      // CRITICAL: Reanimated plugin must be last!
-      // This plugin transforms worklets and ensures proper serialization
-      [
-        "react-native-reanimated/plugin",
-        {
-          // Disable automatic worklet detection to prevent accidental captures
-          processNestedWorklets: true,
-          // Enable globals to ensure proper context
-          globals: ['__scanCodes'],
-        }
-      ],
+      // REMOVED: Reanimated plugin - was causing persistent worklet serialization errors
+      // The app doesn't critically need Reanimated animations, so we're using standard RN animations instead
     ],
   };
 };
